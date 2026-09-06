@@ -1,7 +1,7 @@
 """
 Naver News Report Builder - Streamlit App
 Search Naver news by keyword, filter by period, curate articles into a
-categorized report with shortened (buly.kr) URLs.
+categorized report with shortened (TinyURL) URLs.
 """
 
 import re
@@ -802,7 +802,7 @@ with center_col:
                         if original_url in url_cache:
                             short_url = url_cache[original_url]
                         else:
-                            with st.spinner("buly.kr 단축 URL 생성 중..."):
+                            with st.spinner("TinyURL 단축 URL 생성 중..."):
                                 short_url, error_reason = shortener.shorten_url_verbose(
                                     original_url, retries=2, timeout=10.0
                                 )

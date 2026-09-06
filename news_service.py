@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 NAVER_API_BASE = "https://naverapihub.apigw.ntruss.com/search/v1/news"
-BULY_API_BASE = "https://www.buly.kr/api/shoturl.siso"
+TINYURL_API_BASE = "https://tinyurl.com/api-create.php"
 
 
 def _get_config(key: str, default: str = "") -> str:
@@ -134,17 +134,14 @@ class NaverNewsService:
 
 
 class URLShortener:
-    """Service for shortening URLs using buly.kr"""
-
-    def __init__(self):
-        self.customer_id = _get_config("BULY_CUSTOMER_ID")
-        self.partner_api_id = _get_config("BULY_API_KEY")
+    """Service for shortening URLs using TinyURL's free create API (no
+    account/API key required)."""
 
     def shorten_url_verbose(
         self, long_url: str, retries: int = 1, timeout: float = 6.0
     ) -> tuple[str, str | None]:
         """
-        Shorten a URL using buly.kr API and report *why* it failed, if it did.
+        Shorten a URL using the TinyURL API and report *why* it failed, if it did.
 
         Returns the result as a local tuple (not shared instance state) so
         this stays safe under Streamlit's cache_resource, where a single
@@ -164,46 +161,35 @@ class URLShortener:
         if not long_url:
             return "", None
 
-        if not self.customer_id or not self.partner_api_id:
-            return long_url, "BULY_CUSTOMER_ID / BULY_API_KEY가 설정되지 않았습니다."
-
-        payload = {
-            "customer_id": self.customer_id,
-            "partner_api_id": self.partner_api_id,
-            "org_url": long_url,
-        }
+        params = {"url": long_url}
 
         attempts = max(1, retries + 1)
         last_error = None
         for attempt in range(attempts):
             try:
-                response = requests.post(BULY_API_BASE, data=payload, timeout=timeout)
+                response = requests.get(TINYURL_API_BASE, params=params, timeout=timeout)
 
                 if response.status_code == 200:
-                    data = response.json()
-                    if data.get("result") == "Y":
-                        return data.get("url", long_url), None
-                    return long_url, (
-                        f"buly.kr 응답 실패(result != Y): {data.get('message', '메시지 없음')}"
-                    )
+                    short_url = response.text.strip()
+                    if short_url.startswith("http") and "tinyurl.com" in short_url:
+                        return short_url, None
+                    return long_url, f"TinyURL 응답 실패: {short_url[:200]}"
 
-                return long_url, f"buly.kr HTTP {response.status_code}: {response.text[:200]}"
+                return long_url, f"TinyURL HTTP {response.status_code}: {response.text[:200]}"
 
             except requests.exceptions.Timeout:
-                last_error = f"buly.kr 요청 시간 초과({timeout}s, 시도 {attempt + 1}/{attempts})"
+                last_error = f"TinyURL 요청 시간 초과({timeout}s, 시도 {attempt + 1}/{attempts})"
                 if attempt < attempts - 1:
                     time.sleep(1.5)  # brief backoff before retrying
                 continue  # worth a retry — transient
             except requests.exceptions.RequestException as e:
-                return long_url, f"buly.kr 요청 오류: {type(e).__name__}: {e}"
-            except ValueError as e:
-                return long_url, f"buly.kr 응답 파싱 오류: {e}"
+                return long_url, f"TinyURL 요청 오류: {type(e).__name__}: {e}"
 
         return long_url, last_error
 
     def shorten_url(self, long_url: str) -> str:
         """
-        Shorten a URL using buly.kr API
+        Shorten a URL using the TinyURL API
 
         Args:
             long_url: Original URL to shorten
