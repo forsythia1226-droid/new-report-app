@@ -126,6 +126,125 @@ def keyword_drag_list(items: list[str], current: str | None, key: str):
         on_deleted_change=lambda: None,
     )
 
+
+# ---------------------------------------------------------------------------
+# Draggable report-item list (custom component, CCv2) — lets the user
+# reorder curated report entries by mouse drag instead of up/down buttons.
+# ---------------------------------------------------------------------------
+
+_REPORT_DRAG_LIST_HTML = """
+<div id="list" class="rp-draggable-list"></div>
+<style>
+  .rp-draggable-list { display: flex; flex-direction: column; gap: 6px; }
+  .rp-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    background: #fbfcfe; color: #12172b;
+    border: 1px solid #edf0f7;
+    border-radius: 10px; padding: 8px 10px;
+    cursor: grab; font-size: 14px; font-family: inherit;
+    user-select: none; transition: border-color 0.1s ease, box-shadow 0.1s ease;
+  }
+  .rp-row.drag-over { border-color: #3182F6; border-style: dashed; }
+  .rp-row.dragging { opacity: 0.45; }
+  .rp-handle { opacity: 0.45; cursor: grab; padding-top: 2px; }
+  .rp-body { flex: 1; min-width: 0; }
+  .rp-title { font-weight: 700; word-break: break-word; }
+  .rp-url { color: #8a93a6; font-size: 0.8rem; word-break: break-all; margin-top: 2px; }
+  .rp-delete { cursor: pointer; opacity: 0.7; padding-top: 2px; }
+  .rp-delete:hover { opacity: 1; }
+</style>
+"""
+
+_REPORT_DRAG_LIST_JS = """
+export default function (component) {
+  const { data, parentElement, setStateValue, setTriggerValue } = component
+  const container = parentElement.querySelector('#list')
+  if (!container) return
+
+  const items = data.items || []
+
+  container.innerHTML = ''
+  let dragSrcIndex = null
+
+  items.forEach((item, idx) => {
+    const row = document.createElement('div')
+    row.className = 'rp-row'
+    row.draggable = true
+
+    const handle = document.createElement('span')
+    handle.className = 'rp-handle'
+    handle.textContent = '\\u283f'
+
+    const body = document.createElement('div')
+    body.className = 'rp-body'
+    const title = document.createElement('div')
+    title.className = 'rp-title'
+    title.textContent = item.title
+    const url = document.createElement('div')
+    url.className = 'rp-url'
+    url.textContent = item.url
+    body.appendChild(title)
+    body.appendChild(url)
+
+    const del = document.createElement('span')
+    del.className = 'rp-delete'
+    del.textContent = '\\u274c'
+    del.onclick = (e) => {
+      e.stopPropagation()
+      setTriggerValue('deleted_index', idx)
+    }
+
+    row.appendChild(handle)
+    row.appendChild(body)
+    row.appendChild(del)
+
+    row.addEventListener('dragstart', () => {
+      dragSrcIndex = idx
+      row.classList.add('dragging')
+    })
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging')
+    })
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      row.classList.add('drag-over')
+    })
+    row.addEventListener('dragleave', () => {
+      row.classList.remove('drag-over')
+    })
+    row.addEventListener('drop', (e) => {
+      e.preventDefault()
+      row.classList.remove('drag-over')
+      if (dragSrcIndex === null || dragSrcIndex === idx) return
+      const newItems = items.slice()
+      const [moved] = newItems.splice(dragSrcIndex, 1)
+      newItems.splice(idx, 0, moved)
+      setStateValue('order', newItems)
+    })
+
+    container.appendChild(row)
+  })
+}
+"""
+
+_REPORT_DRAG_LIST = st.components.v2.component(
+    "report_drag_list",
+    html=_REPORT_DRAG_LIST_HTML,
+    js=_REPORT_DRAG_LIST_JS,
+)
+
+
+def report_drag_list(items: list[dict], key: str):
+    """Render a drag-reorderable report-item list. Returns the CCv2 result
+    object with `.deleted_index` (trigger) and `.order` (state)."""
+    return _REPORT_DRAG_LIST(
+        key=key,
+        data={"items": items},
+        default={"order": None},
+        on_order_change=lambda: None,
+        on_deleted_index_change=lambda: None,
+    )
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -294,15 +413,6 @@ div[class*="st-key-newscard_"] {{
 div[class*="st-key-newscard_"]:hover {{
     border-color: #cfd6ea;
     box-shadow: 0 2px 10px rgba(16, 24, 40, 0.06);
-}}
-
-/* Report item cards (right column) */
-div[class*="st-key-reportcard_"] {{
-    background: #fbfcfe;
-    border: 1px solid #edf0f7;
-    border-radius: 10px;
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.4rem;
 }}
 
 /* Category chip labels in the report preview */
@@ -519,7 +629,7 @@ with st.container(key="app_header"):
     hcol1, hcol2 = st.columns([3, 1], vertical_alignment="center")
     with hcol1:
         st.html(
-            '<div class="app-header-title">📰 뉴스 보고서 빌더</div>'
+            '<div class="app-header-title">📰 [대한전선] 주요 기사 모음</div>'
             '<div class="app-header-caption">키워드로 뉴스를 검색하고, 카테고리별로 큐레이션해 공유용 보고서를 완성하세요.</div>'
         )
     with hcol2:
@@ -677,14 +787,38 @@ with center_col:
                         width="stretch",
                     ):
                         _, shortener = get_services()
-                        short_url = shortener.shorten_url(article["original_url"])
+                        original_url = article["original_url"]
+
+                        # Session-level cache: the same article can be added
+                        # more than once (different category, re-search after
+                        # a rerun); skip the network round-trip when we
+                        # already have a shortened URL for this exact link.
+                        url_cache = st.session_state.setdefault("short_url_cache", {})
+                        error_reason = None
+                        if original_url in url_cache:
+                            short_url = url_cache[original_url]
+                        else:
+                            with st.spinner("buly.kr 단축 URL 생성 중..."):
+                                short_url, error_reason = shortener.shorten_url_verbose(
+                                    original_url
+                                )
+                            if error_reason is None:
+                                url_cache[original_url] = short_url
+
                         st.session_state.report_items[selected_category].append(
                             {"title": article["title"], "url": short_url}
                         )
-                        st.toast(
-                            f"보고서에 추가되었습니다 · {article['title'][:24]}...",
-                            icon="✅",
-                        )
+
+                        if error_reason:
+                            st.toast(
+                                f"⚠️ 단축 URL 생성 실패 → 원본 URL 저장됨\n{error_reason}",
+                                icon="⚠️",
+                            )
+                        else:
+                            st.toast(
+                                f"보고서에 추가되었습니다 · {article['title'][:24]}...",
+                                icon="✅",
+                            )
                         st.rerun()
 
 # ---------------------------------------------------------------------------
@@ -713,32 +847,17 @@ with right_col:
 
                 st.html(f'<div class="category-chip">{category}</div>')
 
-                for i, item in enumerate(items):
-                    with st.container(key=f"reportcard_{category}_{i}"):
-                        row = st.columns([5, 1, 1, 1], vertical_alignment="center")
-                        with row[0]:
-                            st.markdown(f"**{item['title']}**")
-                            st.caption(item["url"])
-                        with row[1]:
-                            if st.button(
-                                "", icon="⬆️",
-                                key=f"up_{category}_{i}", disabled=(i == 0),
-                            ):
-                                items[i - 1], items[i] = items[i], items[i - 1]
-                                st.rerun()
-                        with row[2]:
-                            if st.button(
-                                "", icon="⬇️",
-                                key=f"down_{category}_{i}", disabled=(i == len(items) - 1),
-                            ):
-                                items[i + 1], items[i] = items[i], items[i + 1]
-                                st.rerun()
-                        with row[3]:
-                            if st.button(
-                                "", icon="❌", key=f"remove_{category}_{i}",
-                            ):
-                                items.pop(i)
-                                st.rerun()
+                rp_result = report_drag_list(items, key=f"rpdrag_{category}")
+
+                if rp_result.deleted_index is not None:
+                    del_idx = rp_result.deleted_index
+                    if 0 <= del_idx < len(items):
+                        items.pop(del_idx)
+                    st.rerun()
+
+                if rp_result.order and list(rp_result.order) != items:
+                    items[:] = rp_result.order
+                    st.rerun()
 
     st.space("small")
 

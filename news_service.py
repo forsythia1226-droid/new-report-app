@@ -139,6 +139,65 @@ class URLShortener:
         self.customer_id = _get_config("BULY_CUSTOMER_ID")
         self.partner_api_id = _get_config("BULY_API_KEY")
 
+    def shorten_url_verbose(
+        self, long_url: str, retries: int = 1, timeout: float = 6.0
+    ) -> tuple[str, str | None]:
+        """
+        Shorten a URL using buly.kr API and report *why* it failed, if it did.
+
+        Returns the result as a local tuple (not shared instance state) so
+        this stays safe under Streamlit's cache_resource, where a single
+        URLShortener instance can be used concurrently across sessions.
+
+        Args:
+            long_url: Original URL to shorten
+            retries: Extra attempts on timeout errors (transient network
+                hiccups are common on cloud-hosted deployments).
+            timeout: Per-request timeout in seconds.
+
+        Returns:
+            (url, error): `url` is the shortened link, or `long_url` if the
+            service was unavailable. `error` is None on success, otherwise a
+            human-readable reason for the fallback.
+        """
+        if not long_url:
+            return "", None
+
+        if not self.customer_id or not self.partner_api_id:
+            return long_url, "BULY_CUSTOMER_ID / BULY_API_KEY가 설정되지 않았습니다."
+
+        payload = {
+            "customer_id": self.customer_id,
+            "partner_api_id": self.partner_api_id,
+            "org_url": long_url,
+        }
+
+        attempts = max(1, retries + 1)
+        last_error = None
+        for attempt in range(attempts):
+            try:
+                response = requests.post(BULY_API_BASE, data=payload, timeout=timeout)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("result") == "Y":
+                        return data.get("url", long_url), None
+                    return long_url, (
+                        f"buly.kr 응답 실패(result != Y): {data.get('message', '메시지 없음')}"
+                    )
+
+                return long_url, f"buly.kr HTTP {response.status_code}: {response.text[:200]}"
+
+            except requests.exceptions.Timeout:
+                last_error = f"buly.kr 요청 시간 초과({timeout}s, 시도 {attempt + 1}/{attempts})"
+                continue  # worth a retry — transient
+            except requests.exceptions.RequestException as e:
+                return long_url, f"buly.kr 요청 오류: {type(e).__name__}: {e}"
+            except ValueError as e:
+                return long_url, f"buly.kr 응답 파싱 오류: {e}"
+
+        return long_url, last_error
+
     def shorten_url(self, long_url: str) -> str:
         """
         Shorten a URL using buly.kr API
@@ -149,34 +208,8 @@ class URLShortener:
         Returns:
             Shortened URL or original URL if service is unavailable
         """
-        if not long_url:
-            return ""
-
-        if not self.customer_id or not self.partner_api_id:
-            return long_url
-
-        try:
-            payload = {
-                "customer_id": self.customer_id,
-                "partner_api_id": self.partner_api_id,
-                "org_url": long_url
-            }
-
-            response = requests.post(
-                BULY_API_BASE,
-                data=payload,
-                timeout=5
-            )
-
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("result") == "Y":
-                    return data.get("url", long_url)
-
-            return long_url
-
-        except (requests.exceptions.RequestException, ValueError):
-            return long_url
+        url, _ = self.shorten_url_verbose(long_url)
+        return url
 
     def batch_shorten_urls(self, urls: List[str]) -> Dict[str, str]:
         """
