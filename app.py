@@ -464,8 +464,12 @@ if "report_items" not in st.session_state:
     st.session_state.report_items = {cat: [] for cat in CATEGORY_OPTIONS}
 
 
-@st.cache_resource
 def get_services():
+    # Intentionally not cached: these objects are cheap to construct (they
+    # just read a couple of config strings), and caching them with
+    # st.cache_resource previously caused stale-object AttributeErrors after
+    # a redeploy, since Streamlit Cloud can reuse a running process across
+    # a git-push update rather than always restarting it fresh.
     news_service = NaverNewsService()
     shortener = URLShortener()
     return news_service, shortener
