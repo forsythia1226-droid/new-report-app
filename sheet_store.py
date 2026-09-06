@@ -91,8 +91,16 @@ def save_report_snapshot(date_str: str, title: str, report_items: dict) -> tuple
         return False, f"{type(e).__name__}: {e}"
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def load_report_dates() -> list[str]:
-    """Return all saved dates, most recent first."""
+    """Return all saved dates, most recent first.
+
+    Cached for 60s: this is read on every script rerun (it feeds the header
+    date dropdown), and every rerun happens on almost every click — without
+    caching, that's a Google Sheets API round-trip on every single
+    interaction, which made the whole app feel sluggish. Cleared manually
+    right after a successful save so the new date shows up immediately.
+    """
     worksheet = _get_worksheet()
     if worksheet is None:
         return []
@@ -104,8 +112,13 @@ def load_report_dates() -> list[str]:
         return []
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def load_report_snapshot(date_str: str) -> tuple[str, dict] | None:
-    """Load the saved (title, report_items) for `date_str`, or None."""
+    """Load the saved (title, report_items) for `date_str`, or None.
+
+    Cached for 60s for the same reason as `load_report_dates` — this is
+    re-read on every rerun while viewing a past date.
+    """
     worksheet = _get_worksheet()
     if worksheet is None:
         return None

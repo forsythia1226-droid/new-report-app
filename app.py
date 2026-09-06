@@ -968,7 +968,7 @@ with right_col:
             st.code(report_text, language=None, wrap_lines=True)
             st.caption("우측 상단 아이콘을 눌러 클립보드에 바로 복사할 수 있습니다.")
 
-            dl_col, clear_col = st.columns(2)
+            dl_col, save_col = st.columns(2)
             with dl_col:
                 st.download_button(
                     "텍스트 파일 다운로드",
@@ -978,27 +978,23 @@ with right_col:
                     mime="text/plain",
                     width="stretch",
                 )
-            with clear_col:
-                if st.button(
-                    "보고서 초기화", icon="🔄", width="stretch"
-                ):
-                    st.session_state.report_items = {cat: [] for cat in CATEGORY_OPTIONS}
-                    st.rerun()
-
-            if sheet_store.is_configured():
-                if st.button(
-                    "오늘 보고서 저장", icon="💾", width="stretch"
-                ):
-                    ok, err = sheet_store.save_report_snapshot(
-                        TODAY_STR,
-                        st.session_state.report_title,
-                        st.session_state.report_items,
+            with save_col:
+                if sheet_store.is_configured():
+                    if st.button(
+                        "보고서 저장", icon="💾", width="stretch"
+                    ):
+                        ok, err = sheet_store.save_report_snapshot(
+                            TODAY_STR,
+                            st.session_state.report_title,
+                            st.session_state.report_items,
+                        )
+                        if ok:
+                            sheet_store.load_report_dates.clear()
+                            st.toast("오늘 보고서가 저장되었습니다.", icon="✅")
+                        else:
+                            st.toast(f"저장 실패: {err}", icon="⚠️")
+                else:
+                    st.button(
+                        "보고서 저장", icon="💾", width="stretch", disabled=True,
+                        help="Google Sheets 연동이 설정되지 않았습니다.",
                     )
-                    if ok:
-                        st.toast("오늘 보고서가 저장되었습니다.", icon="✅")
-                    else:
-                        st.toast(f"저장 실패: {err}", icon="⚠️")
-            else:
-                st.caption(
-                    "ℹ️ Google Sheets 연동이 설정되지 않아 날짜별 저장은 비활성화되어 있습니다."
-                )
