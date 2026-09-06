@@ -10,6 +10,7 @@ import streamlit as st
 from datetime import datetime, timedelta, date
 
 from news_service import NaverNewsService, URLShortener
+import sheet_store
 
 # ---------------------------------------------------------------------------
 # Draggable keyword list (custom component, CCv2) — lets the user reorder
@@ -320,6 +321,29 @@ div[class*="st-key-app_header"] {{
     float: right;
 }}
 
+/* Date-picker dropdown in the header, styled like the old date badge */
+div[class*="st-key-header_date_picker"] {{
+    display: flex;
+    justify-content: flex-end;
+}}
+div[class*="st-key-header_date_picker"] [data-testid="stSelectbox"] {{
+    width: auto;
+    min-width: 170px;
+}}
+div[class*="st-key-header_date_picker"] [data-baseweb="select"] > div {{
+    background: {NAVY} !important;
+    border-color: {NAVY} !important;
+    border-radius: 999px !important;
+}}
+div[class*="st-key-header_date_picker"] [data-baseweb="select"] p {{
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+}}
+div[class*="st-key-header_date_picker"] [data-baseweb="select"] svg {{
+    fill: #ffffff !important;
+}}
+
 /* Section header used at the top of each panel */
 .section-title {{
     display: flex;
@@ -593,11 +617,19 @@ def split_title_two_lines(title: str) -> list[str]:
     return [line1, line2]
 
 
-def build_report_text() -> str:
-    lines = [st.session_state.report_title]
+def build_report_text(title: str = None, report_items: dict = None) -> str:
+    """Build the final report text. Defaults to the live (editable) report
+    in session_state; pass `title`/`report_items` to render a read-only
+    snapshot loaded from a past date instead."""
+    if title is None:
+        title = st.session_state.report_title
+    if report_items is None:
+        report_items = st.session_state.report_items
+
+    lines = [title]
 
     for category in CATEGORY_OPTIONS:
-        items = st.session_state.report_items.get(category, [])
+        items = report_items.get(category, [])
         if not items:
             continue
 
@@ -629,6 +661,11 @@ def section_title(emoji: str, text: str, count: int | None = None):
 # Header
 # ---------------------------------------------------------------------------
 
+TODAY_STR = date.today().strftime("%Y-%m-%d")
+
+if "viewing_date" not in st.session_state:
+    st.session_state.viewing_date = TODAY_STR
+
 with st.container(key="app_header"):
     hcol1, hcol2 = st.columns([3, 1], vertical_alignment="center")
     with hcol1:
@@ -637,10 +674,21 @@ with st.container(key="app_header"):
             '<div class="app-header-caption">키워드로 뉴스를 검색하고, 카테고리별로 큐레이션해 공유용 보고서를 완성하세요.</div>'
         )
     with hcol2:
-        st.html(
-            '<span class="app-header-badge">'
-            f'📅 {datetime.now().strftime("%Y.%m.%d")}</span>'
-        )
+        with st.container(key="header_date_picker"):
+            saved_dates = sheet_store.load_report_dates()
+            date_options = sorted({TODAY_STR, *saved_dates}, reverse=True)
+
+            def _format_date_option(d: str) -> str:
+                label = d.replace("-", ".")
+                return f"📅 {label} (오늘)" if d == TODAY_STR else f"📅 {label}"
+
+            st.selectbox(
+                "조회 날짜",
+                date_options,
+                key="viewing_date",
+                format_func=_format_date_option,
+                label_visibility="collapsed",
+            )
 
 left_col, center_col, right_col = st.columns([1, 2, 1.5])
 
@@ -829,62 +877,128 @@ with center_col:
 # Right Column - Report Preview
 # ---------------------------------------------------------------------------
 
+is_viewing_today = st.session_state.viewing_date == TODAY_STR
+
 with right_col:
-    with st.container(border=True):
-        section_title("📋", "보고서 미리보기")
+    if not is_viewing_today:
+        # ---- Read-only view of a past day's saved report ----
+        snapshot = sheet_store.load_report_snapshot(st.session_state.viewing_date)
 
-        st.text_input("보고서 제목", key="report_title", label_visibility="collapsed")
+        with st.container(border=True):
+            section_title("📖", f"{st.session_state.viewing_date} 기록 (읽기 전용)")
 
-        total_items = sum(len(v) for v in st.session_state.report_items.values())
+            if snapshot is None:
+                st.caption("해당 날짜에 저장된 보고서가 없습니다.")
+            else:
+                snap_title, snap_items = snapshot
+                st.markdown(f"**{snap_title}**")
 
-        if total_items == 0:
-            st.html(
-                '<div class="empty-state">'
-                '중앙에서 기사를 추가하면 이곳에 표시됩니다.'
-                '</div>'
-            )
-        else:
-            for category in CATEGORY_OPTIONS:
-                items = st.session_state.report_items.get(category, [])
-                if not items:
-                    continue
+                for category in CATEGORY_OPTIONS:
+                    items = snap_items.get(category, [])
+                    if not items:
+                        continue
+                    st.html(f'<div class="category-chip">{category}</div>')
+                    for item in items:
+                        st.markdown(f"**{item['title']}**")
+                        st.caption(item["url"])
 
-                st.html(f'<div class="category-chip">{category}</div>')
-
-                rp_result = report_drag_list(items, key=f"rpdrag_{category}")
-
-                if rp_result.deleted_index is not None:
-                    del_idx = rp_result.deleted_index
-                    if 0 <= del_idx < len(items):
-                        items.pop(del_idx)
+                if st.button(
+                    "이 날짜를 불러와 오늘 보고서로 편집",
+                    icon="✏️",
+                    width="stretch",
+                ):
+                    st.session_state.report_title = snap_title
+                    st.session_state.report_items = {
+                        cat: list(snap_items.get(cat, [])) for cat in CATEGORY_OPTIONS
+                    }
+                    st.session_state.viewing_date = TODAY_STR
                     st.rerun()
 
-                if rp_result.order and list(rp_result.order) != items:
-                    items[:] = rp_result.order
+        st.space("small")
+
+        with st.container(border=True):
+            section_title("📝", "최종 결과물")
+            if snapshot is None:
+                st.caption("표시할 내용이 없습니다.")
+            else:
+                snap_title, snap_items = snapshot
+                st.code(build_report_text(snap_title, snap_items), language=None, wrap_lines=True)
+
+    else:
+        # ---- Live, editable report for today ----
+        with st.container(border=True):
+            section_title("📋", "보고서 미리보기")
+
+            st.text_input("보고서 제목", key="report_title", label_visibility="collapsed")
+
+            total_items = sum(len(v) for v in st.session_state.report_items.values())
+
+            if total_items == 0:
+                st.html(
+                    '<div class="empty-state">'
+                    '중앙에서 기사를 추가하면 이곳에 표시됩니다.'
+                    '</div>'
+                )
+            else:
+                for category in CATEGORY_OPTIONS:
+                    items = st.session_state.report_items.get(category, [])
+                    if not items:
+                        continue
+
+                    st.html(f'<div class="category-chip">{category}</div>')
+
+                    rp_result = report_drag_list(items, key=f"rpdrag_{category}")
+
+                    if rp_result.deleted_index is not None:
+                        del_idx = rp_result.deleted_index
+                        if 0 <= del_idx < len(items):
+                            items.pop(del_idx)
+                        st.rerun()
+
+                    if rp_result.order and list(rp_result.order) != items:
+                        items[:] = rp_result.order
+                        st.rerun()
+
+        st.space("small")
+
+        with st.container(border=True):
+            section_title("📝", "최종 결과물")
+
+            report_text = build_report_text()
+            st.code(report_text, language=None, wrap_lines=True)
+            st.caption("우측 상단 아이콘을 눌러 클립보드에 바로 복사할 수 있습니다.")
+
+            dl_col, clear_col = st.columns(2)
+            with dl_col:
+                st.download_button(
+                    "텍스트 파일 다운로드",
+                    icon="📥",
+                    data=report_text,
+                    file_name=f"news_report_{datetime.now().strftime('%Y%m%d')}.txt",
+                    mime="text/plain",
+                    width="stretch",
+                )
+            with clear_col:
+                if st.button(
+                    "보고서 초기화", icon="🔄", width="stretch"
+                ):
+                    st.session_state.report_items = {cat: [] for cat in CATEGORY_OPTIONS}
                     st.rerun()
 
-    st.space("small")
-
-    with st.container(border=True):
-        section_title("📝", "최종 결과물")
-
-        report_text = build_report_text()
-        st.code(report_text, language=None, wrap_lines=True)
-        st.caption("우측 상단 아이콘을 눌러 클립보드에 바로 복사할 수 있습니다.")
-
-        dl_col, clear_col = st.columns(2)
-        with dl_col:
-            st.download_button(
-                "텍스트 파일 다운로드",
-                icon="📥",
-                data=report_text,
-                file_name=f"news_report_{datetime.now().strftime('%Y%m%d')}.txt",
-                mime="text/plain",
-                width="stretch",
-            )
-        with clear_col:
-            if st.button(
-                "보고서 초기화", icon="🔄", width="stretch"
-            ):
-                st.session_state.report_items = {cat: [] for cat in CATEGORY_OPTIONS}
-                st.rerun()
+            if sheet_store.is_configured():
+                if st.button(
+                    "오늘 보고서 저장", icon="💾", width="stretch"
+                ):
+                    ok, err = sheet_store.save_report_snapshot(
+                        TODAY_STR,
+                        st.session_state.report_title,
+                        st.session_state.report_items,
+                    )
+                    if ok:
+                        st.toast("오늘 보고서가 저장되었습니다.", icon="✅")
+                    else:
+                        st.toast(f"저장 실패: {err}", icon="⚠️")
+            else:
+                st.caption(
+                    "ℹ️ Google Sheets 연동이 설정되지 않아 날짜별 저장은 비활성화되어 있습니다."
+                )
