@@ -804,7 +804,7 @@ with center_col:
                         else:
                             with st.spinner("buly.kr 단축 URL 생성 중..."):
                                 short_url, error_reason = shortener.shorten_url_verbose(
-                                    original_url
+                                    original_url, retries=2, timeout=10.0
                                 )
                             if error_reason is None:
                                 url_cache[original_url] = short_url

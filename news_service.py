@@ -4,6 +4,7 @@ Handles news fetching from Naver Search API and URL shortening
 """
 
 import os
+import time
 import requests
 from typing import List, Dict, Any
 from datetime import datetime
@@ -190,6 +191,8 @@ class URLShortener:
 
             except requests.exceptions.Timeout:
                 last_error = f"buly.kr 요청 시간 초과({timeout}s, 시도 {attempt + 1}/{attempts})"
+                if attempt < attempts - 1:
+                    time.sleep(1.5)  # brief backoff before retrying
                 continue  # worth a retry — transient
             except requests.exceptions.RequestException as e:
                 return long_url, f"buly.kr 요청 오류: {type(e).__name__}: {e}"
