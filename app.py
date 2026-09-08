@@ -666,6 +666,16 @@ TODAY_STR = date.today().strftime("%Y-%m-%d")
 if "viewing_date" not in st.session_state:
     st.session_state.viewing_date = TODAY_STR
 
+# Auto-purge reports older than ~6 months. Runs once per browser session
+# (not on every rerun) since it's a full read+rewrite of the sheet — cheap
+# for the sheet sizes this app expects, but no reason to pay for it on
+# every click within the same session.
+if "retention_purge_done" not in st.session_state:
+    st.session_state.retention_purge_done = True
+    deleted_count, purge_err = sheet_store.purge_old_reports()
+    if deleted_count:
+        st.toast(f"6개월 지난 보고서 {deleted_count}건이 자동 삭제되었습니다.", icon="🗑️")
+
 with st.container(key="app_header"):
     hcol1, hcol2 = st.columns([3, 1], vertical_alignment="center")
     with hcol1:
@@ -764,7 +774,7 @@ with left_col:
                     label_visibility="collapsed",
                 )
                 submitted = st.form_submit_button(
-                    "추가", icon="➕", width="content"
+                    "저장", icon="💾", width="content"
                 )
             if submitted and new_keyword.strip():
                 if new_keyword.strip() not in active_keywords:

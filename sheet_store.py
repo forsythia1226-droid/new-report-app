@@ -19,11 +19,13 @@ empty/None) so the rest of the app keeps working without this feature.
 """
 
 import json
+from datetime import datetime, timedelta
 
 import streamlit as st
 
 WORKSHEET_NAME = "reports"
 HEADER = ["date", "title", "items_json"]
+RETENTION_DAYS = 180  # ~6 months
 
 
 def _has_secrets() -> bool:
@@ -89,6 +91,59 @@ def save_report_snapshot(date_str: str, title: str, report_items: dict) -> tuple
         return True, None
     except Exception as e:
         return False, f"{type(e).__name__}: {e}"
+
+
+def purge_old_reports(retention_days: int = RETENTION_DAYS) -> tuple[int, str | None]:
+    """Delete saved reports older than `retention_days` (default ~6 months),
+    oldest first. Returns (deleted_count, error_message).
+
+    Implementation note: this overwrites the *entire* previously-occupied
+    range in a single `update()` call rather than `clear()` + `update()`.
+    Two separate calls would leave a window where a crash/network drop
+    between them wipes the sheet with nothing written back — a single call
+    avoids that failure mode.
+    """
+    worksheet = _get_worksheet()
+    if worksheet is None:
+        return 0, None  # nothing to do if Sheets isn't configured
+
+    try:
+        all_values = worksheet.get_all_values()
+        if len(all_values) <= 1:
+            return 0, None  # just the header, or empty
+
+        header, rows = all_values[0], all_values[1:]
+        cutoff = datetime.now().date() - timedelta(days=retention_days)
+
+        kept = []
+        expired = []
+        for row in rows:
+            date_str = row[0] if row else ""
+            try:
+                row_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                kept.append(row)  # unparseable date: keep rather than risk data loss
+                continue
+            if row_date < cutoff:
+                expired.append(row_date)
+            else:
+                kept.append(row)
+
+        if not expired:
+            return 0, None
+
+        # Overwrite the whole previously-occupied range in one call: kept
+        # rows first (oldest deletions leave the newer rows intact), then
+        # blank out the now-unused trailing rows so no stale data lingers.
+        blank_row = [""] * len(header)
+        padded = kept + [blank_row] * (len(rows) - len(kept))
+        worksheet.update("A1", [header] + padded)
+
+        load_report_dates.clear()
+        load_report_snapshot.clear()
+        return len(expired), None
+    except Exception as e:
+        return 0, f"{type(e).__name__}: {e}"
 
 
 @st.cache_data(ttl=60, show_spinner=False)
