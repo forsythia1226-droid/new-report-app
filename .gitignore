@@ -1,6 +1,8 @@
 # Secrets — never commit real API keys
 .env
 .streamlit/secrets.toml
+service_account.json
+*service_account*.json
 
 # Python
 __pycache__/
@@ -10,3 +12,7 @@ venv/
 
 # OS / editor
 .DS_Store
+
+# 데모/운영 산출물
+demo_data.json
+purge.log
