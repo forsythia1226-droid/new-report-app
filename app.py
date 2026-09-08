@@ -251,13 +251,18 @@ def report_drag_list(items: list[dict], key: str):
 # ---------------------------------------------------------------------------
 
 CATEGORY_OPTIONS = ["■ 전선산업 주요 기사", "■ 거시경제 및 기타 주요 기사"]
+MAX_KEYWORDS_PER_CATEGORY = 40
 
 DEFAULT_KEYWORDS_BY_CATEGORY = {
     "■ 전선산업 주요 기사": ["대한전선", "LS일렉트릭", "한전"],
     "■ 거시경제 및 기타 주요 기사": ["거시경제", "환율", "금리"],
 }
 
-PERIOD_OPTIONS = ["최근 24시간 이내", "날짜 직접 지정"]
+PERIOD_OPTIONS = ["최근 24시간 이내", "최근 3일 이내", "날짜 직접 지정"]
+PERIOD_HOURS = {
+    "최근 24시간 이내": 24,
+    "최근 3일 이내": 24 * 3,
+}
 
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -469,10 +474,19 @@ div[class*="st-key-newscard_"]:hover {{
 # ---------------------------------------------------------------------------
 
 if "keywords" not in st.session_state:
-    # category -> list of keyword strings
-    st.session_state.keywords = {
-        cat: kws.copy() for cat, kws in DEFAULT_KEYWORDS_BY_CATEGORY.items()
-    }
+    # category -> list of keyword strings. Try the persisted copy in Google
+    # Sheets first (this is what makes keywords survive across sessions /
+    # reopening the app); fall back to the built-in defaults.
+    _saved_keywords = sheet_store.load_keywords()
+    if _saved_keywords:
+        st.session_state.keywords = {
+            cat: list(_saved_keywords.get(cat, DEFAULT_KEYWORDS_BY_CATEGORY.get(cat, [])))
+            for cat in CATEGORY_OPTIONS
+        }
+    else:
+        st.session_state.keywords = {
+            cat: kws.copy() for cat, kws in DEFAULT_KEYWORDS_BY_CATEGORY.items()
+        }
 
 if "current_keyword" not in st.session_state:
     st.session_state.current_keyword = None
@@ -525,7 +539,7 @@ def parse_pub_date(date_str: str):
 def filter_by_period(articles, period_mode: str, custom_range=None):
     """Filter articles by pubDate.
 
-    - '최근 24시간 이내': keep articles published within the last 24 hours.
+    - '최근 24시간 이내' / '최근 3일 이내': keep articles within that rolling window.
     - '날짜 직접 지정': keep articles whose pubDate falls within [start_date, end_date].
     """
     if period_mode == "날짜 직접 지정":
@@ -539,8 +553,8 @@ def filter_by_period(articles, period_mode: str, custom_range=None):
                 filtered.append(article)
         return filtered
 
-    # Default: 최근 24시간 이내
-    cutoff = datetime.now() - timedelta(hours=24)
+    hours = PERIOD_HOURS.get(period_mode, 24)
+    cutoff = datetime.now() - timedelta(hours=hours)
     filtered = []
     for article in articles:
         pub_dt = parse_pub_date(article.get("published_date", ""))
@@ -756,13 +770,17 @@ with left_col:
                     st.session_state.articles_cache.pop(drag_result.deleted, None)
                     if st.session_state.current_keyword == drag_result.deleted:
                         st.session_state.current_keyword = None
+                    sheet_store.save_keywords(st.session_state.keywords)
                 st.rerun()
 
             if drag_result.order and list(drag_result.order) != active_keywords:
                 active_keywords[:] = drag_result.order
+                sheet_store.save_keywords(st.session_state.keywords)
                 st.rerun()
         else:
             st.caption("등록된 키워드가 없습니다.")
+
+        st.caption(f"{len(active_keywords)} / {MAX_KEYWORDS_PER_CATEGORY}")
 
         st.space("small")
 
@@ -777,8 +795,14 @@ with left_col:
                     "저장", icon="💾", width="content"
                 )
             if submitted and new_keyword.strip():
-                if new_keyword.strip() not in active_keywords:
+                if len(active_keywords) >= MAX_KEYWORDS_PER_CATEGORY:
+                    st.warning(
+                        f"카테고리당 최대 {MAX_KEYWORDS_PER_CATEGORY}개까지 등록할 수 있습니다.",
+                        icon="⚠️",
+                    )
+                elif new_keyword.strip() not in active_keywords:
                     active_keywords.append(new_keyword.strip())
+                    sheet_store.save_keywords(st.session_state.keywords)
                     st.rerun()
                 else:
                     st.warning("이미 등록된 키워드입니다.", icon="⚠️")

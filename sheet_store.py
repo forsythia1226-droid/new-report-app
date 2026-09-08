@@ -27,6 +27,9 @@ WORKSHEET_NAME = "reports"
 HEADER = ["date", "title", "items_json"]
 RETENTION_DAYS = 180  # ~6 months
 
+KEYWORDS_WORKSHEET_NAME = "keywords"
+KEYWORDS_HEADER = ["category", "keywords_json"]
+
 
 def _has_secrets() -> bool:
     """Whether the required secrets are present. `st.secrets` itself raises
@@ -38,11 +41,10 @@ def _has_secrets() -> bool:
         return False
 
 
-def _get_worksheet():
-    """Return the reports worksheet, or None if Sheets isn't configured."""
+def _get_client():
+    """Return an authorized gspread client, or None if unconfigured/failed."""
     if not _has_secrets():
         return None
-
     try:
         import gspread
         from google.oauth2.service_account import Credentials
@@ -51,20 +53,35 @@ def _get_worksheet():
         creds = Credentials.from_service_account_info(
             dict(st.secrets["gcp_service_account"]), scopes=scopes
         )
-        client = gspread.authorize(creds)
+        return gspread.authorize(creds)
+    except Exception:
+        return None
+
+
+def _get_or_create_worksheet(name: str, header: list[str]):
+    """Return the named worksheet in the configured spreadsheet, creating it
+    (with a header row) if it doesn't exist yet. None if unconfigured/failed."""
+    client = _get_client()
+    if client is None:
+        return None
+
+    try:
+        import gspread
+
         spreadsheet = client.open_by_key(st.secrets["REPORT_SHEET_ID"])
-
         try:
-            worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
+            worksheet = spreadsheet.worksheet(name)
         except gspread.WorksheetNotFound:
-            worksheet = spreadsheet.add_worksheet(
-                title=WORKSHEET_NAME, rows=100, cols=len(HEADER)
-            )
-            worksheet.append_row(HEADER)
-
+            worksheet = spreadsheet.add_worksheet(title=name, rows=100, cols=len(header))
+            worksheet.append_row(header)
         return worksheet
     except Exception:
         return None
+
+
+def _get_worksheet():
+    """Return the reports worksheet, or None if Sheets isn't configured."""
+    return _get_or_create_worksheet(WORKSHEET_NAME, HEADER)
 
 
 def is_configured() -> bool:
@@ -186,5 +203,56 @@ def load_report_snapshot(date_str: str) -> tuple[str, dict] | None:
         title = row[1] if len(row) > 1 else ""
         items_json = row[2] if len(row) > 2 else "{}"
         return title, json.loads(items_json)
+    except Exception:
+        return None
+
+
+def save_keywords(keywords: dict) -> tuple[bool, str | None]:
+    """Persist the full category -> [keyword, ...] mapping.
+
+    Overwrites the whole keywords sheet in a single update() call (same
+    single-call rationale as `purge_old_reports`: no separate clear() step
+    that could lose data if interrupted mid-way).
+    """
+    worksheet = _get_or_create_worksheet(KEYWORDS_WORKSHEET_NAME, KEYWORDS_HEADER)
+    if worksheet is None:
+        return False, "Google Sheets 연동이 설정되지 않았습니다."
+
+    try:
+        rows = [
+            [category, json.dumps(kw_list, ensure_ascii=False)]
+            for category, kw_list in keywords.items()
+        ]
+        worksheet.update("A1", [KEYWORDS_HEADER] + rows)
+        load_keywords.clear()
+        return True, None
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}"
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def load_keywords() -> dict | None:
+    """Load the saved category -> [keyword, ...] mapping, or None if nothing
+    has been saved yet (caller should fall back to its own defaults)."""
+    worksheet = _get_or_create_worksheet(KEYWORDS_WORKSHEET_NAME, KEYWORDS_HEADER)
+    if worksheet is None:
+        return None
+
+    try:
+        all_values = worksheet.get_all_values()
+        if len(all_values) <= 1:
+            return None  # only the header (or empty): nothing saved yet
+
+        result = {}
+        for row in all_values[1:]:
+            if not row or not row[0]:
+                continue
+            category = row[0]
+            kw_json = row[1] if len(row) > 1 else "[]"
+            try:
+                result[category] = json.loads(kw_json)
+            except json.JSONDecodeError:
+                result[category] = []
+        return result or None
     except Exception:
         return None
