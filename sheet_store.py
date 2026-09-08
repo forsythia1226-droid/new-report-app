@@ -1,11 +1,19 @@
 """
-Google Sheets-backed persistence for daily report snapshots.
+Google Sheets-backed persistence for daily report snapshots, keywords, and
+keyword subcategories. Three worksheets in the same spreadsheet:
 
-Each row in the sheet represents one saved day's report:
-    date (YYYY-MM-DD) | title | items_json
+    reports (date | title | items_json)
+        One row per saved day's report. `items_json` is a JSON-encoded dict
+        of {category: [{"title": ..., "url": ...}]}, matching the shape of
+        st.session_state.report_items.
 
-`items_json` is a JSON-encoded dict of {category: [{"title": ..., "url": ...}]},
-matching the shape of st.session_state.report_items.
+    keywords (category | subcategory | keywords_json)
+        One row per (category, subcategory) pair. `keywords_json` is a
+        JSON-encoded list of keyword strings.
+
+    subcategories (category | subcategories_json)
+        One row per category. `subcategories_json` is a JSON-encoded list
+        of subcategory names, user-editable from the Settings page.
 
 Reads credentials from Streamlit secrets:
     st.secrets["gcp_service_account"]  -> the service account JSON, as a dict
@@ -28,7 +36,11 @@ HEADER = ["date", "title", "items_json"]
 RETENTION_DAYS = 180  # ~6 months
 
 KEYWORDS_WORKSHEET_NAME = "keywords"
-KEYWORDS_HEADER = ["category", "keywords_json"]
+KEYWORDS_HEADER = ["category", "subcategory", "keywords_json"]
+DEFAULT_SUBCATEGORY = "기타"
+
+SUBCATEGORIES_WORKSHEET_NAME = "subcategories"
+SUBCATEGORIES_HEADER = ["category", "subcategories_json"]
 
 
 def _has_secrets() -> bool:
@@ -208,7 +220,7 @@ def load_report_snapshot(date_str: str) -> tuple[str, dict] | None:
 
 
 def save_keywords(keywords: dict) -> tuple[bool, str | None]:
-    """Persist the full category -> [keyword, ...] mapping.
+    """Persist the full category -> {subcategory -> [keyword, ...]} mapping.
 
     Overwrites the whole keywords sheet in a single update() call (same
     single-call rationale as `purge_old_reports`: no separate clear() step
@@ -219,10 +231,10 @@ def save_keywords(keywords: dict) -> tuple[bool, str | None]:
         return False, "Google Sheets 연동이 설정되지 않았습니다."
 
     try:
-        rows = [
-            [category, json.dumps(kw_list, ensure_ascii=False)]
-            for category, kw_list in keywords.items()
-        ]
+        rows = []
+        for category, subs in keywords.items():
+            for subcategory, kw_list in subs.items():
+                rows.append([category, subcategory, json.dumps(kw_list, ensure_ascii=False)])
         worksheet.update("A1", [KEYWORDS_HEADER] + rows)
         load_keywords.clear()
         return True, None
@@ -232,8 +244,13 @@ def save_keywords(keywords: dict) -> tuple[bool, str | None]:
 
 @st.cache_data(ttl=60, show_spinner=False)
 def load_keywords() -> dict | None:
-    """Load the saved category -> [keyword, ...] mapping, or None if nothing
-    has been saved yet (caller should fall back to its own defaults)."""
+    """Load the saved category -> {subcategory -> [keyword, ...]} mapping, or
+    None if nothing has been saved yet (caller should fall back to defaults).
+
+    Transparently migrates the older 2-column schema (category,
+    keywords_json — a flat list with no subcategory) by bucketing those
+    keywords under the catch-all `DEFAULT_SUBCATEGORY` ("기타").
+    """
     worksheet = _get_or_create_worksheet(KEYWORDS_WORKSHEET_NAME, KEYWORDS_HEADER)
     if worksheet is None:
         return None
@@ -243,14 +260,73 @@ def load_keywords() -> dict | None:
         if len(all_values) <= 1:
             return None  # only the header (or empty): nothing saved yet
 
+        header, rows = all_values[0], all_values[1:]
+        is_legacy_flat_schema = len(header) < 3
+
+        result: dict = {}
+        for row in rows:
+            if not row or not row[0]:
+                continue
+            category = row[0]
+
+            if is_legacy_flat_schema:
+                subcategory = DEFAULT_SUBCATEGORY
+                kw_json = row[1] if len(row) > 1 else "[]"
+            else:
+                subcategory = row[1] if len(row) > 1 and row[1] else DEFAULT_SUBCATEGORY
+                kw_json = row[2] if len(row) > 2 else "[]"
+
+            try:
+                kw_list = json.loads(kw_json)
+            except json.JSONDecodeError:
+                kw_list = []
+
+            result.setdefault(category, {})[subcategory] = kw_list
+
+        return result or None
+    except Exception:
+        return None
+
+
+def save_subcategories(subcategories: dict) -> tuple[bool, str | None]:
+    """Persist the full category -> [subcategory, ...] mapping."""
+    worksheet = _get_or_create_worksheet(SUBCATEGORIES_WORKSHEET_NAME, SUBCATEGORIES_HEADER)
+    if worksheet is None:
+        return False, "Google Sheets 연동이 설정되지 않았습니다."
+
+    try:
+        rows = [
+            [category, json.dumps(subs, ensure_ascii=False)]
+            for category, subs in subcategories.items()
+        ]
+        worksheet.update("A1", [SUBCATEGORIES_HEADER] + rows)
+        load_subcategories.clear()
+        return True, None
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}"
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def load_subcategories() -> dict | None:
+    """Load the saved category -> [subcategory, ...] mapping, or None if
+    nothing has been saved yet (caller should fall back to defaults)."""
+    worksheet = _get_or_create_worksheet(SUBCATEGORIES_WORKSHEET_NAME, SUBCATEGORIES_HEADER)
+    if worksheet is None:
+        return None
+
+    try:
+        all_values = worksheet.get_all_values()
+        if len(all_values) <= 1:
+            return None
+
         result = {}
         for row in all_values[1:]:
             if not row or not row[0]:
                 continue
             category = row[0]
-            kw_json = row[1] if len(row) > 1 else "[]"
+            subs_json = row[1] if len(row) > 1 else "[]"
             try:
-                result[category] = json.loads(kw_json)
+                result[category] = json.loads(subs_json)
             except json.JSONDecodeError:
                 result[category] = []
         return result or None
