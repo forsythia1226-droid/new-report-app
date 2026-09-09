@@ -286,6 +286,33 @@ if "report_items" not in st.session_state:
     st.session_state.report_items = {cat: [] for cat in CATEGORY_OPTIONS}
 
 
+def is_reordering_of(candidate, current: list) -> bool:
+    """Whether `candidate` is the same multiset as `current` in a different
+    order — i.e. a genuine drag-reorder result rather than a stale snapshot.
+
+    The drag components report their order as persistent CCv2 *state*, so it
+    keeps returning the list as it looked at the last drag. Applying that
+    blindly would undo any add/delete that happened afterwards (the reported
+    "keyword appears, then disappears"). Comparing contents first makes the
+    stale value a no-op until the next real drag replaces it."""
+    candidate_list = list(candidate)
+    if len(candidate_list) != len(current):
+        return False
+    if candidate_list == current:
+        return False  # nothing to apply
+    try:
+        return sorted(candidate_list) == sorted(current)
+    except TypeError:
+        # Unsortable entries (e.g. report items are dicts): fall back to
+        # counting how many of each entry appear on both sides.
+        remaining = list(current)
+        for entry in candidate_list:
+            if entry not in remaining:
+                return False
+            remaining.remove(entry)
+        return not remaining
+
+
 def persist_keywords():
     """Save the keyword tree to Google Sheets, surfacing failures.
 
@@ -583,7 +610,11 @@ with left_col:
                     persist_keywords()
                 st.rerun()
 
-            if drag_result.order and list(drag_result.order) != active_keywords:
+            # `order` is component *state*, so it keeps holding the snapshot
+            # from the last drag. Only honour it when it's a pure reordering
+            # of what's currently in the list — otherwise adding or deleting
+            # a keyword would get reverted to that stale snapshot.
+            if drag_result.order and is_reordering_of(drag_result.order, active_keywords):
                 active_keywords[:] = drag_result.order
                 persist_keywords()
                 st.rerun()
@@ -803,7 +834,9 @@ with right_col:
                             items.pop(del_idx)
                         st.rerun()
 
-                    if rp_result.order and list(rp_result.order) != items:
+                    # Same stale-state guard as the keyword list: only apply
+                    # a drag result that reorders exactly the current items.
+                    if rp_result.order and is_reordering_of(rp_result.order, items):
                         items[:] = rp_result.order
                         st.rerun()
 
