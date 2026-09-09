@@ -26,6 +26,7 @@ If those secrets are missing, every function degrades gracefully (returns
 empty/None) so the rest of the app keeps working without this feature.
 """
 
+import html
 import json
 from datetime import datetime, timedelta
 
@@ -227,6 +228,25 @@ def load_report_dates() -> list[str]:
         return []
 
 
+def _decode_entities(report_items: dict) -> dict:
+    """Decode HTML entities in stored article titles.
+
+    Reports saved before titles were unescaped at fetch time still hold
+    text like `&quot;...&quot;`, which reads as literal noise in the
+    preview and the copied report. Decoding on read heals those without a
+    migration pass; it's a no-op for titles that are already clean.
+    """
+    decoded = {}
+    for category, items in report_items.items():
+        decoded[category] = [
+            {**item, "title": html.unescape(item.get("title", ""))}
+            if isinstance(item, dict)
+            else item
+            for item in items
+        ]
+    return decoded
+
+
 @st.cache_data(ttl=60, show_spinner=False)
 def load_report_snapshot(date_str: str) -> tuple[str, dict] | None:
     """Load the saved (title, report_items) for `date_str`, or None.
@@ -245,7 +265,7 @@ def load_report_snapshot(date_str: str) -> tuple[str, dict] | None:
         row = worksheet.row_values(cell.row)
         title = row[1] if len(row) > 1 else ""
         items_json = row[2] if len(row) > 2 else "{}"
-        return title, json.loads(items_json)
+        return title, _decode_entities(json.loads(items_json))
     except Exception:
         return None
 

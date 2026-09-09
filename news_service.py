@@ -107,10 +107,22 @@ class NaverNewsService:
 
     @staticmethod
     def _clean_html(text: str) -> str:
-        """Remove HTML tags from text"""
+        """Strip HTML tags and decode HTML entities.
+
+        Naver returns titles wrapped in markup (the matched keyword comes
+        back inside <b> tags) *and* escaped as HTML entities — a quoted
+        headline arrives as &quot;...&quot;. Only the tags were being
+        removed, so those entities showed up verbatim in the report.
+
+        Tags are stripped before unescaping on purpose: unescaping first
+        would turn a literal "&lt;b&gt;" in the headline into a real tag
+        that the strip would then delete.
+        """
+        import html
         import re
-        clean = re.compile('<.*?>')
-        return re.sub(clean, '', text)
+
+        without_tags = re.sub(r"<.*?>", "", text)
+        return html.unescape(without_tags)
 
     @staticmethod
     def _extract_source(url: str) -> str:
