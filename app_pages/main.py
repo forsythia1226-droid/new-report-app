@@ -15,8 +15,10 @@ import app_common
 from app_common import (
     CATEGORY_OPTIONS,
     MAX_KEYWORDS_PER_SUBCATEGORY,
+    is_reordering_of,
     section_title,
 )
+from settings_dialog import SHOW_SETTINGS_KEY, settings_dialog
 
 # ---------------------------------------------------------------------------
 # Draggable keyword list (custom component, CCv2) — lets the user reorder
@@ -286,33 +288,6 @@ if "report_items" not in st.session_state:
     st.session_state.report_items = {cat: [] for cat in CATEGORY_OPTIONS}
 
 
-def is_reordering_of(candidate, current: list) -> bool:
-    """Whether `candidate` is the same multiset as `current` in a different
-    order — i.e. a genuine drag-reorder result rather than a stale snapshot.
-
-    The drag components report their order as persistent CCv2 *state*, so it
-    keeps returning the list as it looked at the last drag. Applying that
-    blindly would undo any add/delete that happened afterwards (the reported
-    "keyword appears, then disappears"). Comparing contents first makes the
-    stale value a no-op until the next real drag replaces it."""
-    candidate_list = list(candidate)
-    if len(candidate_list) != len(current):
-        return False
-    if candidate_list == current:
-        return False  # nothing to apply
-    try:
-        return sorted(candidate_list) == sorted(current)
-    except TypeError:
-        # Unsortable entries (e.g. report items are dicts): fall back to
-        # counting how many of each entry appear on both sides.
-        remaining = list(current)
-        for entry in candidate_list:
-            if entry not in remaining:
-                return False
-            remaining.remove(entry)
-        return not remaining
-
-
 def persist_keywords():
     """Save the keyword tree to Google Sheets, surfacing failures.
 
@@ -530,6 +505,11 @@ with st.container(key="app_header"):
                 label_visibility="collapsed",
             )
 
+# Settings modal — kept open across app reruns by a session flag, since the
+# dialog only renders on runs where its function is called.
+if st.session_state.get(SHOW_SETTINGS_KEY):
+    settings_dialog()
+
 left_col, center_col, right_col = st.columns([1, 2, 1.5])
 
 # ---------------------------------------------------------------------------
@@ -538,7 +518,20 @@ left_col, center_col, right_col = st.columns([1, 2, 1.5])
 
 with left_col:
     with st.container(key="sidebar_panel"):
-        section_title("⚙️", "검색 조건")
+        title_col, settings_col = st.columns([4, 1], vertical_alignment="center")
+        with title_col:
+            section_title("🔎", "검색 조건")
+        with settings_col:
+            with st.container(key="settings_button"):
+                if st.button(
+                    "",
+                    icon="⚙️",
+                    key="open_settings",
+                    help="세부 카테고리 설정",
+                    width="content",
+                ):
+                    st.session_state[SHOW_SETTINGS_KEY] = True
+                    st.rerun()
 
         period = st.segmented_control(
             "검색 기간",

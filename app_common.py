@@ -1,8 +1,8 @@
 """
 Shared constants, theming, and small UI helpers used by every page of the
-Naver News Report Builder (app_pages/main.py and app_pages/settings.py).
-Keeping this separate from app.py (the st.navigation entry point) avoids
-duplicating the CSS block and category/keyword defaults across pages.
+Naver News Report Builder (app_pages/main.py and the settings modal in
+settings_dialog.py). Keeping this separate from app.py avoids duplicating
+the CSS block and category/keyword defaults.
 """
 
 import streamlit as st
@@ -165,6 +165,23 @@ div[class*="st-key-sidebar_panel"] hr {{
     border-color: rgba(255,255,255,0.1);
 }}
 
+/* ⚙️ settings button beside the "검색 조건" title */
+div[class*="st-key-settings_button"] {{
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -0.35rem;
+}}
+div[class*="st-key-settings_button"] button {{
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+    border-radius: 8px !important;
+    padding: 0.25rem 0.5rem !important;
+}}
+div[class*="st-key-settings_button"] button:hover {{
+    background: {SOFT_BLUE_BG} !important;
+    border-color: {SOFT_BLUE_BG} !important;
+}}
+
 /* Segmented-control pills (period selector) — consistent soft-blue highlight,
    blend into the dark panel when unselected.
    IMPORTANT: the visible label text is not a direct child of the button element.
@@ -238,6 +255,33 @@ div[class*="st-key-newscard_"]:hover {{
 }}
 </style>
 """)
+
+
+def is_reordering_of(candidate, current: list) -> bool:
+    """Whether `candidate` is the same multiset as `current` in a different
+    order — i.e. a genuine drag-reorder result rather than a stale snapshot.
+
+    The drag components report their order as persistent CCv2 *state*, so it
+    keeps returning the list as it looked at the last drag. Applying that
+    blindly would undo any add/delete that happened afterwards (the reported
+    "keyword appears, then disappears"). Comparing contents first makes the
+    stale value a no-op until the next real drag replaces it."""
+    candidate_list = list(candidate)
+    if len(candidate_list) != len(current):
+        return False
+    if candidate_list == current:
+        return False  # nothing to apply
+    try:
+        return sorted(candidate_list) == sorted(current)
+    except TypeError:
+        # Unsortable entries (e.g. report items are dicts): fall back to
+        # counting how many of each entry appear on both sides.
+        remaining = list(current)
+        for entry in candidate_list:
+            if entry not in remaining:
+                return False
+            remaining.remove(entry)
+        return not remaining
 
 
 def section_title(emoji: str, text: str, count: int | None = None):

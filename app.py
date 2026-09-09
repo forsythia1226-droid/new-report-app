@@ -60,9 +60,12 @@ if "keywords" not in st.session_state:
 # ---------------------------------------------------------------------------
 # Pages
 # ---------------------------------------------------------------------------
+# Single page, no sidebar nav: settings moved into a modal opened from the
+# ⚙️ button beside the "검색 조건" panel title, so the whole screen stays
+# focused on the report builder. `position="hidden"` keeps st.navigation's
+# routing without rendering a nav menu.
 
 main_page = st.Page("app_pages/main.py", title="뉴스 보고서 빌더", icon="📰", default=True)
-settings_page = st.Page("app_pages/settings.py", title="설정", icon="⚙️")
 
-pg = st.navigation([main_page, settings_page])
+pg = st.navigation([main_page], position="hidden")
 pg.run()
