@@ -1,16 +1,23 @@
 """
 Naver News Report Builder - Streamlit App (entry point)
 
-Sets up shared session state (keywords/subcategories, loaded once here so
-they exist no matter which page the user lands on first) and wires up the
-multipage navigation: the main report-builder page plus a Settings page
-for managing keyword subcategories.
+Sets up shared session state (keywords/subcategories, loaded once here) and
+renders the single report-builder page. Settings live in a modal opened
+from the page itself rather than a separate route.
 """
 
 import streamlit as st
 
+import _reload_guard
 import app_common
 import sheet_store
+
+# Streamlit Cloud may keep a warm process across a deploy: this entry script
+# and the page script are re-read from disk every rerun, but imported helper
+# modules stay cached at their old version, which has broken the app after
+# past deploys until someone hit "Reboot app". Reload just the ones whose
+# source actually changed so a deploy heals itself on the next rerun.
+_reload_guard.reload_changed()
 
 st.set_page_config(
     page_title="네이버 뉴스 보고서 빌더",
