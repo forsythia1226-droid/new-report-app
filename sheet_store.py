@@ -72,7 +72,13 @@ def _get_client():
 
 def _get_or_create_worksheet(name: str, header: list[str]):
     """Return the named worksheet in the configured spreadsheet, creating it
-    (with a header row) if it doesn't exist yet. None if unconfigured/failed."""
+    (with a header row) if it doesn't exist yet. None if unconfigured/failed.
+
+    Also widens an existing worksheet that has fewer columns than `header`
+    needs. Without this, a schema that gains a column (as `keywords` did when
+    it grew a "subcategory" column) keeps failing to save against the
+    narrower grid Google created the first time around.
+    """
     client = _get_client()
     if client is None:
         return None
@@ -83,12 +89,26 @@ def _get_or_create_worksheet(name: str, header: list[str]):
         spreadsheet = client.open_by_key(st.secrets["REPORT_SHEET_ID"])
         try:
             worksheet = spreadsheet.worksheet(name)
+            if worksheet.col_count < len(header):
+                worksheet.resize(rows=worksheet.row_count, cols=len(header))
         except gspread.WorksheetNotFound:
             worksheet = spreadsheet.add_worksheet(title=name, rows=100, cols=len(header))
             worksheet.append_row(header)
         return worksheet
     except Exception:
         return None
+
+
+def _ensure_grid_size(worksheet, rows_needed: int, cols_needed: int) -> None:
+    """Grow the worksheet if the write about to happen wouldn't fit.
+
+    Google's API rejects (rather than silently truncating) writes that
+    exceed the sheet's grid, so a sheet that starts small has to be widened
+    or lengthened before a bigger payload can land."""
+    new_rows = max(worksheet.row_count, rows_needed)
+    new_cols = max(worksheet.col_count, cols_needed)
+    if new_rows != worksheet.row_count or new_cols != worksheet.col_count:
+        worksheet.resize(rows=new_rows, cols=new_cols)
 
 
 def _get_worksheet():
@@ -114,7 +134,10 @@ def save_report_snapshot(date_str: str, title: str, report_items: dict) -> tuple
         items_json = json.dumps(report_items, ensure_ascii=False)
         cell = worksheet.find(date_str, in_column=1)
         if cell:
-            worksheet.update(f"A{cell.row}:C{cell.row}", [[date_str, title, items_json]])
+            _ensure_grid_size(worksheet, cell.row, len(HEADER))
+            worksheet.update(
+                [[date_str, title, items_json]], f"A{cell.row}:C{cell.row}"
+            )
         else:
             worksheet.append_row([date_str, title, items_json])
         return True, None
@@ -166,7 +189,9 @@ def purge_old_reports(retention_days: int = RETENTION_DAYS) -> tuple[int, str | 
         # blank out the now-unused trailing rows so no stale data lingers.
         blank_row = [""] * len(header)
         padded = kept + [blank_row] * (len(rows) - len(kept))
-        worksheet.update("A1", [header] + padded)
+        payload = [header] + padded
+        _ensure_grid_size(worksheet, len(payload), len(header))
+        worksheet.update(payload, "A1")
 
         load_report_dates.clear()
         load_report_snapshot.clear()
@@ -235,7 +260,16 @@ def save_keywords(keywords: dict) -> tuple[bool, str | None]:
         for category, subs in keywords.items():
             for subcategory, kw_list in subs.items():
                 rows.append([category, subcategory, json.dumps(kw_list, ensure_ascii=False)])
-        worksheet.update("A1", [KEYWORDS_HEADER] + rows)
+
+        payload = [KEYWORDS_HEADER] + rows
+        # Blank out any rows left over from a previous, longer save so
+        # deleted subcategories don't linger in the sheet.
+        existing_row_count = len(worksheet.get_all_values())
+        if existing_row_count > len(payload):
+            payload += [[""] * len(KEYWORDS_HEADER)] * (existing_row_count - len(payload))
+
+        _ensure_grid_size(worksheet, len(payload), len(KEYWORDS_HEADER))
+        worksheet.update(payload, "A1")
         load_keywords.clear()
         return True, None
     except Exception as e:
@@ -299,7 +333,9 @@ def save_subcategories(subcategories: dict) -> tuple[bool, str | None]:
             [category, json.dumps(subs, ensure_ascii=False)]
             for category, subs in subcategories.items()
         ]
-        worksheet.update("A1", [SUBCATEGORIES_HEADER] + rows)
+        payload = [SUBCATEGORIES_HEADER] + rows
+        _ensure_grid_size(worksheet, len(payload), len(SUBCATEGORIES_HEADER))
+        worksheet.update(payload, "A1")
         load_subcategories.clear()
         return True, None
     except Exception as e:

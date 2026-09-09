@@ -29,8 +29,17 @@ st.space("small")
 
 
 def _persist():
-    sheet_store.save_subcategories(st.session_state.subcategories)
-    sheet_store.save_keywords(st.session_state.keywords)
+    """Save both the subcategory list and the keyword tree, surfacing any
+    failure instead of letting the change silently live only in memory."""
+    if not sheet_store.is_configured():
+        return
+    for label, saver, payload in (
+        ("세부 카테고리", sheet_store.save_subcategories, st.session_state.subcategories),
+        ("키워드", sheet_store.save_keywords, st.session_state.keywords),
+    ):
+        ok, err = saver(payload)
+        if not ok:
+            st.toast(f"{label} 저장 실패: {err}", icon="⚠️")
 
 
 for category in CATEGORY_OPTIONS:

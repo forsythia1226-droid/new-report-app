@@ -286,6 +286,20 @@ if "report_items" not in st.session_state:
     st.session_state.report_items = {cat: [] for cat in CATEGORY_OPTIONS}
 
 
+def persist_keywords():
+    """Save the keyword tree to Google Sheets, surfacing failures.
+
+    This used to ignore the return value, so a failing write (e.g. the sheet
+    grid being too narrow for a new column) looked like "keywords silently
+    stop saving" — added keywords lived only in session state and vanished
+    on the next reload."""
+    if not sheet_store.is_configured():
+        return
+    ok, err = sheet_store.save_keywords(st.session_state.keywords)
+    if not ok:
+        st.toast(f"키워드 저장 실패: {err}", icon="⚠️")
+
+
 def get_services():
     # Intentionally not cached: these objects are cheap to construct (they
     # just read a couple of config strings), and caching them with
@@ -566,12 +580,12 @@ with left_col:
                     st.session_state.articles_cache.pop(drag_result.deleted, None)
                     if st.session_state.current_keyword == drag_result.deleted:
                         st.session_state.current_keyword = None
-                    sheet_store.save_keywords(st.session_state.keywords)
+                    persist_keywords()
                 st.rerun()
 
             if drag_result.order and list(drag_result.order) != active_keywords:
                 active_keywords[:] = drag_result.order
-                sheet_store.save_keywords(st.session_state.keywords)
+                persist_keywords()
                 st.rerun()
         else:
             st.caption("등록된 키워드가 없습니다.")
@@ -602,7 +616,7 @@ with left_col:
                     )
                 elif new_keyword.strip() not in active_keywords:
                     active_keywords.append(new_keyword.strip())
-                    sheet_store.save_keywords(st.session_state.keywords)
+                    persist_keywords()
                     st.rerun()
                 else:
                     st.warning("이미 등록된 키워드입니다.", icon="⚠️")

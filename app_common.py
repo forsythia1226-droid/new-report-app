@@ -12,7 +12,7 @@ import streamlit as st
 # ---------------------------------------------------------------------------
 
 CATEGORY_OPTIONS = ["■ 전선산업 주요 기사", "■ 거시경제 및 기타 주요 기사"]
-MAX_KEYWORDS_PER_SUBCATEGORY = 40
+MAX_KEYWORDS_PER_SUBCATEGORY = 20
 DEFAULT_SUBCATEGORY_FALLBACK = "기타"
 
 # Every category's keyword list is now split into subcategories so a long
