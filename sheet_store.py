@@ -140,6 +140,12 @@ def save_report_snapshot(date_str: str, title: str, report_items: dict) -> tuple
             )
         else:
             worksheet.append_row([date_str, title, items_json])
+
+        # Both readers are cached, so drop them here rather than at each call
+        # site — otherwise a reload within the TTL would show the pre-save
+        # report and the newly saved date could be missing from the picker.
+        load_report_dates.clear()
+        load_report_snapshot.clear()
         return True, None
     except Exception as e:
         return False, f"{type(e).__name__}: {e}"

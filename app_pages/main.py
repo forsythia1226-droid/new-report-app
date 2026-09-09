@@ -285,7 +285,21 @@ if "report_title" not in st.session_state:
 
 if "report_items" not in st.session_state:
     # category -> list of {"title": str, "url": str}
-    st.session_state.report_items = {cat: [] for cat in CATEGORY_OPTIONS}
+    #
+    # Restore today's saved report if there is one. Saved snapshots used to
+    # be read back only when viewing a *past* date, so everything added via
+    # "보고서에 추가" looked lost the moment the session restarted — even
+    # right after pressing "보고서 저장".
+    _saved_today = sheet_store.load_report_snapshot(date.today().strftime("%Y-%m-%d"))
+    if _saved_today:
+        _saved_title, _saved_items = _saved_today
+        if _saved_title:
+            st.session_state.report_title = _saved_title
+        st.session_state.report_items = {
+            cat: list(_saved_items.get(cat, [])) for cat in CATEGORY_OPTIONS
+        }
+    else:
+        st.session_state.report_items = {cat: [] for cat in CATEGORY_OPTIONS}
 
 
 def persist_keywords():
@@ -857,14 +871,19 @@ with right_col:
                     if st.button(
                         "보고서 저장", icon="💾", width="stretch"
                     ):
+                        saved_count = sum(
+                            len(v) for v in st.session_state.report_items.values()
+                        )
                         ok, err = sheet_store.save_report_snapshot(
                             TODAY_STR,
                             st.session_state.report_title,
                             st.session_state.report_items,
                         )
                         if ok:
-                            sheet_store.load_report_dates.clear()
-                            st.toast("오늘 보고서가 저장되었습니다.", icon="✅")
+                            st.toast(
+                                f"오늘 보고서가 저장되었습니다 · 기사 {saved_count}건",
+                                icon="✅",
+                            )
                         else:
                             st.toast(f"저장 실패: {err}", icon="⚠️")
                 else:
