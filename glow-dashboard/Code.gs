@@ -3,15 +3,18 @@
 
 var TABS = {
   inbody: ["측정일", "체중", "골격근량", "체지방률", "기초대사량"],
-  workouts: ["날짜", "가슴", "어깨", "등", "하체", "이두", "삼두", "전완근", "복근"],
+  workouts: ["날짜", "운동함"],
+  plans: ["날짜", "계획 부위"],
   checks: ["날짜", "단단함", "자신감", "여유", "원칙 지킴", "메모"],
   principles: ["순서", "원칙"],
   settings: ["항목", "값"],
   saju: ["원문"],
 };
 var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm", "abs"];
-// workouts 탭 머리글 → 부위 키. 예전 시트의 "코어" 열은 복근으로 읽는다.
-var PART_BY_HEADER = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs" };
+// 부위 이름 → 키. 예전 workouts 탭의 부위별 열과 plans 탭의 "계획 부위" 글자를 읽을 때 쓴다.
+var PART_BY_NAME = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs" };
+var PART_NAMES = { chest: "가슴", shoulder: "어깨", back: "등", legs: "하체", biceps: "이두", triceps: "삼두", forearm: "전완근", abs: "복근" };
+var DOW = ["일", "월", "화", "수", "목", "금", "토"];
 var CHECK_KEYS = ["solid", "confidence", "ease", "principle"];
 // checks 탭 머리글 → 점검 키. 예전 시트의 "부드러운 태도"는 여유로, "에너지"는 버린다.
 var CHECK_BY_HEADER = { 단단함: "solid", 자신감: "confidence", 여유: "ease", "부드러운 태도": "ease", "원칙 지킴": "principle" };
@@ -33,7 +36,7 @@ function setup() {
     if (sh.getLastRow() === 0) sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight("bold");
     sh.setFrozenRows(1);
   });
-  ["inbody", "workouts", "checks"].forEach(function (name) {
+  ["inbody", "workouts", "plans", "checks"].forEach(function (name) {
     sheet_(name).getRange("A2:A").setNumberFormat("yyyy-mm-dd");
   });
 
@@ -46,6 +49,7 @@ function setup() {
     ["목표 체지방률", 12],
     ["누적 기준 월", "2026-09"],
     ["누적 기준 횟수", 100],
+    ["주간 루틴", ""],
     ["지향 묘사", DEFAULT_VISION],
     ["정체성 문장", "단단한 몸처럼 흔들리지 않고, 부드러운 태도로 사람을 대한다."],
     ["키워드", "단단함, 자신감, 여유, 편안함, 아우라"],
@@ -71,21 +75,24 @@ function getData() {
   var settings = {};
   rows_("settings").forEach(function (r) { settings[String(r[0]).trim()] = r[1]; });
 
-  var workouts = {};
+  // 운동한 날. 예전 형식(부위별 체크 열)이면 한 부위라도 체크된 날을 운동한 날로 본다.
+  var done = {};
   var wsh = sheet_("workouts");
   if (wsh.getLastRow() >= 2) {
     var width = wsh.getLastColumn();
-    var head = wsh.getRange(1, 1, 1, width).getValues()[0];
+    var head = wsh.getRange(1, 1, 1, width).getValues()[0].map(function (h) { return String(h).trim(); });
     wsh.getRange(2, 1, wsh.getLastRow() - 1, width).getValues().forEach(function (r) {
       if (r[0] === "" || r[0] == null) return;
-      var parts = [];
-      head.forEach(function (h, i) {
-        var key = PART_BY_HEADER[String(h).trim()];
-        if (i > 0 && key && isOn_(r[i]) && parts.indexOf(key) < 0) parts.push(key);
-      });
-      if (parts.length) workouts[day_(r[0])] = parts;
+      var on = head.some(function (h, i) { return i > 0 && (h === "운동함" || PART_BY_NAME[h]) && isOn_(r[i]); });
+      if (on) done[day_(r[0])] = true;
     });
   }
+
+  var plans = {};
+  rows_("plans").forEach(function (r) {
+    var parts = partsFromText_(r[1]);
+    if (parts.length) plans[day_(r[0])] = parts;
+  });
 
   return {
     goal: { weight: num_(settings["목표 체중"], 68), fat: num_(settings["목표 체지방률"], 12) },
@@ -97,7 +104,9 @@ function getData() {
     inbody: rows_("inbody")
       .filter(function (r) { return r[1] !== ""; })
       .map(function (r) { return { date: day_(r[0]), w: num_(r[1]), m: num_(r[2]), f: num_(r[3]), bmr: num_(r[4]) }; }),
-    workouts: workouts,
+    done: done,
+    plans: plans,
+    routine: routineFromText_(settings["주간 루틴"]),
     checks: readChecks_(),
     principles: rows_("principles")
       .sort(function (a, b) { return num_(a[0], 0) - num_(b[0], 0); })
@@ -117,11 +126,12 @@ function saveAll(s) {
       return [r.date, r.w, r.m, r.f, r.bmr == null ? "" : r.bmr];
     }));
 
-    var days = Object.keys(s.workouts || {}).sort();
-    write_("workouts", days.map(function (d) {
-      return [d].concat(PARTS.map(function (p) { return s.workouts[d].indexOf(p) >= 0; }));
-    }));
-    if (days.length) sheet_("workouts").getRange(2, 2, days.length, PARTS.length).insertCheckboxes();
+    var days = Object.keys(s.done || {}).filter(function (d) { return s.done[d]; }).sort();
+    write_("workouts", days.map(function (d) { return [d, true]; }));
+    if (days.length) sheet_("workouts").getRange(2, 2, days.length, 1).insertCheckboxes();
+
+    var planDays = Object.keys(s.plans || {}).sort();
+    write_("plans", planDays.map(function (d) { return [d, partsToText_(s.plans[d])]; }));
 
     write_("checks", (s.checks || []).slice().sort(byDate).map(function (c) {
       return [c.date].concat(CHECK_KEYS.map(function (k) { return c.s[k] == null ? "" : c.s[k]; }), [c.note || ""]);
@@ -132,6 +142,7 @@ function saveAll(s) {
       ["목표 체지방률", s.goal.fat],
       ["누적 기준 월", s.yearBase && s.yearBase.month ? "'" + s.yearBase.month : ""],
       ["누적 기준 횟수", s.yearBase ? s.yearBase.count : ""],
+      ["주간 루틴", routineToText_(s.routine)],
       ["지향 묘사", s.vision || DEFAULT_VISION],
       ["정체성 문장", s.identity || ""],
       ["키워드", (s.keywords || []).join(", ")],
@@ -143,6 +154,35 @@ function saveAll(s) {
 }
 
 /* ---------- helpers ---------- */
+// "가슴, 삼두" ↔ ["chest", "triceps"]
+function partsFromText_(v) {
+  var keys = [];
+  String(v == null ? "" : v).split(/[,·\/\s]+/).forEach(function (n) {
+    var k = PART_BY_NAME[n.trim()];
+    if (k && keys.indexOf(k) < 0) keys.push(k);
+  });
+  return PARTS.filter(function (k) { return keys.indexOf(k) >= 0; });
+}
+function partsToText_(keys) {
+  return PARTS.filter(function (k) { return (keys || []).indexOf(k) >= 0; }).map(function (k) { return PART_NAMES[k]; }).join(", ");
+}
+// 주간 루틴: "월: 가슴, 삼두 / 화: 등, 이두" ↔ { 1: [...], 2: [...] }
+function routineFromText_(v) {
+  var out = {};
+  for (var i = 0; i < 7; i++) out[i] = [];
+  String(v == null ? "" : v).split("/").forEach(function (seg) {
+    var m = seg.match(/^\s*([일월화수목금토])\s*[:：]\s*(.*)$/);
+    if (m) out[DOW.indexOf(m[1])] = partsFromText_(m[2]);
+  });
+  return out;
+}
+function routineToText_(r) {
+  return [1, 2, 3, 4, 5, 6, 0]
+    .filter(function (d) { return r && r[d] && r[d].length; })
+    .map(function (d) { return DOW[d] + ": " + partsToText_(r[d]); })
+    .join(" / ");
+}
+
 // 머리글 이름으로 열을 찾아 읽는다 (열 순서·구성이 바뀐 예전 시트도 읽힘)
 function readChecks_() {
   var sh = sheet_("checks");

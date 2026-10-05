@@ -276,22 +276,41 @@ ul.plain li { margin-bottom: 3px; }
 .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
 .cal .wd { text-align: center; font-size: .72rem; color: var(--muted); padding-bottom: 4px; }
 .cal button.day {
-  height: 46px; min-width: 0; border: 0; background: var(--bg); border-radius: 8px;
+  height: 52px; min-width: 0; border: 0; background: var(--bg); border-radius: 8px;
   display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 5px 6px; font-size: .8rem;
 }
-@media (max-width: 560px) { .cal button.day { height: 42px; padding: 4px 5px; } }
-.cal .strip { display: flex; gap: 1px; width: 100%; height: 4px; border-radius: 2px; overflow: hidden; }
-.cal .strip i { flex: 1; }
+.cal .plan { font-size: .66rem; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.cal .plan .s { display: none; }
+@media (max-width: 560px) { .cal button.day { height: 46px; padding: 4px 5px; } .cal .plan .l { display: none; } .cal .plan .s { display: inline; } }
+.cal button.day.on .plan { color: inherit; opacity: .85; }
+.cal button.day.missed { box-shadow: inset 0 0 0 1px var(--warn); }
+.cal button.day.missed .plan { color: var(--warn); }
+.star { color: var(--warn); font-size: .8rem; line-height: 1; }
+.cal button.day .star { position: absolute; top: 4px; right: 5px; }
+.cal button.day.on .star { color: var(--day-on-ink); }
 .cal button.day.out { visibility: hidden; }
 .cal button.day { position: relative; }
 .cal button.day .num { font-size: .82rem; }
 .cal button.day.on { background: var(--day-on); color: var(--day-on-ink); }
 .cal button.day.on .num { font-weight: 700; }
-.cal button.day .cnt { position: absolute; top: 3px; right: 5px; font: 600 .6rem var(--mono); opacity: .75; }
 .cal button.day.today .num { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
 .cal button.day[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
-.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-@media (max-width: 720px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.today-card { display: flex; flex-direction: column; gap: 12px; }
+.today-card .when { font-size: .8rem; color: var(--muted); letter-spacing: .04em; }
+.today-card .what { font-family: var(--display); font-size: clamp(1.3rem, 2.6vw, 1.7rem); line-height: 1.35; margin: 0; text-wrap: balance; }
+.today-card .what b { color: var(--iron); }
+.today-card .todo { display: flex; flex-wrap: wrap; gap: 6px; }
+.today-card .todo span { background: var(--iron-soft); color: var(--iron); border-radius: 99px; padding: 4px 12px; font-weight: 600; font-size: .9rem; }
+.done-btn { border: 2px solid var(--iron); background: var(--surface); color: var(--iron); border-radius: 12px; padding: 12px 16px; font-weight: 700; font-size: 1rem; display: flex; justify-content: center; gap: 8px; align-items: center; }
+.done-btn[aria-pressed="true"] { background: var(--iron); color: var(--surface); }
+.routine { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.routine th, .routine td { text-align: center; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.routine th:first-child, .routine td:first-child { text-align: left; font-weight: 600; width: 44px; }
+.routine thead th { font-weight: 500; color: var(--muted); font-size: .78rem; }
+.routine thead th.grp { color: var(--iron); font-size: .72rem; letter-spacing: .04em; border-bottom: 0; padding-bottom: 0; }
+.routine input { width: 18px; height: 18px; accent-color: var(--iron); cursor: pointer; }
+.routine-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
 .tile { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; min-width: 0; }
 .tile .k { font-size: .78rem; color: var(--muted); }
 .tile .v { font-family: var(--mono); font-size: 1.7rem; line-height: 1.2; }
@@ -447,7 +466,6 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
         <div class="card c7">
           <h2>이번 주 운동 <span class="pill" id="h-week-pill"></span></h2>
           <div class="week-strip" id="h-week"></div>
-          <div class="legend" id="h-legend"></div>
         </div>
         <div class="card c5" id="h-saju-card">
           <h2>이번 달 사주 <button class="linkbtn" type="button" data-goto-saju="flow" style="font-size:.8rem;letter-spacing:0">운 흐름 보기</button></h2>
@@ -575,7 +593,8 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
     <section id="v-body" data-view="body" hidden>
       <div class="view-head"><div><div class="tagline">“다부진 체구에서는 단단함을”</div><h1>신체 · 身</h1><p>골격을 넓혀 보이게: 어깨·등을 중심으로 프레임 키우기</p></div></div>
       <div class="grid">
-        <div class="card c12">
+        <div class="card c5 today-card" id="today-card"></div>
+        <div class="card c7">
           <h2>운동 기록</h2>
           <div class="tiles" id="tiles"></div>
         </div>
@@ -586,17 +605,22 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
             <button class="btn small" id="cal-next" type="button" aria-label="다음 달">›</button>
           </div>
           <div class="cal" id="cal"></div>
-          <div class="legend" id="cal-legend"></div>
+          <div class="legend"><span><span class="star">★</span> 운동한 날</span><span>글자 = 계획한 부위</span><span style="color:var(--warn)">테두리 = 계획했는데 못 한 날</span></div>
         </div>
         <div class="card c5">
           <p class="sel-date" id="sel-date"></p>
           <p class="sel-sub" id="sel-sub"></p>
+          <button class="done-btn" id="sel-done" type="button" aria-pressed="false" style="width:100%;margin-bottom:16px"></button>
           <div id="parts"></div>
         </div>
         <div class="card c12">
-          <h2 id="count-title"></h2>
-          <div class="count-groups" id="counts"></div>
-          <div class="tip" id="frame-tip"></div>
+          <h2>주간 루틴 <span class="muted" style="font-weight:400;letter-spacing:0">요일마다 할 부위를 정해 두고 한 달에 한 번에 채우기</span></h2>
+          <div class="table-wrap"><table class="routine" id="routine"></table></div>
+          <div class="routine-actions">
+            <button class="btn primary" id="fill-month" type="button">이 달의 빈 날에 루틴 채우기</button>
+            <button class="btn" id="clear-month" type="button">이 달 계획 비우기</button>
+            <span class="muted" style="font-size:.8rem" id="routine-note"></span>
+          </div>
         </div>
         <div class="card c7">
           <h2>목표</h2>
@@ -696,29 +720,38 @@ function normChecks(list) {
     return { ...c, s: Object.fromEntries(CHECK_ITEMS.map((i) => [i.k, s[i.k] ?? null])) };
   });
 }
-// 예전 기록의 "코어"는 복근으로 옮긴다
-function normWorkouts(w) {
-  const order = PARTS.map((p) => p.k);
-  const out = {};
-  for (const [d, ps] of Object.entries(w || {})) {
-    const list = new Set((ps || []).map((p) => (p === "core" ? "abs" : p)));
-    const sorted = order.filter((k) => list.has(k));
-    if (sorted.length) out[d] = sorted;
-  }
-  return out;
+const PART_NAME = Object.fromEntries(PARTS.map((p) => [p.k, p.n]));
+const PART_SHORT = { chest: "가", shoulder: "어", back: "등", legs: "하", biceps: "이", triceps: "삼", forearm: "전", abs: "복" };
+const sortParts = (ks) => { const set = new Set((ks || []).map((k) => (k === "core" ? "abs" : k))); return PARTS.map((p) => p.k).filter((k) => set.has(k)); };
+const planText = (ks) => ks.map((k) => PART_NAME[k]).join(" · ");
+// done: 운동한 날 / plans: 날짜별 계획 부위 / routine: 요일(0=일)별 기본 부위
+// 예전 기록(날짜별 운동한 부위 목록)은 "운동한 날"로만 옮긴다
+function normBody(s) {
+  const done = {};
+  for (const [d, v] of Object.entries(s.done || {})) if (v) done[d] = true;
+  for (const [d, v] of Object.entries(s.workouts || {})) if (Array.isArray(v) ? v.length : v) done[d] = true;
+  const plans = {};
+  for (const [d, ps] of Object.entries(s.plans || {})) { const k = sortParts(ps); if (k.length) plans[d] = k; }
+  const routine = {};
+  for (let i = 0; i < 7; i++) routine[i] = sortParts((s.routine || {})[i]);
+  s.done = done; s.plans = plans; s.routine = routine;
+  delete s.workouts;
+  return s;
 }
-const partColor = (k) => `var(--p-${k})`;
 
 /* ---------- 예시 데이터 ---------- */
-function exampleWorkouts() {
-  const plan = { 1: ["chest", "triceps"], 2: ["back", "biceps", "forearm"], 4: ["shoulder", "abs"], 6: ["legs", "abs"] };
-  const out = {};
+const EXAMPLE_ROUTINE = { 1: ["chest", "triceps"], 2: ["back", "biceps", "forearm"], 4: ["shoulder", "abs"], 6: ["legs", "abs"] };
+function exampleBody() {
+  const done = {}, plans = {};
   const start = new Date(TODAY.getFullYear(), TODAY.getMonth() - 1, 1);
-  for (let d = new Date(start); d < TODAY; d.setDate(d.getDate() + 1)) {
-    const p = plan[d.getDay()];
-    if (p && (d.getDate() * 7) % 10 !== 3) out[ymd(d)] = [...p];
+  const end = new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 0);
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const p = EXAMPLE_ROUTINE[d.getDay()];
+    if (!p) continue;
+    if (d.getMonth() === TODAY.getMonth()) plans[ymd(d)] = [...p];
+    if (d < TODAY && (d.getDate() * 7) % 10 !== 3) done[ymd(d)] = true;
   }
-  return out;
+  return { done, plans, routine: EXAMPLE_ROUTINE };
 }
 const EXAMPLE = () => ({
   example: true,
@@ -729,7 +762,7 @@ const EXAMPLE = () => ({
     { date: "2026-08-29", w: 62.1, m: 27.5, f: 18.8, bmr: 1414 },
     { date: "2026-09-30", w: 62.5, m: 27.9, f: 18.2, bmr: 1426 },
   ],
-  workouts: exampleWorkouts(),
+  ...exampleBody(),
   identity: "단단한 몸처럼 흔들리지 않고, 부드러운 태도로 사람을 대한다.",
   vision: DEFAULT_VISION,
   keywords: DEFAULT_KEYWORDS,
@@ -751,14 +784,14 @@ const EXAMPLE = () => ({
 const DEFAULT_VISION = "그를 처음 보았을 때, 나는 그가 다른 이들과 다르다는 것을 느꼈다. 다부진 체구에서는 단단함을, 총명한 눈빛에서는 미래를 아는 듯한 자신감을 부드러운 말투에서는 여유와 편안함이 느껴졌다. 그 사람에게서 나오는 아우라가 그와 함께 있는 공간을 가득채웠다.";
 const DEFAULT_YEAR_BASE = { month: "2026-09", count: 100 };
 const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
-const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], workouts: {}, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
+const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, routine: {}, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
 
 /* ---------- 저장 (이 브라우저에만) ---------- */
 // Apps Script 웹 앱으로 열리면 구글시트에, 파일로 그냥 열면 이 브라우저에 저장한다(미리보기).
 const KEY = "glow-dashboard:v1";
 const RUN = typeof google !== "undefined" && google.script && google.script.run;
 let S = RUN ? EMPTY() : (() => { try { return JSON.parse(localStorage.getItem(KEY)) || EXAMPLE(); } catch { return EXAMPLE(); } })();
-S.workouts = normWorkouts(S.workouts);
+normBody(S);
 S.checks = normChecks(S.checks);
 if (!S.vision) S.vision = DEFAULT_VISION;
 if (!S.yearBase) S.yearBase = { ...DEFAULT_YEAR_BASE };
@@ -867,12 +900,11 @@ function renderHome() {
   let days = 0;
   $("#h-week").innerHTML = [...Array(7)].map((_, i) => {
     const d = new Date(monday); d.setDate(monday.getDate() + i);
-    const ps = S.workouts[ymd(d)] || [];
-    if (ps.length) days++;
-    return `<div class="d ${ymd(d) === ymd(TODAY) ? "today" : ""}"><b>${"월화수목금토일"[i]}</b><span class="num">${d.getDate()}</span><div class="dots">${ps.map((p) => `<i class="dot" style="background:${partColor(p)}"></i>`).join("")}</div></div>`;
+    const k = ymd(d), did = !!S.done[k], plan = S.plans[k] || [];
+    if (did) days++;
+    return `<div class="d ${k === ymd(TODAY) ? "today" : ""}"><b>${"월화수목금토일"[i]}</b><span class="num">${d.getDate()}</span><span class="star" style="min-height:1em">${did ? "★" : ""}</span><span style="font-size:.68rem;color:var(--muted)">${plan.map((p) => PART_SHORT[p]).join("")}</span></div>`;
   }).join("");
   $("#h-week-pill").textContent = `${days}일 운동`;
-  $("#h-legend").innerHTML = PARTS.map((p) => `<span><i class="dot" style="background:${partColor(p.k)}"></i>${p.n}</span>`).join("");
 
   renderPrinciple();
   renderHomeSaju();
@@ -890,7 +922,8 @@ function renderVision() {
   const L = latest(), F = first();
   const wp = L && F && S.goal.weight !== F.w ? Math.max(0, Math.min(1, (L.w - F.w) / (S.goal.weight - F.w))) : null;
   const mKey = ymd(TODAY).slice(0, 7);
-  const monthDays = Object.keys(S.workouts).filter((d) => d.startsWith(mKey)).length;
+  const monthDays = Object.keys(S.done).filter((d) => d.startsWith(mKey)).length;
+  const todayPlan = S.plans[ymd(TODAY)] || [];
   const cs = [...S.checks].sort((a, b) => a.date.localeCompare(b.date));
   const lastOf = (k) => { for (let i = cs.length - 1; i >= 0; i--) if (cs[i].s[k] != null) return cs[i].s[k]; return null; };
   const conf = lastOf("confidence"), ease = lastOf("ease");
@@ -900,7 +933,7 @@ function renderVision() {
 
   $("#pc-solid").innerHTML = `<div class="pc-big">${wp == null ? `<span class="muted" style="font-size:.9rem">인바디 입력 전</span>` : `${Math.round(wp * 100)}<small>% 목표 체중까지</small>`}</div>
     <div class="bar"><div style="width:${(wp ?? 0) * 100}%"></div></div>
-    ${line("이번 달 운동", `${monthDays}회`)}${line("최근 체중", L ? `${fmt1(L.w)} → ${S.goal.weight}kg` : "–")}`;
+    ${line("오늘", S.done[ymd(TODAY)] ? "완료 ★" : todayPlan.length ? planText(todayPlan) : "휴식")}${line("이번 달 운동", `${monthDays}회`)}${line("최근 체중", L ? `${fmt1(L.w)} → ${S.goal.weight}kg` : "–")}`;
   $("#pc-conf").innerHTML = `<div class="pc-big">${score(conf)}</div>
     ${line("최근 점검 자신감", conf == null ? "–" : `${conf}점`)}${line("이번 달 사주", P ? `${P.gz} · ${P.kw}` : "–")}`;
   $("#pc-ease").innerHTML = `<div class="pc-big">${score(ease)}</div>
@@ -1187,80 +1220,102 @@ $("#ib-table").addEventListener("click", (e) => {
 function yearCount(y) {
   const b = S.yearBase;
   if (b && b.month && b.month.startsWith(`${y}-`)) {
-    const after = Object.keys(S.workouts).filter((d) => d.startsWith(`${y}-`) && d.slice(0, 7) > b.month && S.workouts[d].length).length;
+    const after = Object.keys(S.done).filter((d) => d.startsWith(`${y}-`) && d.slice(0, 7) > b.month).length;
     return { total: b.count + after, base: b.count, baseMonth: +b.month.slice(5), after };
   }
   return { total: trainedDays(`${y}-`), base: null };
 }
-const trainedDays = (prefix) => Object.keys(S.workouts).filter((d) => d.startsWith(prefix) && S.workouts[d].length).length;
+const trainedDays = (prefix) => Object.keys(S.done).filter((d) => d.startsWith(prefix)).length;
+const dayLabel = (k) => { const d = new Date(k + "T00:00"); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${"일월화수목금토"[d.getDay()]})`; };
+
+function renderToday() {
+  const k = ymd(TODAY), plan = S.plans[k] || [], did = !!S.done[k];
+  $("#today-card").innerHTML = `
+    <div class="when">오늘 · ${dayLabel(k)}</div>
+    <p class="what">${plan.length ? `오늘은 <b>${planText(plan)}</b> 하는 날` : "오늘은 계획된 운동이 없는 날"}</p>
+    ${plan.length ? `<div class="todo">${plan.map((p) => `<span>${PART_NAME[p]}</span>`).join("")}</div>` : `<p class="muted" style="margin:0;font-size:.88rem">쉬어도 되고, 운동했다면 아래에서 체크하세요. 계획은 달력에서 날짜를 눌러 정합니다.</p>`}
+    <button class="done-btn" type="button" data-toggle-done="${k}" aria-pressed="${did}">${did ? "★ 오늘 운동 완료" : "오늘 운동 완료 체크"}</button>`;
+}
 
 function renderCalendar() {
   const y = calMonth.getFullYear(), m = calMonth.getMonth();
   const mKey = `${y}-${pad(m + 1)}`;
+  const todayKey = ymd(TODAY);
   $("#cal-title").textContent = `${y}년 ${m + 1}월`;
+  renderToday();
 
-  // 이번 달 부위별 횟수
-  const cnt = Object.fromEntries(PARTS.map((p) => [p.k, 0]));
-  for (const [d, ps] of Object.entries(S.workouts)) if (d.startsWith(mKey)) ps.forEach((p) => cnt[p] !== undefined && cnt[p]++);
   const monthDays = trainedDays(mKey);
   const yc = yearCount(y);
-  const isCurMonth = y === TODAY.getFullYear() && m === TODAY.getMonth();
   const nDays = new Date(y, m + 1, 0).getDate();
-  const weeks = Math.max(1, (isCurMonth ? TODAY.getDate() : nDays) / 7);
   const monday = new Date(TODAY); monday.setDate(TODAY.getDate() - ((TODAY.getDay() + 6) % 7));
   let weekDays = 0;
-  for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(monday.getDate() + i); if ((S.workouts[ymd(d)] || []).length) weekDays++; }
+  for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(monday.getDate() + i); if (S.done[ymd(d)]) weekDays++; }
   const prev = new Date(y, m - 1, 1);
-  const prevDays = trainedDays(`${prev.getFullYear()}-${pad(prev.getMonth() + 1)}`);
-  const diff = monthDays - prevDays;
   const prevKey = `${prev.getFullYear()}-${pad(prev.getMonth() + 1)}`;
+  const prevDays = trainedDays(prevKey);
+  const diff = monthDays - prevDays;
   const prevBeforeApp = S.yearBase && prevKey <= S.yearBase.month && prevDays === 0;
+  // 계획 달성: 이 달 중 오늘까지 계획한 날 가운데 운동한 날
+  const plannedSoFar = Object.keys(S.plans).filter((d) => d.startsWith(mKey) && d <= todayKey);
+  const hit = plannedSoFar.filter((d) => S.done[d]).length;
 
   $("#tiles").innerHTML = `
     <div class="tile hero"><div class="k">${m + 1}월 운동</div><div class="v">${monthDays}<small>회</small></div><div class="s">${prevBeforeApp ? "지난달은 앱 기록 이전" : `지난달 ${prevDays}회 · ${diff >= 0 ? "+" : ""}${diff}`}</div></div>
     <div class="tile"><div class="k">${y}년 누적</div><div class="v">${yc.total}<small>회</small></div><div class="s">${yc.base != null ? `${yc.baseMonth}월까지 ${yc.base}회 + 이후 ${yc.after}회` : y === TODAY.getFullYear() ? `월평균 ${fmt1(yc.total / (TODAY.getMonth() + 1))}회` : "&nbsp;"}</div></div>
     <div class="tile"><div class="k">이번 주</div><div class="v">${weekDays}<small>회</small></div><div class="s">월~일 기준</div></div>
-    <div class="tile"><div class="k">${m + 1}월 주당 평균</div><div class="v">${fmt1(monthDays / weeks)}<small>회</small></div><div class="s">${isCurMonth ? "오늘까지 기준" : "한 달 기준"}</div></div>`;
+    <div class="tile"><div class="k">${m + 1}월 계획 달성</div><div class="v">${hit}<small>/ ${plannedSoFar.length}일</small></div><div class="s">${plannedSoFar.length ? `${Math.round((hit / plannedSoFar.length) * 100)}% · 오늘까지 계획한 날 기준` : "아직 계획 없음"}</div></div>`;
 
-  // 달력: 운동한 날은 칸 전체를 채워 강조
+  // 달력: 운동한 날 = 칸 채움 + ★, 계획 부위는 글자로
   const startPad = (new Date(y, m, 1).getDay() + 6) % 7;
   let html = "월화수목금토일".split("").map((d) => `<div class="wd">${d}</div>`).join("");
   for (let i = 0; i < startPad; i++) html += `<button class="day out" tabindex="-1" aria-hidden="true"></button>`;
   for (let d = 1; d <= nDays; d++) {
     const key = `${mKey}-${pad(d)}`;
-    const ps = S.workouts[key] || [];
-    const label = ps.length ? `${m + 1}월 ${d}일, ${ps.map((p) => PARTS.find((x) => x.k === p).n).join(", ")}` : `${m + 1}월 ${d}일, 기록 없음`;
-    html += `<button class="day ${ps.length ? "on" : ""} ${key === ymd(TODAY) ? "today" : ""}" data-date="${key}" aria-pressed="${key === selDate}" aria-label="${label}" type="button">
-      <span class="num">${d}</span>${ps.length ? `<span class="cnt">${ps.length}</span>` : ""}
-      ${ps.length ? `<span class="strip">${ps.map((p) => `<i style="background:${partColor(p)}"></i>`).join("")}</span>` : ""}</button>`;
+    const did = !!S.done[key], plan = S.plans[key] || [];
+    const missed = !did && plan.length && key < todayKey;
+    const label = `${m + 1}월 ${d}일${plan.length ? `, 계획 ${planText(plan)}` : ""}${did ? ", 운동함" : ""}`;
+    html += `<button class="day ${did ? "on" : ""} ${missed ? "missed" : ""} ${key === todayKey ? "today" : ""}" data-date="${key}" aria-pressed="${key === selDate}" aria-label="${label}" type="button">
+      <span class="num">${d}</span>${did ? '<span class="star">★</span>' : ""}
+      ${plan.length ? `<span class="plan"><span class="l">${plan.map((p) => PART_NAME[p]).join("·")}</span><span class="s">${plan.map((p) => PART_SHORT[p]).join("")}</span></span>` : ""}</button>`;
   }
   $("#cal").innerHTML = html;
-  $("#cal-legend").innerHTML = PARTS.map((p) => `<span><i class="dot" style="background:${partColor(p.k)}"></i>${p.n}</span>`).join("");
 
-  // 선택한 날의 부위 체크 — 각 부위 옆에 그 달 누적 횟수
-  const sel = new Date(selDate + "T00:00");
-  const selMonth = selDate.slice(0, 7);
-  const selCnt = Object.fromEntries(PARTS.map((p) => [p.k, 0]));
-  for (const [d, ps] of Object.entries(S.workouts)) if (d.startsWith(selMonth)) ps.forEach((p) => selCnt[p] !== undefined && selCnt[p]++);
-  const done = S.workouts[selDate] || [];
-  $("#sel-date").textContent = `${sel.getMonth() + 1}월 ${sel.getDate()}일 (${"일월화수목금토"[sel.getDay()]})${selDate === ymd(TODAY) ? " · 오늘" : ""}`;
-  $("#sel-sub").textContent = done.length ? `${done.length}개 부위 운동 · 누르면 체크/해제` : "운동한 부위를 눌러 체크하세요";
+  // 선택한 날: 운동 완료 + 계획 부위
+  const plan = S.plans[selDate] || [];
+  const did = !!S.done[selDate];
+  $("#sel-date").textContent = dayLabel(selDate) + (selDate === todayKey ? " · 오늘" : "");
+  $("#sel-sub").textContent = plan.length ? `계획: ${planText(plan)}` : "이 날 할 부위를 아래에서 골라 계획하세요";
+  $("#sel-done").setAttribute("aria-pressed", did);
+  $("#sel-done").dataset.toggleDone = selDate;
+  $("#sel-done").textContent = did ? "★ 운동함 (누르면 취소)" : selDate > todayKey ? "운동 완료 체크 (미래 날짜)" : "운동 완료 체크";
   $("#parts").innerHTML = GROUPS.map((g) => `
-    <div class="pgroup"><h4>${g.n}</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
-      const on = done.includes(p.k);
-      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? `background:${partColor(p.k)}` : `border-left:4px solid ${partColor(p.k)}`}"><span class="ck"></span><span class="pn">${p.n}</span><span class="pc">${selMonth.slice(5).replace(/^0/, "")}월 ${selCnt[p.k]}회</span></button>`;
+    <div class="pgroup"><h4>${g.n} 계획</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
+      const on = plan.includes(p.k);
+      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}"><span class="ck"></span><span class="pn">${p.n}</span></button>`;
     }).join("")}</div></div>`).join("");
 
-  // 이번 달 부위별 횟수 (그룹별)
-  const mx = Math.max(1, ...Object.values(cnt));
-  $("#count-title").innerHTML = `${m + 1}월 부위별 횟수 <span class="pill iron">${monthDays}회 운동</span>`;
-  $("#counts").innerHTML = GROUPS.map((g) => `<div><h4>${g.n}</h4><div class="counts">${PARTS.filter((p) => p.g === g.g).map((p) =>
-    `<div class="r" style="color:${partColor(p.k)}"><span style="color:var(--ink)">${p.n}</span><div class="bar"><div style="width:${(cnt[p.k] / mx) * 100}%"></div></div><span class="num" style="color:var(--muted);text-align:right">${cnt[p.k]}회 · 주${fmt1(cnt[p.k] / weeks)}</span></div>`).join("")}</div></div>`).join("");
-  const weak = ["shoulder", "back"].filter((k) => cnt[k] / weeks < 2);
-  $("#frame-tip").innerHTML = weak.length
-    ? `<span class="pill warn">보강 필요</span> 프레임을 넓히는 핵심은 어깨·등입니다. ${m + 1}월 <b>${weak.map((k) => PARTS.find((p) => p.k === k).n).join("·")}</b>이(가) 주 2회에 못 미쳐요.`
-    : `<span class="pill ok">좋아요</span> 어깨·등을 주 2회 이상 하고 있어요. 프레임 확장 페이스를 유지하세요.`;
+  renderRoutine();
 }
+
+function renderRoutine() {
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const big = PARTS.filter((p) => p.g === "big"), small = PARTS.filter((p) => p.g === "small");
+  $("#routine").innerHTML = `<thead>
+      <tr><th class="grp"></th><th class="grp" colspan="${big.length}">대근육</th><th class="grp" colspan="${small.length}">소근육</th></tr>
+      <tr><th></th>${[...big, ...small].map((p) => `<th>${p.n}</th>`).join("")}</tr></thead>
+    <tbody>${order.map((dow) => `<tr><td>${"일월화수목금토"[dow]}</td>${[...big, ...small].map((p) =>
+      `<td><input type="checkbox" data-dow="${dow}" data-rpart="${p.k}" aria-label="${"일월화수목금토"[dow]}요일 ${p.n}" ${S.routine[dow].includes(p.k) ? "checked" : ""}/></td>`).join("")}</tr>`).join("")}</tbody>`;
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  $("#fill-month").textContent = `${m + 1}월의 빈 날에 루틴 채우기`;
+  $("#clear-month").textContent = `${m + 1}월 계획 비우기`;
+}
+
+function toggleDone(k) {
+  if (S.done[k]) delete S.done[k]; else S.done[k] = true;
+  save(); renderCalendar(); renderHome();
+  toast(S.done[k] ? `${dayLabel(k)} 운동 완료 ★` : "운동 체크를 취소했어요");
+}
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-toggle-done]"); if (b) toggleDone(b.dataset.toggleDone); });
 $("#cal").addEventListener("click", (e) => {
   const b = e.target.closest("button.day[data-date]");
   if (!b) return;
@@ -1269,11 +1324,40 @@ $("#cal").addEventListener("click", (e) => {
 $("#parts").addEventListener("click", (e) => {
   const b = e.target.closest("[data-part]");
   if (!b) return;
-  const cur = new Set(S.workouts[selDate] || []);
+  const cur = new Set(S.plans[selDate] || []);
   cur.has(b.dataset.part) ? cur.delete(b.dataset.part) : cur.add(b.dataset.part);
-  S.workouts[selDate] = PARTS.map((p) => p.k).filter((k) => cur.has(k));
-  if (!S.workouts[selDate].length) delete S.workouts[selDate];
+  const next = sortParts([...cur]);
+  if (next.length) S.plans[selDate] = next; else delete S.plans[selDate];
   save(); renderCalendar(); renderHome();
+});
+$("#routine").addEventListener("change", (e) => {
+  const t = e.target;
+  if (!t.dataset.rpart) return;
+  const dow = +t.dataset.dow, cur = new Set(S.routine[dow]);
+  t.checked ? cur.add(t.dataset.rpart) : cur.delete(t.dataset.rpart);
+  S.routine[dow] = sortParts([...cur]);
+  save();
+  $("#routine-note").textContent = "루틴을 저장했어요. 달력에 반영하려면 '빈 날에 루틴 채우기'를 누르세요.";
+});
+$("#fill-month").addEventListener("click", () => {
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  const nDays = new Date(y, m + 1, 0).getDate();
+  let n = 0;
+  for (let d = 1; d <= nDays; d++) {
+    const date = new Date(y, m, d), key = ymd(date), r = S.routine[date.getDay()];
+    if (!S.plans[key] && r.length) { S.plans[key] = [...r]; n++; }
+  }
+  save(); renderCalendar(); renderHome();
+  toast(n ? `${m + 1}월 ${n}일에 루틴을 채웠어요` : "채울 빈 날이 없어요 (루틴이 비었거나 이미 계획됨)");
+});
+let clearArmed = false;
+$("#clear-month").addEventListener("click", () => {
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  if (!clearArmed) { clearArmed = true; $("#clear-month").textContent = "한 번 더 누르면 비워요"; setTimeout(() => { clearArmed = false; renderRoutine(); }, 3000); return; }
+  clearArmed = false;
+  const mKey = `${y}-${pad(m + 1)}`;
+  for (const k of Object.keys(S.plans)) if (k.startsWith(mKey)) delete S.plans[k];
+  save(); renderCalendar(); renderHome(); toast(`${m + 1}월 계획을 비웠어요`);
 });
 $("#cal-prev").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCalendar(); });
 $("#cal-next").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCalendar(); });
@@ -1327,7 +1411,7 @@ document.addEventListener("click", () => ($("#quick-menu").hidden = true));
 $("#quick-menu").addEventListener("click", (e) => {
   const q = e.target.dataset.q;
   if (!q) return;
-  if (q === "workout") { go("body"); selDate = ymd(TODAY); calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); renderCalendar(); $("#cal").scrollIntoView({ block: "center" }); }
+  if (q === "workout") { go("body"); selDate = ymd(TODAY); calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); if (!S.done[ymd(TODAY)]) toggleDone(ymd(TODAY)); else renderCalendar(); }
   if (q === "inbody") { go("body"); $("#ib-w").focus(); }
   if (q === "check") { go("mind"); $("#check-form").scrollIntoView({ block: "center" }); }
 });
@@ -1348,7 +1432,7 @@ if (RUN) {
   google.script.run
     .withSuccessHandler((d) => {
       S = { ...EMPTY(), ...d, example: false };
-      S.workouts = normWorkouts(S.workouts);
+      normBody(S);
       S.checks = normChecks(S.checks);
       if (!S.vision) S.vision = DEFAULT_VISION;
       if (!S.yearBase || !S.yearBase.month) S.yearBase = { ...DEFAULT_YEAR_BASE };
