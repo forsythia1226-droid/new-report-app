@@ -14,7 +14,7 @@
   --iron: #2c4766; --iron-soft: #dbe3ee; --sage: #5f8a73; --sage-soft: #dde9e2; --warn: #a85a22; --warn-soft: #f4e4d6;
   --wood: #3c8a5a; --fire: #c0473a; --earth: #b2852f; --metal: #87909a; --water: #2b4d7a;
   --p-chest: #cf6a4d; --p-shoulder: #2f6fb0; --p-back: #2b8c77; --p-legs: #8a62b6;
-  --p-biceps: #c39629; --p-triceps: #b5557d; --p-forearm: #6a8a35; --p-abs: #3593ad; --p-cardio: #7b8692;
+  --p-biceps: #c39629; --p-triceps: #b5557d; --p-forearm: #6a8a35; --p-abs: #3593ad;
   --day-on: #c9d8ea; --day-on-ink: #1e3a5c;
   --display: "Gowun Batang", "Noto Serif KR", serif;
   --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
@@ -27,7 +27,7 @@
     --iron: #8fb0d8; --iron-soft: #22324a; --sage: #8fbfa3; --sage-soft: #1f3329; --warn: #e5a06a; --warn-soft: #3a2a1c;
     --wood: #6cbf8a; --fire: #e57a6c; --earth: #d7ad5b; --metal: #aab3bc; --water: #7aa0d6;
     --p-chest: #e98a6f; --p-shoulder: #6aa2df; --p-back: #5cc0a6; --p-legs: #b392dc;
-    --p-biceps: #dcb44d; --p-triceps: #e08aae; --p-forearm: #a3c46a; --p-abs: #6cc3dc; --p-cardio: #a3adb8;
+    --p-biceps: #dcb44d; --p-triceps: #e08aae; --p-forearm: #a3c46a; --p-abs: #6cc3dc;
     --day-on: #2b4a70; --day-on-ink: #e3eefb;
     color-scheme: dark;
   }
@@ -37,7 +37,7 @@
   --iron: #8fb0d8; --iron-soft: #22324a; --sage: #8fbfa3; --sage-soft: #1f3329; --warn: #e5a06a; --warn-soft: #3a2a1c;
   --wood: #6cbf8a; --fire: #e57a6c; --earth: #d7ad5b; --metal: #aab3bc; --water: #7aa0d6;
   --p-chest: #e98a6f; --p-shoulder: #6aa2df; --p-back: #5cc0a6; --p-legs: #b392dc;
-    --p-biceps: #dcb44d; --p-triceps: #e08aae; --p-forearm: #a3c46a; --p-abs: #6cc3dc; --p-cardio: #a3adb8;
+    --p-biceps: #dcb44d; --p-triceps: #e08aae; --p-forearm: #a3c46a; --p-abs: #6cc3dc;
     --day-on: #2b4a70; --day-on-ink: #e3eefb;
   color-scheme: dark;
 }
@@ -301,7 +301,6 @@ ul.plain li { margin-bottom: 3px; }
 .pgroup { margin-bottom: 14px; }
 .pgroup h4 { margin: 0 0 6px; font-size: .75rem; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
 .parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.parts.one { grid-template-columns: minmax(0, 1fr); }
 .part { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; text-align: left; min-width: 0; }
 .part .pn { font-weight: 600; flex: 1; min-width: 0; }
 .part .pc { font: 500 .78rem var(--mono); color: var(--muted); white-space: nowrap; }
@@ -312,7 +311,7 @@ ul.plain li { margin-bottom: 3px; }
 .part[aria-pressed="true"] .ck::after { content: "✓"; }
 .sel-date { font-family: var(--display); font-size: 1.25rem; margin: 0 0 2px; }
 .sel-sub { font-size: .82rem; color: var(--muted); margin: 0 0 14px; }
-.count-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.count-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 @media (max-width: 860px) { .count-groups { grid-template-columns: minmax(0, 1fr); } }
 .count-groups h4 { margin: 0 0 8px; font-size: .75rem; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
 .counts { display: flex; flex-direction: column; gap: 8px; }
@@ -682,9 +681,8 @@ const age = (() => { const b = PROFILE.birth; let a = TODAY.getFullYear() - b.ge
 const PARTS = [
   { k: "chest", n: "가슴", g: "big" }, { k: "shoulder", n: "어깨", g: "big" }, { k: "back", n: "등", g: "big" }, { k: "legs", n: "하체", g: "big" },
   { k: "biceps", n: "이두", g: "small" }, { k: "triceps", n: "삼두", g: "small" }, { k: "forearm", n: "전완근", g: "small" }, { k: "abs", n: "복근", g: "small" },
-  { k: "cardio", n: "유산소", g: "cardio" },
 ];
-const GROUPS = [{ g: "big", n: "대근육" }, { g: "small", n: "소근육" }, { g: "cardio", n: "유산소" }];
+const GROUPS = [{ g: "big", n: "대근육" }, { g: "small", n: "소근육" }];
 const CHECK_ITEMS = [
   { k: "solid", n: "단단함", hint: "체구·자세·컨디션" }, { k: "confidence", n: "자신감", hint: "눈빛·판단·결정" },
   { k: "ease", n: "여유", hint: "말투·표정·편안함" }, { k: "principle", n: "원칙 지킴", hint: "오늘 원칙대로 했나" },
@@ -712,7 +710,7 @@ const partColor = (k) => `var(--p-${k})`;
 
 /* ---------- 예시 데이터 ---------- */
 function exampleWorkouts() {
-  const plan = { 1: ["chest", "triceps"], 2: ["back", "biceps", "forearm"], 4: ["shoulder", "abs", "cardio"], 6: ["legs", "abs"], 3: ["cardio"] };
+  const plan = { 1: ["chest", "triceps"], 2: ["back", "biceps", "forearm"], 4: ["shoulder", "abs"], 6: ["legs", "abs"] };
   const out = {};
   const start = new Date(TODAY.getFullYear(), 0, 1);
   for (let d = new Date(start); d < TODAY; d.setDate(d.getDate() + 1)) {
@@ -1233,7 +1231,7 @@ function renderCalendar() {
   $("#sel-date").textContent = `${sel.getMonth() + 1}월 ${sel.getDate()}일 (${"일월화수목금토"[sel.getDay()]})${selDate === ymd(TODAY) ? " · 오늘" : ""}`;
   $("#sel-sub").textContent = done.length ? `${done.length}개 부위 운동 · 누르면 체크/해제` : "운동한 부위를 눌러 체크하세요";
   $("#parts").innerHTML = GROUPS.map((g) => `
-    <div class="pgroup"><h4>${g.n}</h4><div class="parts ${g.g === "cardio" ? "one" : ""}">${PARTS.filter((p) => p.g === g.g).map((p) => {
+    <div class="pgroup"><h4>${g.n}</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
       const on = done.includes(p.k);
       return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? `background:${partColor(p.k)}` : `border-left:4px solid ${partColor(p.k)}`}"><span class="ck"></span><span class="pn">${p.n}</span><span class="pc">${selMonth.slice(5).replace(/^0/, "")}월 ${selCnt[p.k]}회</span></button>`;
     }).join("")}</div></div>`).join("");

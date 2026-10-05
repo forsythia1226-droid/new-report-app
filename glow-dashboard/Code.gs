@@ -3,15 +3,15 @@
 
 var TABS = {
   inbody: ["측정일", "체중", "골격근량", "체지방률", "기초대사량"],
-  workouts: ["날짜", "가슴", "어깨", "등", "하체", "이두", "삼두", "전완근", "복근", "유산소"],
+  workouts: ["날짜", "가슴", "어깨", "등", "하체", "이두", "삼두", "전완근", "복근"],
   checks: ["날짜", "단단함", "자신감", "여유", "원칙 지킴", "메모"],
   principles: ["순서", "원칙"],
   settings: ["항목", "값"],
   saju: ["원문"],
 };
-var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm", "abs", "cardio"];
+var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm", "abs"];
 // workouts 탭 머리글 → 부위 키. 예전 시트의 "코어" 열은 복근으로 읽는다.
-var PART_BY_HEADER = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs", 유산소: "cardio" };
+var PART_BY_HEADER = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs" };
 var CHECK_KEYS = ["solid", "confidence", "ease", "principle"];
 // checks 탭 머리글 → 점검 키. 예전 시트의 "부드러운 태도"는 여유로, "에너지"는 버린다.
 var CHECK_BY_HEADER = { 단단함: "solid", 자신감: "confidence", 여유: "ease", "부드러운 태도": "ease", "원칙 지킴": "principle" };
