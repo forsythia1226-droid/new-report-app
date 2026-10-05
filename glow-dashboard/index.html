@@ -273,12 +273,15 @@ ul.plain li { margin-bottom: 3px; }
 
 .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .cal-head b { font-size: 1.05rem; }
-.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
 .cal .wd { text-align: center; font-size: .72rem; color: var(--muted); padding-bottom: 4px; }
 .cal button.day {
-  aspect-ratio: 1 / 1; max-width: 100%; border: 1px solid transparent; background: var(--bg); border-radius: 10px;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 5px 2px; gap: 4px; font-size: .8rem;
+  height: 46px; min-width: 0; border: 0; background: var(--bg); border-radius: 8px;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 5px 6px; font-size: .8rem;
 }
+@media (max-width: 560px) { .cal button.day { height: 42px; padding: 4px 5px; } }
+.cal .strip { display: flex; gap: 1px; width: 100%; height: 4px; border-radius: 2px; overflow: hidden; }
+.cal .strip i { flex: 1; }
 .cal button.day.out { visibility: hidden; }
 .cal button.day { position: relative; }
 .cal button.day .num { font-size: .82rem; }
@@ -287,8 +290,6 @@ ul.plain li { margin-bottom: 3px; }
 .cal button.day .cnt { position: absolute; top: 3px; right: 5px; font: 600 .6rem var(--mono); opacity: .75; }
 .cal button.day.today .num { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
 .cal button.day[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
-.cal .dot { width: 6px; height: 6px; }
-.cal button.day.on .dot { box-shadow: 0 0 0 1px var(--surface); }
 .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 720px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tile { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; min-width: 0; }
@@ -712,7 +713,7 @@ const partColor = (k) => `var(--p-${k})`;
 function exampleWorkouts() {
   const plan = { 1: ["chest", "triceps"], 2: ["back", "biceps", "forearm"], 4: ["shoulder", "abs"], 6: ["legs", "abs"] };
   const out = {};
-  const start = new Date(TODAY.getFullYear(), 0, 1);
+  const start = new Date(TODAY.getFullYear(), TODAY.getMonth() - 1, 1);
   for (let d = new Date(start); d < TODAY; d.setDate(d.getDate() + 1)) {
     const p = plan[d.getDay()];
     if (p && (d.getDate() * 7) % 10 !== 3) out[ymd(d)] = [...p];
@@ -732,6 +733,7 @@ const EXAMPLE = () => ({
   identity: "단단한 몸처럼 흔들리지 않고, 부드러운 태도로 사람을 대한다.",
   vision: DEFAULT_VISION,
   keywords: DEFAULT_KEYWORDS,
+  yearBase: { ...DEFAULT_YEAR_BASE },
   principles: [
     "약속한 운동은 컨디션과 관계없이 간다. 강도만 조절한다.",
     "말하기 전에 한 박자 쉬고, 결론은 부드럽게 전한다.",
@@ -747,8 +749,9 @@ const EXAMPLE = () => ({
   ],
 });
 const DEFAULT_VISION = "그를 처음 보았을 때, 나는 그가 다른 이들과 다르다는 것을 느꼈다. 다부진 체구에서는 단단함을, 총명한 눈빛에서는 미래를 아는 듯한 자신감을 부드러운 말투에서는 여유와 편안함이 느껴졌다. 그 사람에게서 나오는 아우라가 그와 함께 있는 공간을 가득채웠다.";
+const DEFAULT_YEAR_BASE = { month: "2026-09", count: 100 };
 const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
-const EMPTY = () => ({ example: false, goal: { weight: 68, fat: 12 }, inbody: [], workouts: {}, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
+const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], workouts: {}, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
 
 /* ---------- 저장 (이 브라우저에만) ---------- */
 // Apps Script 웹 앱으로 열리면 구글시트에, 파일로 그냥 열면 이 브라우저에 저장한다(미리보기).
@@ -758,6 +761,7 @@ let S = RUN ? EMPTY() : (() => { try { return JSON.parse(localStorage.getItem(KE
 S.workouts = normWorkouts(S.workouts);
 S.checks = normChecks(S.checks);
 if (!S.vision) S.vision = DEFAULT_VISION;
+if (!S.yearBase) S.yearBase = { ...DEFAULT_YEAR_BASE };
 function setSync(text, bad) {
   const el = $("#sync");
   if (el) { el.textContent = text; el.classList.toggle("bad", !!bad); }
@@ -1179,6 +1183,15 @@ $("#ib-table").addEventListener("click", (e) => {
   save(); renderBody(); renderHome(); toast("기록을 삭제했어요");
 });
 
+// 앱을 쓰기 전 기록은 "기준 월까지 N회"로 받고, 그 다음 달부터 앱 기록을 더한다
+function yearCount(y) {
+  const b = S.yearBase;
+  if (b && b.month && b.month.startsWith(`${y}-`)) {
+    const after = Object.keys(S.workouts).filter((d) => d.startsWith(`${y}-`) && d.slice(0, 7) > b.month && S.workouts[d].length).length;
+    return { total: b.count + after, base: b.count, baseMonth: +b.month.slice(5), after };
+  }
+  return { total: trainedDays(`${y}-`), base: null };
+}
 const trainedDays = (prefix) => Object.keys(S.workouts).filter((d) => d.startsWith(prefix) && S.workouts[d].length).length;
 
 function renderCalendar() {
@@ -1190,7 +1203,7 @@ function renderCalendar() {
   const cnt = Object.fromEntries(PARTS.map((p) => [p.k, 0]));
   for (const [d, ps] of Object.entries(S.workouts)) if (d.startsWith(mKey)) ps.forEach((p) => cnt[p] !== undefined && cnt[p]++);
   const monthDays = trainedDays(mKey);
-  const yearDays = trainedDays(`${y}-`);
+  const yc = yearCount(y);
   const isCurMonth = y === TODAY.getFullYear() && m === TODAY.getMonth();
   const nDays = new Date(y, m + 1, 0).getDate();
   const weeks = Math.max(1, (isCurMonth ? TODAY.getDate() : nDays) / 7);
@@ -1200,10 +1213,12 @@ function renderCalendar() {
   const prev = new Date(y, m - 1, 1);
   const prevDays = trainedDays(`${prev.getFullYear()}-${pad(prev.getMonth() + 1)}`);
   const diff = monthDays - prevDays;
+  const prevKey = `${prev.getFullYear()}-${pad(prev.getMonth() + 1)}`;
+  const prevBeforeApp = S.yearBase && prevKey <= S.yearBase.month && prevDays === 0;
 
   $("#tiles").innerHTML = `
-    <div class="tile hero"><div class="k">${m + 1}월 운동</div><div class="v">${monthDays}<small>회</small></div><div class="s">지난달 ${prevDays}회 · ${diff >= 0 ? "+" : ""}${diff}</div></div>
-    <div class="tile"><div class="k">${y}년 누적</div><div class="v">${yearDays}<small>회</small></div><div class="s">${y === TODAY.getFullYear() ? `월평균 ${fmt1(yearDays / (TODAY.getMonth() + 1))}회` : "&nbsp;"}</div></div>
+    <div class="tile hero"><div class="k">${m + 1}월 운동</div><div class="v">${monthDays}<small>회</small></div><div class="s">${prevBeforeApp ? "지난달은 앱 기록 이전" : `지난달 ${prevDays}회 · ${diff >= 0 ? "+" : ""}${diff}`}</div></div>
+    <div class="tile"><div class="k">${y}년 누적</div><div class="v">${yc.total}<small>회</small></div><div class="s">${yc.base != null ? `${yc.baseMonth}월까지 ${yc.base}회 + 이후 ${yc.after}회` : y === TODAY.getFullYear() ? `월평균 ${fmt1(yc.total / (TODAY.getMonth() + 1))}회` : "&nbsp;"}</div></div>
     <div class="tile"><div class="k">이번 주</div><div class="v">${weekDays}<small>회</small></div><div class="s">월~일 기준</div></div>
     <div class="tile"><div class="k">${m + 1}월 주당 평균</div><div class="v">${fmt1(monthDays / weeks)}<small>회</small></div><div class="s">${isCurMonth ? "오늘까지 기준" : "한 달 기준"}</div></div>`;
 
@@ -1217,7 +1232,7 @@ function renderCalendar() {
     const label = ps.length ? `${m + 1}월 ${d}일, ${ps.map((p) => PARTS.find((x) => x.k === p).n).join(", ")}` : `${m + 1}월 ${d}일, 기록 없음`;
     html += `<button class="day ${ps.length ? "on" : ""} ${key === ymd(TODAY) ? "today" : ""}" data-date="${key}" aria-pressed="${key === selDate}" aria-label="${label}" type="button">
       <span class="num">${d}</span>${ps.length ? `<span class="cnt">${ps.length}</span>` : ""}
-      <div class="dots">${ps.map((p) => `<i class="dot" style="background:${partColor(p)}"></i>`).join("")}</div></button>`;
+      ${ps.length ? `<span class="strip">${ps.map((p) => `<i style="background:${partColor(p)}"></i>`).join("")}</span>` : ""}</button>`;
   }
   $("#cal").innerHTML = html;
   $("#cal-legend").innerHTML = PARTS.map((p) => `<span><i class="dot" style="background:${partColor(p.k)}"></i>${p.n}</span>`).join("");
@@ -1320,7 +1335,7 @@ $("#quick-menu").addEventListener("click", (e) => {
 /* ---------- 예시 데이터 ---------- */
 function renderExampleBar() { $("#example-bar").hidden = !S.example; }
 $("#clear-examples").addEventListener("click", () => {
-  const keep = { identity: S.identity, vision: S.vision, keywords: S.keywords };
+  const keep = { identity: S.identity, vision: S.vision, keywords: S.keywords, yearBase: S.yearBase };
   S = { ...EMPTY(), ...keep };
   save(); renderAll(); toast("예시 데이터를 지웠어요");
 });
@@ -1336,6 +1351,7 @@ if (RUN) {
       S.workouts = normWorkouts(S.workouts);
       S.checks = normChecks(S.checks);
       if (!S.vision) S.vision = DEFAULT_VISION;
+      if (!S.yearBase || !S.yearBase.month) S.yearBase = { ...DEFAULT_YEAR_BASE };
       if (d.saju) SAJU_RAW = d.saju;
       renderAll();
       setSync("시트와 동기화됨");

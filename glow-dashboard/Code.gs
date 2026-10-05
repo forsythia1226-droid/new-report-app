@@ -44,6 +44,8 @@ function setup() {
   [
     ["목표 체중", 68],
     ["목표 체지방률", 12],
+    ["누적 기준 월", "2026-09"],
+    ["누적 기준 횟수", 100],
     ["지향 묘사", DEFAULT_VISION],
     ["정체성 문장", "단단한 몸처럼 흔들리지 않고, 부드러운 태도로 사람을 대한다."],
     ["키워드", "단단함, 자신감, 여유, 편안함, 아우라"],
@@ -87,6 +89,8 @@ function getData() {
 
   return {
     goal: { weight: num_(settings["목표 체중"], 68), fat: num_(settings["목표 체지방률"], 12) },
+    // 앱 이전 운동 기록: 기준 월까지 N회 (그 다음 달부터 앱 기록을 더한다)
+    yearBase: { month: month_(settings["누적 기준 월"]), count: num_(settings["누적 기준 횟수"], 0) },
     vision: str_(settings["지향 묘사"]),
     identity: str_(settings["정체성 문장"]),
     keywords: str_(settings["키워드"]).split(",").map(function (s) { return s.trim(); }).filter(String),
@@ -126,6 +130,8 @@ function saveAll(s) {
     write_("settings", [
       ["목표 체중", s.goal.weight],
       ["목표 체지방률", s.goal.fat],
+      ["누적 기준 월", s.yearBase && s.yearBase.month ? "'" + s.yearBase.month : ""],
+      ["누적 기준 횟수", s.yearBase ? s.yearBase.count : ""],
       ["지향 묘사", s.vision || DEFAULT_VISION],
       ["정체성 문장", s.identity || ""],
       ["키워드", (s.keywords || []).join(", ")],
@@ -184,11 +190,20 @@ function write_(name, rows) {
 // 시트에 직접 입력한 "2026.10.5", "2026/10/05" 같은 날짜도 받아준다.
 function day_(v) {
   var tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
-  if (v instanceof Date) return Utilities.formatDate(v, tz, "yyyy-MM-dd");
+  if (isDate_(v)) return Utilities.formatDate(v, tz, "yyyy-MM-dd");
   var m = String(v).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
   if (!m) return String(v);
   return m[1] + "-" + ("0" + m[2]).slice(-2) + "-" + ("0" + m[3]).slice(-2);
 }
+
+// "2026-09", "2026.9", 날짜로 바뀐 셀 모두 "2026-09"로
+function month_(v) {
+  if (isDate_(v)) return Utilities.formatDate(v, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), "yyyy-MM");
+  var m = String(v == null ? "" : v).match(/(\d{4})\D+(\d{1,2})/);
+  return m ? m[1] + "-" + ("0" + m[2]).slice(-2) : "";
+}
+
+function isDate_(v) { return Object.prototype.toString.call(v) === "[object Date]"; }
 
 function num_(v, fallback) {
   if (v === "" || v == null || isNaN(Number(v))) return fallback === undefined ? null : fallback;
