@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Glow 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+/* 레이아웃: 왼쪽 세로 내비(데스크톱) / 하단 탭바(폰) + 카드 그리드. 강함=아이언 블루, 부드러움=세이지 */
+:root {
+  --bg: #eceff1; --surface: #ffffff; --surface-2: #e2e7ea; --ink: #17202b; --muted: #5b6672; --line: #d3d9de;
+  --iron: #2c4766; --iron-soft: #dbe3ee; --sage: #5f8a73; --sage-soft: #dde9e2; --warn: #a85a22; --warn-soft: #f4e4d6;
+  --wood: #3c8a5a; --fire: #c0473a; --earth: #b2852f; --metal: #87909a; --water: #2b4d7a;
+  --p-chest: #cf6a4d; --p-shoulder: #2f6fb0; --p-back: #2b8c77; --p-legs: #8a62b6;
+  --p-biceps: #c39629; --p-triceps: #b5557d; --p-forearm: #6a8a35; --p-abs: #3593ad; --p-cardio: #7b8692;
+  --day-on: #c9d8ea; --day-on-ink: #1e3a5c;
+  --display: "Gowun Batang", "Noto Serif KR", serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171d; --surface: #1a2129; --surface-2: #232c36; --ink: #e8edf2; --muted: #9aa6b2; --line: #2e3945;
+    --iron: #8fb0d8; --iron-soft: #22324a; --sage: #8fbfa3; --sage-soft: #1f3329; --warn: #e5a06a; --warn-soft: #3a2a1c;
+    --wood: #6cbf8a; --fire: #e57a6c; --earth: #d7ad5b; --metal: #aab3bc; --water: #7aa0d6;
+    --p-chest: #e98a6f; --p-shoulder: #6aa2df; --p-back: #5cc0a6; --p-legs: #b392dc;
+    --p-biceps: #dcb44d; --p-triceps: #e08aae; --p-forearm: #a3c46a; --p-abs: #6cc3dc; --p-cardio: #a3adb8;
+    --day-on: #2b4a70; --day-on-ink: #e3eefb;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171d; --surface: #1a2129; --surface-2: #232c36; --ink: #e8edf2; --muted: #9aa6b2; --line: #2e3945;
+  --iron: #8fb0d8; --iron-soft: #22324a; --sage: #8fbfa3; --sage-soft: #1f3329; --warn: #e5a06a; --warn-soft: #3a2a1c;
+  --wood: #6cbf8a; --fire: #e57a6c; --earth: #d7ad5b; --metal: #aab3bc; --water: #7aa0d6;
+  --p-chest: #e98a6f; --p-shoulder: #6aa2df; --p-back: #5cc0a6; --p-legs: #b392dc;
+    --p-biceps: #dcb44d; --p-triceps: #e08aae; --p-forearm: #a3c46a; --p-abs: #6cc3dc; --p-cardio: #a3adb8;
+    --day-on: #2b4a70; --day-on-ink: #e3eefb;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body); }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--iron); outline-offset: 2px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+
+.app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100%; }
+nav.side {
+  position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; padding: 28px 16px;
+  border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; background: var(--surface);
+}
+.side .me { padding: 0 10px 22px; }
+.side .me b { font-family: var(--display); font-size: 1.6rem; display: block; line-height: 1.2; }
+.side .me span { font-size: .8rem; color: var(--muted); display: block; }
+.side .me .sync { margin-top: 6px; font-size: .72rem; color: var(--sage); }
+.side .me .sync.bad { color: var(--warn); }
+.tab {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 0;
+  background: transparent; text-align: left; color: var(--muted); font-weight: 500;
+}
+.tab .glyph { font-family: var(--display); width: 22px; text-align: center; font-size: 1.05rem; }
+.tab[aria-selected="true"] { background: var(--iron-soft); color: var(--iron); }
+.side .add { margin-top: auto; }
+
+main { padding-block: 28px 96px; padding-inline: 32px; max-width: 1180px; width: 100%; }
+.view-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.view-head h1 { font-family: var(--display); font-size: 1.9rem; font-weight: 700; }
+.view-head p { margin: 2px 0 0; color: var(--muted); }
+.tagline { font-family: var(--display); color: var(--iron); font-size: .95rem; margin-bottom: 2px; }
+
+.example-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 8px 14px; margin-bottom: 18px; font-size: .88rem;
+}
+.example-bar button { background: transparent; border: 1px solid currentColor; color: inherit; border-radius: 8px; padding: 3px 10px; font-size: .82rem; }
+
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.c4 { grid-column: span 4; } .c5 { grid-column: span 5; } .c6 { grid-column: span 6; } .c7 { grid-column: span 7; } .c8 { grid-column: span 8; } .c12 { grid-column: span 12; }
+@media (max-width: 1080px) { .c4, .c5, .c7 { grid-column: span 6; } .c8 { grid-column: span 12; } }
+@media (max-width: 720px) { .grid > * { grid-column: span 12 !important; } }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; min-width: 0; }
+.card h2 { font-size: .8rem; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.card h3 { font-size: 1rem; margin-bottom: 6px; }
+.pill { display: inline-block; font-size: .72rem; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); letter-spacing: 0; font-weight: 500; }
+.pill.ok { background: var(--sage-soft); color: var(--sage); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.iron { background: var(--iron-soft); color: var(--iron); }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-weight: 500; }
+.btn.primary { background: var(--iron); border-color: var(--iron); color: var(--surface); }
+.btn.small { padding: 4px 10px; font-size: .82rem; border-radius: 8px; }
+input[type="text"], input[type="number"], input[type="date"], textarea {
+  width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 8px 10px;
+}
+textarea { resize: vertical; line-height: 1.6; }
+label.f { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; color: var(--muted); }
+
+/* 홈 */
+.identity { background: var(--iron); color: var(--surface); border: 0; padding: 26px; }
+.identity .label { font-size: .75rem; letter-spacing: .08em; opacity: .75; }
+.identity blockquote { margin: 10px 0 16px; font-family: var(--display); font-size: clamp(1.1rem, 2.1vw, 1.45rem); line-height: 1.85; max-width: 62ch; text-wrap: pretty; }
+.identity blockquote em { font-style: normal; border-bottom: 2px solid color-mix(in srgb, var(--surface) 55%, transparent); padding-bottom: 1px; }
+.identity blockquote em.aura { font-weight: 700; border-bottom-style: double; border-bottom-width: 3px; }
+.c3 { grid-column: span 3; }
+@media (max-width: 1080px) { .c3 { grid-column: span 6; } }
+.pillar-card { text-align: left; display: flex; flex-direction: column; gap: 10px; cursor: pointer; font: inherit; color: inherit; }
+.pillar-card:hover { border-color: var(--iron); }
+.pillar-card.aura { cursor: default; background: var(--iron-soft); border-color: transparent; }
+.pc-head { display: flex; gap: 10px; align-items: center; }
+.pc-glyph { font-family: var(--display); font-size: 1.6rem; color: var(--iron); width: 40px; height: 40px; border-radius: 10px; background: var(--iron-soft); display: grid; place-items: center; flex: none; }
+.aura .pc-glyph { background: var(--surface); }
+.pc-head b { display: block; font-size: 1.05rem; }
+.pc-head small { color: var(--muted); font-size: .78rem; }
+.pc-line { display: flex; justify-content: space-between; gap: 8px; font-size: .85rem; }
+.pc-line span:first-child { color: var(--muted); }
+.pc-big { font: 500 1.6rem var(--mono); line-height: 1.1; }
+.pc-big small { font: .85rem var(--body); color: var(--muted); margin-left: 2px; }
+.aura-ring { display: flex; align-items: center; gap: 12px; }
+.aura-ring svg { width: 64px; height: 64px; flex: none; }
+.aura-ring circle { fill: none; stroke-width: 7; }
+.aura-ring .track { stroke: var(--surface); }
+.aura-ring .val { stroke: var(--iron); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+.aura-ring .ring-t { fill: var(--ink); font: 600 15px var(--mono); }
+.identity .kw { display: flex; gap: 6px; flex-wrap: wrap; }
+.identity .kw span { border: 1px solid color-mix(in srgb, var(--surface) 45%, transparent); border-radius: 99px; padding: 2px 10px; font-size: .82rem; }
+.stat { display: flex; flex-direction: column; gap: 6px; }
+.stat .big { font-size: 2rem; line-height: 1.1; }
+.stat .big small { font-size: .9rem; color: var(--muted); margin-left: 2px; }
+.bar { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.bar > div { height: 100%; background: var(--iron); border-radius: 99px; }
+.bar.sage > div { background: var(--sage); }
+.row { display: flex; justify-content: space-between; gap: 8px; font-size: .85rem; }
+
+.week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.week-strip .d { text-align: center; font-size: .75rem; color: var(--muted); display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.week-strip .d.today b { color: var(--iron); }
+.dots { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; min-height: 10px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: .78rem; color: var(--muted); margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* 차트 */
+svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
+svg.chart text { fill: var(--muted); font: 10px var(--mono); }
+svg.chart .grid-l { stroke: var(--line); stroke-width: 1; }
+svg.chart .target { stroke: var(--sage); stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
+svg.chart .target-t { fill: var(--sage); }
+svg.chart .line { stroke: var(--iron); stroke-width: 2; fill: none; }
+svg.chart .area { fill: var(--iron); opacity: .08; }
+svg.chart .pt { fill: var(--surface); stroke: var(--iron); stroke-width: 2; }
+svg.chart .pt.last { fill: var(--iron); }
+.minis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 720px) { .minis { grid-template-columns: 1fr; } }
+.mini h3 { font-size: .85rem; display: flex; justify-content: space-between; gap: 8px; font-weight: 600; }
+.mini h3 .num { color: var(--iron); }
+
+/* 사주 */
+.pillars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.pillar { text-align: center; }
+.pillar .cap { font-size: .75rem; color: var(--muted); margin-bottom: 6px; }
+.pillar.day .cap { color: var(--iron); font-weight: 600; }
+.ch { border-radius: 12px; padding: 10px 4px 8px; margin-bottom: 6px; color: var(--surface); }
+.ch b { font-family: var(--display); font-size: 2rem; line-height: 1; display: block; }
+.ch span { font-size: .72rem; opacity: .9; }
+.el-wood { background: var(--wood); } .el-fire { background: var(--fire); } .el-earth { background: var(--earth); } .el-metal { background: var(--metal); } .el-water { background: var(--water); }
+.pillar.day .ch:first-child { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--iron); }
+.ohaeng { display: flex; flex-direction: column; gap: 10px; }
+.ohaeng .r { display: grid; grid-template-columns: 54px 1fr 24px; gap: 10px; align-items: center; font-size: .88rem; }
+.ohaeng .bar > div { background: currentColor; }
+.ch.hl { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--ink) !important; }
+.tags { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; min-height: 22px; }
+.tags span { font-size: .68rem; padding: 1px 6px; border-radius: 99px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+svg.rel { width: 100%; height: auto; display: block; }
+svg.rel path { fill: none; stroke-width: 2; }
+svg.rel text { font: 600 11px var(--body); cursor: pointer; }
+svg.rel .bg { fill: var(--surface); }
+.rel-note { font-size: .88rem; background: var(--surface-2); border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
+
+.subtabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 12px; flex-wrap: wrap; }
+.subtabs button { border: 0; background: transparent; border-radius: 9px; padding: 7px 14px; color: var(--muted); font-weight: 500; }
+.subtabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+.linkbtn { border: 0; background: transparent; color: var(--iron); font-weight: 600; padding: 4px 0; text-decoration: underline; text-underline-offset: 3px; }
+
+.oneliner { font-family: var(--display); font-size: clamp(1.25rem, 2.4vw, 1.6rem); line-height: 1.5; margin: 4px 0 14px; text-wrap: balance; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .two { grid-template-columns: 1fr; } }
+.two > div { background: var(--surface-2); border-radius: 12px; padding: 12px; font-size: .9rem; }
+.two b { display: block; font-size: .75rem; color: var(--muted); letter-spacing: .04em; margin-bottom: 4px; }
+.quote { font-family: var(--display); font-size: 1.05rem; line-height: 1.55; }
+.src { font-size: .72rem; color: var(--muted); margin-top: 8px; }
+.est { font-size: .7rem; font-weight: 700; color: var(--warn); background: var(--warn-soft); padding: 1px 6px; border-radius: 6px; margin-right: 4px; }
+ul.plain { margin: 0; padding-left: 18px; }
+ul.plain li { margin-bottom: 3px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { background: var(--surface-2); border-radius: 99px; padding: 3px 10px; font-size: .85rem; }
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; }
+.flow > div { flex: 1 1 120px; background: var(--surface-2); border-radius: 10px; padding: 10px; font-size: .85rem; }
+.flow > div b { display: block; font-family: var(--display); font-size: 1.15rem; color: var(--iron); }
+.flow > i { align-self: center; color: var(--muted); font-style: normal; }
+.neq { display: flex; flex-direction: column; gap: 6px; font-family: var(--display); font-size: 1.1rem; }
+
+.rate { display: grid; grid-template-columns: 44px 1fr; gap: 8px; align-items: center; font-size: .75rem; color: var(--muted); }
+.segs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+.segs i { height: 8px; border-radius: 2px; background: var(--surface-2); }
+.segs i.on { background: var(--iron); }
+.segs i.maybe { background: var(--iron); opacity: .35; }
+.segs.risk i.on { background: var(--fire); }
+
+.timeline { display: grid; grid-template-columns: repeat(5, minmax(150px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.period { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 14px; text-align: left; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.period .when { font-size: .78rem; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
+.period .gz { font-family: var(--display); font-size: 1.7rem; line-height: 1.1; }
+.period .kw { font-weight: 600; font-size: .9rem; }
+.period.past { opacity: .55; }
+.period.now { border-color: var(--iron); box-shadow: 0 0 0 1px var(--iron); }
+.period[aria-pressed="true"] { background: var(--iron-soft); }
+.detail { margin-top: 14px; }
+.detail .cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.detail h3 { font-size: .8rem; letter-spacing: .05em; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+.detail .lead { font-family: var(--display); font-size: 1.3rem; margin: 0 0 14px; }
+
+.ss { display: flex; flex-direction: column; gap: 6px; }
+.ss-row { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.ss-row > button { width: 100%; border: 0; background: transparent; display: grid; grid-template-columns: 92px 96px minmax(0, 1fr) 70px; gap: 10px; align-items: center; padding: 10px 12px; text-align: left; }
+@media (max-width: 640px) { .ss-row > button { grid-template-columns: 84px minmax(0, 1fr) 64px; } .ss-row .lv-t { display: none; } }
+.ss-row .nm { font-weight: 600; }
+.ss-row .key { font-size: .85rem; color: var(--muted); min-width: 0; }
+.ss-row .pos { font-family: var(--display); text-align: right; }
+.lv { display: flex; gap: 2px; }
+.lv i { width: 12px; height: 8px; border-radius: 2px; background: var(--surface-2); }
+.lv i.on { background: var(--iron); }
+.lv-t { font-size: .72rem; color: var(--muted); }
+.ss-body { padding: 0 14px 14px; font-size: .88rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.ss-body h4 { margin: 0 0 4px; font-size: .75rem; color: var(--muted); letter-spacing: .04em; }
+
+.placeholder { text-align: center; padding: 56px 16px; }
+.placeholder .glyph { font-family: var(--display); font-size: 3rem; color: var(--iron); }
+
+/* 원문 보기 */
+.reader { position: fixed; inset: 0; z-index: 40; background: var(--bg); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+.reader-bar { display: flex; gap: 10px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--surface); flex-wrap: wrap; }
+.reader-bar b { font-family: var(--display); font-size: 1.1rem; margin-right: auto; }
+.reader-bar input { width: 200px; max-width: 100%; }
+.reader-main { flex: 1; overflow: hidden; display: grid; grid-template-columns: 240px minmax(0, 1fr); }
+.toc { overflow-y: auto; border-right: 1px solid var(--line); padding: 12px 8px; font-size: .82rem; }
+.toc button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 5px 8px; border-radius: 6px; color: var(--muted); }
+.toc button:hover { background: var(--surface-2); color: var(--ink); }
+.raw { overflow-y: auto; padding: 20px 16px 80px; }
+.raw-inner { max-width: 68ch; margin: 0 auto; white-space: pre-wrap; line-height: 1.75; font-size: .95rem; }
+.raw-inner .h { font-weight: 700; font-family: var(--display); font-size: 1.2rem; color: var(--iron); display: inline-block; margin-top: 10px; }
+.raw-inner mark { background: var(--warn-soft); color: var(--warn); border-radius: 3px; }
+@media (max-width: 760px) { .reader-main { grid-template-columns: minmax(0, 1fr); } .toc { display: none; } }
+
+/* 몸 */
+.goalbox { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 560px) { .goalbox { grid-template-columns: 1fr; } }
+.goalbox > div { background: var(--surface-2); border-radius: 12px; padding: 12px; }
+.goalbox .k { font-size: .78rem; color: var(--muted); }
+.goalbox .v { font-size: 1.25rem; }
+.phases { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.phase { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: .85rem; }
+.phase.on { border-color: var(--iron); background: var(--iron-soft); }
+.phase b { display: block; }
+
+.cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.cal-head b { font-size: 1.05rem; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal .wd { text-align: center; font-size: .72rem; color: var(--muted); padding-bottom: 4px; }
+.cal button.day {
+  aspect-ratio: 1 / 1; max-width: 100%; border: 1px solid transparent; background: var(--bg); border-radius: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 5px 2px; gap: 4px; font-size: .8rem;
+}
+.cal button.day.out { visibility: hidden; }
+.cal button.day { position: relative; }
+.cal button.day .num { font-size: .82rem; }
+.cal button.day.on { background: var(--day-on); color: var(--day-on-ink); }
+.cal button.day.on .num { font-weight: 700; }
+.cal button.day .cnt { position: absolute; top: 3px; right: 5px; font: 600 .6rem var(--mono); opacity: .75; }
+.cal button.day.today .num { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.cal button.day[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+.cal .dot { width: 6px; height: 6px; }
+.cal button.day.on .dot { box-shadow: 0 0 0 1px var(--surface); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 720px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.tile .k { font-size: .78rem; color: var(--muted); }
+.tile .v { font-family: var(--mono); font-size: 1.7rem; line-height: 1.2; }
+.tile .v small { font-family: var(--body); font-size: .85rem; color: var(--muted); margin-left: 2px; }
+.tile .s { font-size: .75rem; color: var(--muted); }
+.tile.hero { background: var(--iron); color: var(--surface); }
+.tile.hero .k, .tile.hero .s, .tile.hero .v small { color: inherit; opacity: .85; }
+.pgroup { margin-bottom: 14px; }
+.pgroup h4 { margin: 0 0 6px; font-size: .75rem; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+.parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.parts.one { grid-template-columns: minmax(0, 1fr); }
+.part { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; text-align: left; min-width: 0; }
+.part .pn { font-weight: 600; flex: 1; min-width: 0; }
+.part .pc { font: 500 .78rem var(--mono); color: var(--muted); white-space: nowrap; }
+.part .ck { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--line); display: grid; place-items: center; font-size: .7rem; flex: none; }
+.part[aria-pressed="true"] { color: var(--surface); border-color: transparent; }
+.part[aria-pressed="true"] .pc { color: inherit; opacity: .85; }
+.part[aria-pressed="true"] .ck { border-color: currentColor; }
+.part[aria-pressed="true"] .ck::after { content: "✓"; }
+.sel-date { font-family: var(--display); font-size: 1.25rem; margin: 0 0 2px; }
+.sel-sub { font-size: .82rem; color: var(--muted); margin: 0 0 14px; }
+.count-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 860px) { .count-groups { grid-template-columns: minmax(0, 1fr); } }
+.count-groups h4 { margin: 0 0 8px; font-size: .75rem; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+.counts { display: flex; flex-direction: column; gap: 8px; }
+.counts .r { display: grid; grid-template-columns: 52px 1fr 92px; gap: 8px; align-items: center; font-size: .85rem; }
+.counts .bar > div { background: currentColor; }
+.tip { font-size: .85rem; border-radius: 10px; padding: 10px 12px; background: var(--surface-2); margin-top: 12px; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 500; font-size: .78rem; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; align-items: end; }
+
+/* 정신 */
+.principles { list-style: none; margin: 0; padding: 0; counter-reset: p; display: flex; flex-direction: column; gap: 8px; }
+.principles li { counter-increment: p; display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; background: var(--bg); border-radius: 10px; }
+.principles li::before { content: counter(p); font-family: var(--mono); color: var(--iron); font-weight: 500; }
+.principles button { border: 0; background: transparent; color: var(--muted); font-size: .8rem; }
+.add-row { display: flex; gap: 8px; margin-top: 10px; }
+.kw-edit { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.kw-edit span { background: var(--iron-soft); color: var(--iron); border-radius: 99px; padding: 3px 4px 3px 12px; font-size: .85rem; display: inline-flex; gap: 2px; align-items: center; }
+.kw-edit span button { border: 0; background: transparent; color: inherit; padding: 0 6px; }
+.sliders { display: flex; flex-direction: column; gap: 14px; }
+.sl { display: grid; grid-template-columns: 110px 1fr 28px; gap: 10px; align-items: center; font-size: .88rem; }
+.sl input { accent-color: var(--iron); width: 100%; }
+.trend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 560px) { .trend { grid-template-columns: 1fr; } }
+.log { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+.log .e { background: var(--bg); border-radius: 10px; padding: 8px 12px; font-size: .85rem; }
+.log .e .when { color: var(--muted); font-size: .75rem; }
+
+/* 빠른 기록 */
+.quick { position: relative; }
+.quick-menu {
+  position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 6px; display: flex; flex-direction: column; box-shadow: 0 8px 24px rgb(0 0 0 / .12); z-index: 10;
+}
+.quick-menu button { border: 0; background: transparent; text-align: left; padding: 9px 10px; border-radius: 8px; }
+.quick-menu button:hover { background: var(--surface-2); }
+.toast {
+  position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 99px; font-size: .88rem; z-index: 30;
+}
+
+/* 폰: 하단 탭바 */
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  nav.side {
+    position: fixed; top: auto; bottom: 0; left: 0; right: 0; height: auto; z-index: 20; flex-direction: row;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); border-right: 0; border-top: 1px solid var(--line); gap: 2px;
+  }
+  .side .me { display: none; }
+  .tab { flex: 1; flex-direction: column; gap: 0; padding: 6px 2px; font-size: .72rem; text-align: center; }
+  .side .add { margin: 0; flex: 1; display: flex; }
+  .side .add > .btn { flex: 1; font-size: .72rem; padding: 6px 2px; }
+  .quick-menu { left: auto; right: 0; width: 180px; }
+  main { padding-inline: 16px; padding-block: 20px 110px; }
+}
+@media (prefers-reduced-motion: no-preference) { .bar > div { transition: width .4s ease; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="side" aria-label="카테고리">
+    <div class="me"><b>Glow</b><span id="me-sub"></span><span id="sync" class="sync"></span></div>
+    <button class="tab" data-tab="home" aria-selected="true"><span class="glyph">◎</span>홈</button>
+    <button class="tab" data-tab="saju" aria-selected="false"><span class="glyph">命</span>사주</button>
+    <button class="tab" data-tab="body" aria-selected="false"><span class="glyph">身</span>신체</button>
+    <button class="tab" data-tab="mind" aria-selected="false"><span class="glyph">心</span>정신</button>
+    <button class="tab" data-tab="career" aria-selected="false"><span class="glyph">職</span>커리어</button>
+    <button class="tab" data-tab="invest" aria-selected="false"><span class="glyph">財</span>투자</button>
+    <div class="add quick">
+      <button class="btn primary" id="quick-btn" type="button">＋ 기록</button>
+      <div class="quick-menu" id="quick-menu" hidden>
+        <button type="button" data-q="workout">오늘 운동 체크</button>
+        <button type="button" data-q="inbody">인바디 입력</button>
+        <button type="button" data-q="check">자기 점검 남기기</button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="example-bar" id="example-bar" hidden>
+      <span>프로토타입이라 인바디·운동·점검·원칙은 <b>예시 데이터</b>로 채워져 있어요. 사주는 받은 원문 그대로입니다.</span>
+      <button type="button" id="clear-examples">예시 지우고 시작</button>
+    </div>
+
+    <!-- 홈 -->
+    <section id="v-home" data-view="home">
+      <div class="view-head"><div><h1 id="hello"></h1><p id="today-line"></p></div></div>
+      <div class="grid">
+        <div class="card identity c12">
+          <div class="label">내가 그리는 나</div>
+          <blockquote id="home-vision"></blockquote>
+          <div class="kw" id="home-kw"></div>
+        </div>
+        <button type="button" class="card pillar-card c3" data-goto="body">
+          <div class="pc-head"><span class="pc-glyph">身</span><span><b>단단함</b><small>다부진 체구</small></span></div>
+          <div id="pc-solid"></div>
+        </button>
+        <button type="button" class="card pillar-card c3" data-goto="saju">
+          <div class="pc-head"><span class="pc-glyph">命</span><span><b>자신감</b><small>총명한 눈빛</small></span></div>
+          <div id="pc-conf"></div>
+        </button>
+        <button type="button" class="card pillar-card c3" data-goto="mind">
+          <div class="pc-head"><span class="pc-glyph">心</span><span><b>여유</b><small>부드러운 말투</small></span></div>
+          <div id="pc-ease"></div>
+        </button>
+        <div class="card pillar-card aura c3">
+          <div class="pc-head"><span class="pc-glyph">氣</span><span><b>아우라</b><small>공간을 가득 채우다</small></span></div>
+          <div id="pc-aura"></div>
+        </div>
+        <div class="card c4 stat">
+          <h2>체중 <span class="pill iron">목표 <span class="num" id="h-goal-w"></span>kg</span></h2>
+          <div class="big num" id="h-w"></div>
+          <div class="bar"><div id="h-w-bar"></div></div>
+          <div class="row muted"><span id="h-w-from"></span><span id="h-w-left"></span></div>
+        </div>
+        <div class="card c4 stat">
+          <h2>체지방률 <span class="pill ok">목표 <span class="num" id="h-goal-f"></span>%</span></h2>
+          <div class="big num" id="h-f"></div>
+          <div class="bar sage"><div id="h-f-bar"></div></div>
+          <div class="row muted"><span id="h-f-from"></span><span id="h-f-left"></span></div>
+        </div>
+        <div class="card c4 stat">
+          <h2>골격근량 <span class="pill" id="h-m-pill"></span></h2>
+          <div class="big num" id="h-m"></div>
+          <div class="row muted"><span>목표 제지방량</span><span class="num" id="h-ffm"></span></div>
+          <div class="row muted"><span>최근 측정</span><span class="num" id="h-last"></span></div>
+        </div>
+        <div class="card c7">
+          <h2>이번 주 운동 <span class="pill" id="h-week-pill"></span></h2>
+          <div class="week-strip" id="h-week"></div>
+          <div class="legend" id="h-legend"></div>
+        </div>
+        <div class="card c5" id="h-saju-card">
+          <h2>이번 달 사주 <button class="linkbtn" type="button" data-goto-saju="flow" style="font-size:.8rem;letter-spacing:0">운 흐름 보기</button></h2>
+          <div id="h-saju"></div>
+        </div>
+        <div class="card c5">
+          <h2>오늘 되새길 원칙 <button class="btn small" id="next-principle" type="button">다른 원칙</button></h2>
+          <p id="h-principle" style="font-family:var(--display);font-size:1.25rem;margin:4px 0 12px"></p>
+          <div class="row muted"><span>최근 자기 점검</span><span id="h-check"></span></div>
+        </div>
+        <div class="card c7">
+          <h2>체중 추이 <span class="muted" style="font-weight:400;letter-spacing:0">점선 = 목표</span></h2>
+          <div id="h-chart"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 사주 -->
+    <section id="v-saju" data-view="saju" hidden>
+      <div class="view-head">
+        <div><div class="tagline">“미래를 아는 듯한 자신감”</div><h1>사주 · 命</h1><p id="saju-sub"></p></div>
+        <button class="linkbtn" type="button" id="open-raw">원문 보기</button>
+      </div>
+      <div class="subtabs" role="tablist" style="margin-bottom:16px">
+        <button type="button" data-sub="sum" aria-selected="true">요약</button>
+        <button type="button" data-sub="chart" aria-selected="false">원국 · 신살</button>
+        <button type="button" data-sub="flow" aria-selected="false">운 흐름</button>
+      </div>
+
+      <!-- 요약 -->
+      <div class="grid" data-subview="sum">
+        <div class="card c12">
+          <h2>신살 조합 한 문장</h2>
+          <p class="oneliner">“사람을 통해 기회를 만들고, 정보를 빠르게 구조화하며, 외부 변화에 적응해 성과로 연결하는 타입”</p>
+          <div class="two">
+            <div><b>가장 큰 장점</b>사람·정보·성과를 연결하는 능력</div>
+            <div><b>가장 큰 약점</b>돈·일·관계를 너무 많이 동시에 생각하면서 스스로 피로해지는 것</div>
+          </div>
+        </div>
+        <div class="card c6">
+          <h2>원국의 핵심 구조</h2>
+          <p class="quote" style="margin:0 0 10px">己土 일간인데 원국에서 수(水)가 매우 강합니다. 즉 재성, 다시 말해 <b>돈·성과·시장·현실적인 책임</b>이 강한 구조입니다.</p>
+          <p style="margin:0 0 6px;font-size:.88rem">기회가 많아질수록 같이 올 수 있는 것</p>
+          <div class="chips"><span>책임 증가</span><span>업무량 증가</span><span>투자 고민 증가</span><span>가족 경제 부담 증가</span></div>
+          <div class="src">핵심 현실 주제: ‘사람과 능력을 돈과 성과로 연결하는 것’</div>
+        </div>
+        <div class="card c6">
+          <h2>지금의 대운 <span class="pill iron">戊申</span></h2>
+          <p class="quote" style="margin:0 0 10px">戊土가 일간을 도와주므로 예전보다 훨씬 적극적으로 움직일 수 있는 시기. 다만 申이 원국의 수를 다시 강화하므로 활동 범위와 돈의 흐름도 동시에 커집니다.</p>
+          <div class="src">30대 후반~40대 초반 = “돈을 크게 움직이기 시작하는 시기”</div>
+        </div>
+        <div class="card c12">
+          <h2>2026.9 ~ 2027 전략 <span class="muted" style="font-weight:400;letter-spacing:0">“커리어를 바꾸고 재정 구조를 다시 짜는 1년 반”</span></h2>
+          <div class="flow">
+            <div><span class="muted">2026 하반기</span><b>선택</b>커리어의 방향을 결정합니다.</div><i>→</i>
+            <div><span class="muted">2027</span><b>집중</b>새로운 방향의 전문성과 직책을 만듭니다.</div><i>→</i>
+            <div><span class="muted">재물</span><b>확대보다 축적</b>수익을 늘리는 것 이상으로 현금과 순자산을 남깁니다.</div>
+          </div>
+          <p class="src" style="font-size:.85rem"><span class="est">추정</span>가장 좋은 시나리오: 2026년 하반기 역할 변경·이직·새 기회 확보 → 2027년 자리 안착·보상 현실화</p>
+        </div>
+        <div class="card c4">
+          <h2>커리어 핵심</h2>
+          <ul class="plain"><li>2026.9~10: 움직이기 좋은 구간</li><li>2026.11: 보상·외부기회 증가</li><li>2026.12: 충동 퇴사·독립 주의</li><li>2027: 직책·책임·전문성 확대, 자리 잡기 좋은 해</li></ul>
+        </div>
+        <div class="card c4">
+          <h2>재물 핵심</h2>
+          <ul class="plain"><li>2026년 말: 돈의 기회는 많지만 변동성이 큼</li><li>2027년: 버는 돈을 실제 자산으로 남기기 더 좋은 해</li><li>고위험 투자보다 본업 소득·장기자산·부채 관리가 유리</li></ul>
+        </div>
+        <div class="card c4">
+          <h2>혼동하지 말 것</h2>
+          <div class="neq"><span>매출 ≠ 순이익</span><span>연봉 ≠ 순자산</span><span>투자수익 ≠ 확정수익</span></div>
+          <div class="src">커리어는 연봉보다 경력 가치·안정성·권한·성장 가능성을 같이</div>
+        </div>
+        <div class="card c12">
+          <h2>특히 조심해야 할 재물 패턴</h2>
+          <p class="quote" style="margin:0 0 10px">“돈을 못 버는 것”이 아니라 “돈을 더 벌 수 있을 것 같아서 계속 움직이는 것”</p>
+          <p style="margin:0 0 6px;font-size:.88rem">수익률보다 원칙이 중요 · 미리 정할 것</p>
+          <div class="chips"><span>투자금 총액 한도</span><span>종목·자산별 최대 비중</span><span>대출 한도</span><span>손실 제한</span><span>현금 비중</span><span>배우자와 합의가 필요한 금액</span></div>
+        </div>
+      </div>
+
+      <!-- 원국 · 신살 -->
+      <div class="grid" data-subview="chart" hidden>
+        <div class="card c7">
+          <h2>원국 <span class="muted" style="font-weight:400;letter-spacing:0">글자 아래 = 신살 · 선 = 지지 관계</span></h2>
+          <div class="pillars" id="pillars"></div>
+          <div id="rel"></div>
+          <div class="rel-note" id="rel-note" hidden></div>
+        </div>
+        <div class="card c5">
+          <h2>오행 분포</h2>
+          <div class="ohaeng" id="ohaeng"></div>
+          <p class="src" style="font-size:.85rem">壬이 두 개 · 월지 子 · 시지 申과 子가 반합 → 수(水)가 매우 강함</p>
+        </div>
+        <div class="card c12">
+          <h2>신살 중요도 <span class="muted" style="font-weight:400;letter-spacing:0">반복 여부 + 일주·월주와의 가까움 + 원국의 합충 기준 · 눌러서 자세히</span></h2>
+          <div class="ss" id="shinsal"></div>
+        </div>
+      </div>
+
+      <!-- 운 흐름 -->
+      <div data-subview="flow" hidden>
+        <div class="card" style="margin-bottom:16px">
+          <h2>운 흐름 <span class="muted" style="font-weight:400;letter-spacing:0">막대 = 원문 별점(5점) · 옅은 칸 = 범위 · 눌러서 자세히</span></h2>
+          <div class="timeline" id="timeline"></div>
+          <p class="src">명리적으로 2027년이 좋아도 실제 승진·연봉 상승을 보장한다는 의미는 아닙니다.</p>
+        </div>
+        <div class="card detail" id="period-detail"></div>
+      </div>
+    </section>
+
+    <!-- 커리어 -->
+    <section id="v-career" data-view="career" hidden>
+      <div class="view-head"><div><div class="tagline">“총명한 눈빛”</div><h1>커리어 · 職</h1><p>대한전선 IT혁신팀</p></div></div>
+      <div class="card placeholder"><div class="glyph">職</div><h3>준비 중</h3><p class="muted">어떤 내용을 담을지 정한 뒤 채웁니다.</p></div>
+    </section>
+
+    <!-- 투자 -->
+    <section id="v-invest" data-view="invest" hidden>
+      <div class="view-head"><div><div class="tagline">“여유와 편안함”</div><h1>투자 · 財</h1><p>자산과 투자 원칙</p></div></div>
+      <div class="card placeholder"><div class="glyph">財</div><h3>준비 중</h3><p class="muted">어떤 내용을 담을지 정한 뒤 채웁니다.</p></div>
+    </section>
+
+    <!-- 몸 -->
+    <section id="v-body" data-view="body" hidden>
+      <div class="view-head"><div><div class="tagline">“다부진 체구에서는 단단함을”</div><h1>신체 · 身</h1><p>골격을 넓혀 보이게: 어깨·등을 중심으로 프레임 키우기</p></div></div>
+      <div class="grid">
+        <div class="card c12">
+          <h2>운동 기록</h2>
+          <div class="tiles" id="tiles"></div>
+        </div>
+        <div class="card c7">
+          <div class="cal-head">
+            <button class="btn small" id="cal-prev" type="button" aria-label="이전 달">‹</button>
+            <b id="cal-title"></b>
+            <button class="btn small" id="cal-next" type="button" aria-label="다음 달">›</button>
+          </div>
+          <div class="cal" id="cal"></div>
+          <div class="legend" id="cal-legend"></div>
+        </div>
+        <div class="card c5">
+          <p class="sel-date" id="sel-date"></p>
+          <p class="sel-sub" id="sel-sub"></p>
+          <div id="parts"></div>
+        </div>
+        <div class="card c12">
+          <h2 id="count-title"></h2>
+          <div class="count-groups" id="counts"></div>
+          <div class="tip" id="frame-tip"></div>
+        </div>
+        <div class="card c7">
+          <h2>목표</h2>
+          <div class="goalbox">
+            <div><div class="k">체중</div><div class="v num" id="g-w"></div></div>
+            <div><div class="k">체지방률</div><div class="v num" id="g-f"></div></div>
+            <div><div class="k">제지방량 (근육·뼈 등)</div><div class="v num" id="g-ffm"></div></div>
+          </div>
+          <div class="phases">
+            <div class="phase" id="ph1"><b>1단계 · 벌크</b>근육 위주로 69~70kg까지 · 하루 약 2,600kcal, 단백질 100~135g</div>
+            <div class="phase" id="ph2"><b>2단계 · 컷</b>지방만 덜어내 68kg · 체지방률 12%</div>
+          </div>
+        </div>
+        <div class="card c5">
+          <h2>인바디 입력 <span class="muted" style="font-weight:400;letter-spacing:0">결과지 보고 직접 입력</span></h2>
+          <form id="inbody-form" class="form-row">
+            <label class="f">측정일<input type="date" id="ib-date" required /></label>
+            <label class="f">체중 kg<input type="number" id="ib-w" step="0.1" required /></label>
+            <label class="f">골격근량 kg<input type="number" id="ib-m" step="0.1" required /></label>
+            <label class="f">체지방률 %<input type="number" id="ib-f" step="0.1" required /></label>
+            <label class="f">기초대사량<input type="number" id="ib-bmr" step="1" /></label>
+            <button class="btn primary" type="submit">저장</button>
+          </form>
+        </div>
+        <div class="card c12">
+          <h2>인바디 변화 <span class="muted" style="font-weight:400;letter-spacing:0">점선 = 목표</span></h2>
+          <div class="minis" id="minis"></div>
+          <div class="table-wrap" style="margin-top:14px"><table id="ib-table"></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 정신 -->
+    <section id="v-mind" data-view="mind" hidden>
+      <div class="view-head"><div><div class="tagline">“부드러운 말투에서는 여유와 편안함이”</div><h1>정신 · 心</h1><p>남에게 보이기 위한 게 아니라, 내가 어떤 사람으로 살지 정하고 점검하는 곳</p></div></div>
+      <div class="grid">
+        <div class="card c12">
+          <h2>내가 그리는 나 <span class="muted" style="font-weight:400;letter-spacing:0">홈 맨 위에 표시 · 고치면 바로 저장</span></h2>
+          <textarea id="in-vision" rows="4" style="font-family:var(--display);font-size:1.1rem;line-height:1.75"></textarea>
+        </div>
+        <div class="card c6">
+          <h2>정체성 문장</h2>
+          <textarea id="in-identity" rows="3" style="font-family:var(--display);font-size:1.1rem"></textarea>
+          <div class="kw-edit" id="kw-edit"></div>
+          <div class="add-row"><input type="text" id="in-kw" maxlength="12" placeholder="키워드 추가" /><button class="btn" id="add-kw" type="button">추가</button></div>
+        </div>
+        <div class="card c6">
+          <h2>나의 원칙</h2>
+          <ol class="principles" id="principles"></ol>
+          <div class="add-row"><input type="text" id="in-principle" maxlength="80" placeholder="새 원칙" /><button class="btn" id="add-principle" type="button">추가</button></div>
+        </div>
+        <div class="card c5">
+          <h2>자기 점검 남기기 <span class="muted" style="font-weight:400;letter-spacing:0">1~5점</span></h2>
+          <form id="check-form" class="sliders"></form>
+        </div>
+        <div class="card c7">
+          <h2>점검 추이</h2>
+          <div class="trend" id="trend"></div>
+        </div>
+        <div class="card c12">
+          <h2>점검 메모</h2>
+          <div class="log" id="check-log"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const pad = (n) => String(n).padStart(2, "0");
+const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const TODAY = new Date();
+const fmt1 = (n) => (Math.round(n * 10) / 10).toFixed(1);
+
+/* ---------- 고정 프로필 ---------- */
+const PROFILE = { name: "Glow", birth: new Date(1987, 11, 26), birthText: "1987.12.26 17:05 (양력) · 울산", height: 168, mbti: "ISTJ", job: "대한전선 IT혁신팀" };
+const age = (() => { const b = PROFILE.birth; let a = TODAY.getFullYear() - b.getFullYear(); if (TODAY < new Date(TODAY.getFullYear(), b.getMonth(), b.getDate())) a--; return a; })();
+
+const PARTS = [
+  { k: "chest", n: "가슴", g: "big" }, { k: "shoulder", n: "어깨", g: "big" }, { k: "back", n: "등", g: "big" }, { k: "legs", n: "하체", g: "big" },
+  { k: "biceps", n: "이두", g: "small" }, { k: "triceps", n: "삼두", g: "small" }, { k: "forearm", n: "전완근", g: "small" }, { k: "abs", n: "복근", g: "small" },
+  { k: "cardio", n: "유산소", g: "cardio" },
+];
+const GROUPS = [{ g: "big", n: "대근육" }, { g: "small", n: "소근육" }, { g: "cardio", n: "유산소" }];
+const CHECK_ITEMS = [
+  { k: "solid", n: "단단함", hint: "체구·자세·컨디션" }, { k: "confidence", n: "자신감", hint: "눈빛·판단·결정" },
+  { k: "ease", n: "여유", hint: "말투·표정·편안함" }, { k: "principle", n: "원칙 지킴", hint: "오늘 원칙대로 했나" },
+];
+// 예전 점검(부드러운 태도)은 여유로 옮기고, 없는 항목은 비워 둔다
+function normChecks(list) {
+  return (list || []).map((c) => {
+    const s = { ...c.s };
+    if (s.ease == null && s.softness != null) s.ease = s.softness;
+    return { ...c, s: Object.fromEntries(CHECK_ITEMS.map((i) => [i.k, s[i.k] ?? null])) };
+  });
+}
+// 예전 기록의 "코어"는 복근으로 옮긴다
+function normWorkouts(w) {
+  const order = PARTS.map((p) => p.k);
+  const out = {};
+  for (const [d, ps] of Object.entries(w || {})) {
+    const list = new Set((ps || []).map((p) => (p === "core" ? "abs" : p)));
+    const sorted = order.filter((k) => list.has(k));
+    if (sorted.length) out[d] = sorted;
+  }
+  return out;
+}
+const partColor = (k) => `var(--p-${k})`;
+
+/* ---------- 예시 데이터 ---------- */
+function exampleWorkouts() {
+  const plan = { 1: ["chest", "triceps"], 2: ["back", "biceps", "forearm"], 4: ["shoulder", "abs", "cardio"], 6: ["legs", "abs"], 3: ["cardio"] };
+  const out = {};
+  const start = new Date(TODAY.getFullYear(), 0, 1);
+  for (let d = new Date(start); d < TODAY; d.setDate(d.getDate() + 1)) {
+    const p = plan[d.getDay()];
+    if (p && (d.getDate() * 7) % 10 !== 3) out[ymd(d)] = [...p];
+  }
+  return out;
+}
+const EXAMPLE = () => ({
+  example: true,
+  goal: { weight: 68, fat: 12 },
+  inbody: [
+    { date: "2026-06-28", w: 61.6, m: 26.8, f: 19.8, bmr: 1398 },
+    { date: "2026-07-27", w: 61.9, m: 27.1, f: 19.3, bmr: 1405 },
+    { date: "2026-08-29", w: 62.1, m: 27.5, f: 18.8, bmr: 1414 },
+    { date: "2026-09-30", w: 62.5, m: 27.9, f: 18.2, bmr: 1426 },
+  ],
+  workouts: exampleWorkouts(),
+  identity: "단단한 몸처럼 흔들리지 않고, 부드러운 태도로 사람을 대한다.",
+  vision: DEFAULT_VISION,
+  keywords: DEFAULT_KEYWORDS,
+  principles: [
+    "약속한 운동은 컨디션과 관계없이 간다. 강도만 조절한다.",
+    "말하기 전에 한 박자 쉬고, 결론은 부드럽게 전한다.",
+    "끼니마다 단백질을 먼저 챙긴다.",
+    "어깨를 펴고 천천히 걷는다.",
+    "비교는 어제의 나와만 한다.",
+  ],
+  checks: [
+    { date: "2026-08-10", s: { solid: 2, confidence: 2, ease: 3, principle: 3 }, note: "운동 루틴이 아직 들쭉날쭉. 저녁 식사량이 부족했다." },
+    { date: "2026-08-31", s: { solid: 3, confidence: 3, ease: 3, principle: 4 }, note: "주 4회 운동 지킴. 거울 볼 때 어깨 라인이 조금 달라 보인다." },
+    { date: "2026-09-21", s: { solid: 3, confidence: 3, ease: 4, principle: 4 }, note: "회의에서 반박할 때 한 박자 쉬고 말했더니 분위기가 덜 딱딱했다." },
+    { date: "2026-10-03", s: { solid: 4, confidence: 4, ease: 4, principle: 4 }, note: "벤치 무게가 올랐다. 셔츠 어깨가 조금 끼기 시작." },
+  ],
+});
+const DEFAULT_VISION = "그를 처음 보았을 때, 나는 그가 다른 이들과 다르다는 것을 느꼈다. 다부진 체구에서는 단단함을, 총명한 눈빛에서는 미래를 아는 듯한 자신감을 부드러운 말투에서는 여유와 편안함이 느껴졌다. 그 사람에게서 나오는 아우라가 그와 함께 있는 공간을 가득채웠다.";
+const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
+const EMPTY = () => ({ example: false, goal: { weight: 68, fat: 12 }, inbody: [], workouts: {}, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
+
+/* ---------- 저장 (이 브라우저에만) ---------- */
+// Apps Script 웹 앱으로 열리면 구글시트에, 파일로 그냥 열면 이 브라우저에 저장한다(미리보기).
+const KEY = "glow-dashboard:v1";
+const RUN = typeof google !== "undefined" && google.script && google.script.run;
+let S = RUN ? EMPTY() : (() => { try { return JSON.parse(localStorage.getItem(KEY)) || EXAMPLE(); } catch { return EXAMPLE(); } })();
+S.workouts = normWorkouts(S.workouts);
+S.checks = normChecks(S.checks);
+if (!S.vision) S.vision = DEFAULT_VISION;
+function setSync(text, bad) {
+  const el = $("#sync");
+  if (el) { el.textContent = text; el.classList.toggle("bad", !!bad); }
+  if (bad) toast(text);
+}
+let saveTimer;
+const save = () => {
+  if (!RUN) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} return; }
+  setSync("저장 대기…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    setSync("저장 중…");
+    google.script.run
+      .withSuccessHandler(() => setSync("시트에 저장됨"))
+      .withFailureHandler((e) => setSync("저장 실패: " + ((e && e.message) || e), true))
+      .saveAll(JSON.parse(JSON.stringify(S)));
+  }, 600);
+};
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 1800);
+}
+
+/* ---------- 탭 ---------- */
+let tab = "home";
+try { tab = localStorage.getItem(KEY + ":tab") || "home"; } catch {}
+function go(t) {
+  tab = t;
+  $$(".tab").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+  $$("[data-view]").forEach((v) => (v.hidden = v.dataset.view !== t));
+  try { localStorage.setItem(KEY + ":tab", t); } catch {}
+  window.scrollTo({ top: 0 });
+}
+$$(".tab").forEach((b) => b.addEventListener("click", () => go(b.dataset.tab)));
+
+/* ---------- 차트 ---------- */
+function lineChart(points, { target, unit = "", w = 640, h = 180, digits = 1 } = {}) {
+  if (!points.length) return `<p class="muted">아직 기록이 없어요. 인바디 결과를 입력하면 그래프가 그려집니다.</p>`;
+  const pl = 40, pr = 56, pt = 14, pb = 26;
+  const vals = points.map((p) => p.v).concat(target ?? []);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const padv = Math.max((hi - lo) * 0.15, 0.5);
+  lo -= padv; hi += padv;
+  const x = (i) => pl + (points.length === 1 ? (w - pl - pr) / 2 : (i * (w - pl - pr)) / (points.length - 1));
+  const y = (v) => pt + ((hi - v) * (h - pt - pb)) / (hi - lo);
+  const ticks = [0, 1, 2, 3].map((i) => lo + ((hi - lo) * i) / 3);
+  const path = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+  const area = `${path}L${x(points.length - 1)},${h - pb}L${x(0)},${h - pb}Z`;
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img">
+    ${ticks.map((t) => `<line class="grid-l" x1="${pl}" x2="${w - pr}" y1="${y(t)}" y2="${y(t)}"/><text x="${pl - 6}" y="${y(t) + 3}" text-anchor="end">${t.toFixed(digits)}</text>`).join("")}
+    ${target != null ? `<line class="target" x1="${pl}" x2="${w - pr}" y1="${y(target)}" y2="${y(target)}"/><text class="target-t" x="${w - pr + 6}" y="${y(target) + 3}">목표 ${target}${unit}</text>` : ""}
+    ${points.length > 1 ? `<path class="area" d="${area}"/>` : ""}
+    <path class="line" d="${path}"/>
+    ${points.map((p, i) => `<circle class="pt ${i === points.length - 1 ? "last" : ""}" cx="${x(i)}" cy="${y(p.v)}" r="${i === points.length - 1 ? 4.5 : 3}"/><text x="${x(i)}" y="${h - 8}" text-anchor="middle">${p.label}</text>`).join("")}
+  </svg>`;
+}
+
+/* ---------- 파생 값 ---------- */
+const sortedInbody = () => [...S.inbody].sort((a, b) => a.date.localeCompare(b.date));
+const latest = () => sortedInbody().at(-1);
+const first = () => sortedInbody()[0];
+const targetFFM = () => S.goal.weight * (1 - S.goal.fat / 100);
+
+/* ---------- 홈 ---------- */
+function renderHome() {
+  $("#me-sub").textContent = `${age}세 · ${PROFILE.mbti} · ${PROFILE.job}`;
+  $("#hello").textContent = `${PROFILE.name}`;
+  $("#today-line").textContent = `${TODAY.getFullYear()}.${pad(TODAY.getMonth() + 1)}.${pad(TODAY.getDate())} · ${age}세 · ${PROFILE.height}cm · ${PROFILE.mbti} · ${PROFILE.job}`;
+  renderVision();
+  $("#home-kw").innerHTML = S.keywords.map((k) => `<span>${esc(k)}</span>`).join("");
+
+  const L = latest(), F = first();
+  $("#h-goal-w").textContent = S.goal.weight;
+  $("#h-goal-f").textContent = S.goal.fat;
+  if (L) {
+    const wp = F && S.goal.weight !== F.w ? Math.max(0, Math.min(1, (L.w - F.w) / (S.goal.weight - F.w))) : 0;
+    const fp = F && F.f !== S.goal.fat ? Math.max(0, Math.min(1, (F.f - L.f) / (F.f - S.goal.fat))) : 0;
+    $("#h-w").innerHTML = `${fmt1(L.w)}<small>kg</small>`;
+    $("#h-w-bar").style.width = `${wp * 100}%`;
+    $("#h-w-from").textContent = `시작 ${fmt1(F.w)}kg`;
+    $("#h-w-left").textContent = `남은 ${fmt1(Math.max(0, S.goal.weight - L.w))}kg`;
+    $("#h-f").innerHTML = `${fmt1(L.f)}<small>%</small>`;
+    $("#h-f-bar").style.width = `${fp * 100}%`;
+    $("#h-f-from").textContent = `시작 ${fmt1(F.f)}%`;
+    $("#h-f-left").textContent = `남은 ${fmt1(Math.max(0, L.f - S.goal.fat))}%p`;
+    $("#h-m").innerHTML = `${fmt1(L.m)}<small>kg</small>`;
+    const dm = L.m - F.m;
+    $("#h-m-pill").textContent = `${dm >= 0 ? "+" : ""}${fmt1(dm)}kg`;
+    $("#h-m-pill").className = `pill ${dm > 0 ? "ok" : ""}`;
+    $("#h-ffm").textContent = `${fmt1(L.w * (1 - L.f / 100))} → ${fmt1(targetFFM())}kg`;
+    $("#h-last").textContent = L.date.replaceAll("-", ".");
+  } else {
+    ["#h-w", "#h-f", "#h-m"].forEach((s) => ($(s).innerHTML = `<span class="muted" style="font-size:1rem">인바디 입력 전</span>`));
+    ["#h-w-from", "#h-w-left", "#h-f-from", "#h-f-left", "#h-ffm", "#h-last", "#h-m-pill"].forEach((s) => ($(s).textContent = ""));
+    $("#h-w-bar").style.width = $("#h-f-bar").style.width = "0";
+  }
+  $("#h-chart").innerHTML = lineChart(sortedInbody().map((r) => ({ v: r.w, label: r.date.slice(5).replace("-", ".") })), { target: S.goal.weight, unit: "kg" });
+
+  // 이번 주
+  const monday = new Date(TODAY); monday.setDate(TODAY.getDate() - ((TODAY.getDay() + 6) % 7));
+  let days = 0;
+  $("#h-week").innerHTML = [...Array(7)].map((_, i) => {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const ps = S.workouts[ymd(d)] || [];
+    if (ps.length) days++;
+    return `<div class="d ${ymd(d) === ymd(TODAY) ? "today" : ""}"><b>${"월화수목금토일"[i]}</b><span class="num">${d.getDate()}</span><div class="dots">${ps.map((p) => `<i class="dot" style="background:${partColor(p)}"></i>`).join("")}</div></div>`;
+  }).join("");
+  $("#h-week-pill").textContent = `${days}일 운동`;
+  $("#h-legend").innerHTML = PARTS.map((p) => `<span><i class="dot" style="background:${partColor(p.k)}"></i>${p.n}</span>`).join("");
+
+  renderPrinciple();
+  renderHomeSaju();
+  const c = [...S.checks].sort((a, b) => a.date.localeCompare(b.date)).at(-1);
+  $("#h-check").textContent = c ? `${c.date.replaceAll("-", ".")} · 평균 ${fmt1(avg(Object.values(c.s)))}점` : "아직 없음";
+}
+const avg = (xs) => { const v = xs.filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+const VISION_MARKS = [["다부진 체구", ""], ["단단함", ""], ["총명한 눈빛", ""], ["미래를 아는 듯한 자신감", ""], ["부드러운 말투", ""], ["여유와 편안함", ""], ["아우라", "aura"]];
+function renderVision() {
+  let html = esc(S.vision || DEFAULT_VISION);
+  for (const [p, cls] of VISION_MARKS) html = html.split(p).join(`<em class="${cls}">${p}</em>`);
+  $("#home-vision").innerHTML = html;
+
+  // 네 기둥: 단단함=체중 목표 진행, 자신감·여유=최근 자기 점검, 아우라=셋의 평균
+  const L = latest(), F = first();
+  const wp = L && F && S.goal.weight !== F.w ? Math.max(0, Math.min(1, (L.w - F.w) / (S.goal.weight - F.w))) : null;
+  const mKey = ymd(TODAY).slice(0, 7);
+  const monthDays = Object.keys(S.workouts).filter((d) => d.startsWith(mKey)).length;
+  const cs = [...S.checks].sort((a, b) => a.date.localeCompare(b.date));
+  const lastOf = (k) => { for (let i = cs.length - 1; i >= 0; i--) if (cs[i].s[k] != null) return cs[i].s[k]; return null; };
+  const conf = lastOf("confidence"), ease = lastOf("ease");
+  const P = nowPeriod();
+  const line = (k, v) => `<div class="pc-line"><span>${k}</span><span>${v}</span></div>`;
+  const score = (v) => (v == null ? `<span class="muted" style="font-size:.9rem">점검 전</span>` : `${v}<small>/ 5</small>`);
+
+  $("#pc-solid").innerHTML = `<div class="pc-big">${wp == null ? `<span class="muted" style="font-size:.9rem">인바디 입력 전</span>` : `${Math.round(wp * 100)}<small>% 목표 체중까지</small>`}</div>
+    <div class="bar"><div style="width:${(wp ?? 0) * 100}%"></div></div>
+    ${line("이번 달 운동", `${monthDays}회`)}${line("최근 체중", L ? `${fmt1(L.w)} → ${S.goal.weight}kg` : "–")}`;
+  $("#pc-conf").innerHTML = `<div class="pc-big">${score(conf)}</div>
+    ${line("최근 점검 자신감", conf == null ? "–" : `${conf}점`)}${line("이번 달 사주", P ? `${P.gz} · ${P.kw}` : "–")}`;
+  $("#pc-ease").innerHTML = `<div class="pc-big">${score(ease)}</div>
+    ${line("최근 점검 여유", ease == null ? "–" : `${ease}점`)}${line("나의 원칙", `${S.principles.length}개`)}`;
+
+  const parts = [wp, conf == null ? null : conf / 5, ease == null ? null : ease / 5];
+  const a = avg(parts);
+  const C = 2 * Math.PI * 26;
+  $("#pc-aura").innerHTML = `<div class="aura-ring">
+      <svg viewBox="0 0 64 64" aria-label="아우라 ${a == null ? "기록 전" : Math.round(a * 100)}"><circle class="track" cx="32" cy="32" r="26"/><circle class="val" cx="32" cy="32" r="26" stroke-dasharray="${(a ?? 0) * C} ${C}"/><text class="ring-t" x="32" y="37" text-anchor="middle">${a == null ? "–" : Math.round(a * 100)}</text></svg>
+      <div style="font-size:.82rem;color:var(--muted)">단단함 · 자신감 · 여유가 함께 채워질 때 나오는 기운<br/>(세 기둥의 평균)</div>
+    </div>`;
+}
+document.addEventListener("click", (e) => { const b = e.target.closest(".pillar-card[data-goto]"); if (b) go(b.dataset.goto); });
+let pIdx = TODAY.getDate();
+function renderPrinciple() {
+  $("#h-principle").textContent = S.principles.length ? S.principles[pIdx % S.principles.length] : "정신에서 나의 원칙을 추가해 주세요.";
+}
+$("#next-principle").addEventListener("click", () => { pIdx++; renderPrinciple(); });
+
+/* ---------- 사주 (원문: 채주엽 사주_260903 — 대시보드 문구는 모두 원문에서 발췌) ---------- */
+let SAJU_RAW = "채주엽 사주_260903\n\n1. 결론 요약\n\n1987년 남성 명식 丁卯년 壬子월 己酉일 壬申시, 현재 戊申 대운 기준으로 보면, 2026년 9월 이후~2027년은 “커리어를 바꾸고 재정 구조를 다시 짜는 1년 반”에 가깝습니다.\n\n핵심만 먼저 말하면:\n\n* 2026년 9~10월: 커리어 성과·평가·직무 변화가 눈에 띄는 구간\n* 2026년 11~12월: 돈의 움직임은 커지지만 투자·지출·성과 압박도 커짐\n* 2027년: 2026년에 벌어진 변화를 “자리 잡게 만드는 해”\n* 재물운은 2026년보다 2027년이 안정적\n* 커리어는 2026년이 변화, 2027년이 정착·책임 확대\n* 사업·투자는 2026년 말보다 2027년에 규모와 구조를 재정비하는 편이 낫습니다.\n\n[추정] 가장 좋은 시나리오는\n2026년 하반기: 역할 변경·이직·새 기회 확보 → 2027년: 자리 안착·보상 현실화입니다.\n\n⸻\n\n2. 왜 이런 흐름인가\n\n이 남성은 己土 일간인데 원국에서 수(水)가 매우 강합니다.\n\n* 壬이 두 개\n* 월지 子\n* 시지 申과 子가 반합\n\n즉 재성, 다시 말해 돈·성과·시장·현실적인 책임이 강한 구조입니다.\n\n하지만 본인인 己土가 아주 강한 편은 아니기 때문에,\n\n돈 벌 기회가 많아지는 것\n= 반드시 편해지는 것\n\n은 아닙니다.\n\n오히려 기회가 많아질수록:\n\n* 책임 증가\n* 업무량 증가\n* 투자 고민 증가\n* 가족 경제 부담 증가\n\n가 같이 올 수 있습니다.\n\n현재 戊申 대운은 戊土가 일간을 도와주므로 예전보다 훨씬 적극적으로 움직일 수 있는 시기입니다. 다만 申이 원국의 수를 다시 강화하므로 활동 범위와 돈의 흐름도 동시에 커집니다.\n\n그래서 30대 후반~40대 초반은 이 남성에게 “돈을 크게 움직이기 시작하는 시기”로 볼 수 있습니다.\n\n⸻\n\n3. 2026년 9월 — 丁酉\n\n커리어 ★★★★☆\n\n재물 ★★★☆☆\n\n9월은 꽤 중요한 달입니다.\n\n丁은 편인, 酉는 식신 성향이 강합니다.\n\n즉,\n\n전문성 → 결과물\n\n이라는 흐름입니다.\n\n커리어에서는:\n\n* 평가\n* 발표\n* 프로젝트 결과 공개\n* 포트폴리오\n* 실적 인정\n* 직무 전문성 부각\n\n같은 일이 생기기 좋습니다.\n\n특히 원국 일지가 이미 酉이므로 酉가 반복됩니다.\n\n그래서 자신의 직업 정체성에 대해 생각이 많아질 수 있습니다.\n\n“나는 앞으로 이 일을 계속할 것인가?”\n\n“지금 역할보다 다른 역할이 맞지 않을까?”\n\n같은 생각입니다.\n\n이직은?\n\n가능합니다.\n\n다만 “지금 회사가 싫어서”보다는,\n\n내 전문성을 더 인정해주는 자리로 이동하는 것이 좋습니다.\n\n재물\n\n돈을 버는 것보다 자신의 가치를 높이는 데 초점이 있습니다.\n\n연봉 협상, 조건 협의, 성과급 결정 등에 유리할 수 있지만 충동 투자에는 특별히 좋은 달은 아닙니다.\n\n⸻\n\n4. 2026년 10월 — 戊戌\n\n커리어 ★★★★★\n\n재물 ★★★★☆\n\n2026년 하반기에서 상당히 괜찮은 달입니다.\n\n戊土가 들어오면서 약한 己土의 중심을 보완합니다.\n\n쉽게 말하면,\n\n“내가 무엇을 할 것인가”\n\n를 결정하기가 쉬워지는 달입니다.\n\n특히 좋게 작용할 수 있는 것은:\n\n* 이직 결정\n* 직무 전환\n* 승진·리더 역할\n* 장기 프로젝트 선택\n* 연봉 협상\n* 사업 구조 결정\n\n입니다.\n\n9월이 가능성을 보는 시기라면 10월은 결정하는 시기에 가깝습니다.\n\n재물\n\n돈의 구조를 정리하기 좋습니다.\n\n* 대출 점검\n* 투자 비중 조절\n* 현금 확보\n* 자산 리밸런싱\n* 부부 재정 계획\n\n같은 일에 적합합니다.\n\n[추정] 큰 투자를 한다면 단순 기대수익보다 현금흐름이 버틸 수 있는가를 기준으로 결정하는 것이 중요합니다.\n\n⸻\n\n5. 2026년 11월 — 己亥\n\n커리어 ★★★★☆\n\n재물 ★★★★☆~★★★★★\n\n이때부터 돈이 움직입니다.\n\n亥는 수이고 己土에게 재성입니다.\n\n따라서:\n\n* 추가 수입\n* 성과 보상\n* 부업\n* 투자 기회\n* 사업 제안\n* 외부 프로젝트\n\n등이 들어올 가능성이 있습니다.\n\n그런데 문제가 있습니다.\n\n이 남성은 원래도 수가 매우 강합니다.\n\n그래서 돈의 기회가 늘어나는 동시에 욕심도 같이 커질 수 있습니다.\n\n예를 들어:\n\n“이 정도면 더 투자해도 되겠다.”\n\n“이번 기회에 크게 해볼까?”\n\n“돈이 되니까 이것도 같이 하자.”\n\n가 될 수 있습니다.\n\n이 남성에게는 이런 때가 오히려 위험합니다.\n\n좋은 방향\n\n100을 벌 기회가 생겼다면\n200으로 베팅하기보다 50을 확실히 남기는 것이 중요합니다.\n\n⸻\n\n6. 2026년 12월 — 庚子\n\n커리어 ★★★☆☆\n\n재물 ★★★★☆\n\n리스크 ★★★★★\n\n주의해서 볼 달입니다.\n\n庚은 상관, 子는 강한 재성입니다.\n\n즉,\n\n아이디어 + 돈\n\n이 강하게 움직입니다.\n\n영업이나 실적을 내는 사람이라면 성과가 커질 수 있습니다.\n\n하지만 상관은 조직의 기준과 부딪칠 수도 있습니다.\n\n그래서:\n\n* 상사와 충돌\n* 조직에 대한 불만\n* “내가 직접 하는 게 낫겠다”는 생각\n* 사업·독립 욕구\n* 충동적인 퇴사\n\n가 강해질 수 있습니다.\n\n가장 조심할 것\n\n성과가 잘 나온다고 갑자기 독립하는 것입니다.\n\n또 재성까지 강하기 때문에:\n\n* 주식\n* 부동산\n* 사업\n* 레버리지\n\n등에서 공격적으로 움직이고 싶어질 수 있습니다.\n\n2026년 12월은 돈을 벌 수 있는 달이면서 동시에 돈을 크게 잃을 수도 있는 달이라는 식으로 보는 것이 좋습니다.\n\n수익률보다 리스크 관리가 중요합니다.\n\n⸻\n8. 2027년 丁未년 — 전체 흐름\n\n2027년은 상당히 중요합니다.\n\n丁未\n\n* 丁 = 편인\n* 未 = 비견\n\n입니다.\n\n2026년의 丙午가 강한 변화와 이동을 만들었다면, 2027년은 그 변화를 내 것으로 만드는 해에 가깝습니다.\n\n그리고 이 남성에게 부족했던 화·토가 동시에 들어옵니다.\n\n그래서 전체적으로 2026년보다 본인이 감당할 수 있는 힘이 좋아집니다.\n\n⸻\n\n9. 2027년 커리어운\n\n종합 ★★★★☆~★★★★★\n\n좋은 편입니다.\n\n특히 커리어에서 중요한 변화는 “직책과 책임”입니다.\n\n단순히 일을 많이 하는 것이 아니라,\n\n* 중요한 업무 담당\n* 리더 역할\n* 의사결정 권한 증가\n* 후배 관리\n* 전문성 인정\n* 회사에서 핵심 인력으로 자리 잡음\n\n같은 방향으로 가기 쉽습니다.\n\n즉 2026년에 이동했다면 2027년에는 새로운 자리에서 존재감을 만드는 흐름이 좋습니다.\n\n⸻\n\n이직한다면?\n\n2026년에 좋은 제안을 받고 이동했다면 2027년이 정착 기간이 될 수 있습니다.\n\n반대로 2026년에 이직하지 않았다고 해도 2027년에는:\n\n* 직무 확대\n* 승진\n* 조직 이동\n* 책임 증가\n\n등의 변화가 가능합니다.\n\n단, 2027년은 “새로운 걸 계속 찾아다니는 것”보다 한 자리에서 경력을 쌓아 올리는 것이 더 유리합니다.\n\n⸻\n\n10. 2027년의 숨은 커리어 포인트\n\n편인이 들어온다는 것이 중요합니다.\n\n편인은:\n\n* 전문지식\n* 공부\n* 새로운 기술\n* 자격\n* 연구\n* 독특한 전문분야\n\n와 연결됩니다.\n\n그래서 2027년에 이 남성에게 좋은 전략은,\n\n지금 하던 일을 더 잘하는 것\n\n뿐만 아니라\n\n지금 하는 일 + 새로운 전문성\n\n을 만드는 것입니다.\n\n예를 들어:\n\n* 금융 + 데이터\n* 영업 + 기술\n* 기획 + AI\n* 엔지니어링 + 관리\n* 기존 업무 + 자격증\n\n처럼 두 가지 능력을 결합하면 좋습니다.\n\n⸻\n\n11. 2027년 재물운\n\n종합 ★★★★☆\n\n2026년보다 제가 더 안정적으로 보는 부분입니다.\n\n이유는 돈 자체를 뜻하는 수가 더 많아져서가 아닙니다.\n\n오히려 돈을 감당하는 화·토가 보충되기 때문입니다.\n\n이게 중요한 차이입니다.\n\n2026년은:\n\n돈의 기회 ↑\n변화 ↑\n변동성 ↑\n\n이라면,\n\n2027년은:\n\n소득 안정 ↑\n관리능력 ↑\n축적 가능성 ↑\n\n쪽입니다.\n\n⸻\n\n12. 2027년에 좋은 돈의 형태\n\n특히 좋게 보는 건 본업 기반의 자산 형성입니다.\n\n예를 들어:\n\n* 연봉 상승\n* 성과급\n* 승진에 따른 급여 상승\n* 장기 적립\n* 대출 상환\n* 주택 구입 준비\n* 우량자산 장기 보유\n\n같은 것입니다.\n\n반대로 한방을 노리는 투기성 재물은 이 사람에게 항상 주의해야 합니다.\n\n원국의 재성이 이미 강하기 때문에 돈이 보이면 더 움직이고 싶어질 가능성이 있기 때문입니다.\n\n⸻\n\n13. 2027년 사업운\n\n사업 자체는 가능하지만 완전 독립보다 안정된 기반 위의 사업·부업이 더 좋습니다.\n\n예를 들어:\n\n좋은 형태\n\n본업 유지\n↓\n전문성 기반 부업\n↓\n고정 고객 확보\n↓\n매출 검증\n↓\n독립\n\n좋지 않은 형태\n\n회사 불만\n↓\n퇴사\n↓\n사업 아이템 찾음\n↓\n대출\n↓\n매출 확보\n\n입니다.\n\n이 사람은 돈을 만들 능력은 있는데, 재성이 강해서 사업이 커질수록 부담도 매우 빨리 커질 수 있습니다.\n\n⸻\n\n14. 2026 → 2027 커리어 흐름을 연결하면\n\n제가 가장 긍정적으로 보는 그림은 다음입니다.\n\n2026년 9월\n\n내 시장가치 확인\n\n↓\n\n2026년 10월\n\n직무·이직·커리어 방향 결정\n\n↓\n\n2026년 11월\n\n보상·수입 기회 확대\n\n↓\n\n2026년 12월\n\n욕심 조절\n\n↓\n\n2027년\n\n선택한 분야에서 자리 잡고 직책·보상 확대\n\n이 흐름입니다.\n\n따라서 2026년 말에 모든 것을 완성해야 하는 것이 아닙니다.\n\n2026년은 판을 바꾸고, 2027년은 그 판에서 돈을 만드는 해라고 이해하면 가장 쉽습니다.\n\n⸻\n\n15. 특히 조심해야 할 재물 패턴\n\n이 남성에게 가장 중요한 부분입니다.\n\n사주에서 재성이 강한 사람에게 흔히 나타나는 문제가:\n\n“돈을 못 버는 것”이 아니라\n“돈을 더 벌 수 있을 것 같아서 계속 움직이는 것”\n\n입니다.\n\n예를 들어 20% 수익이 나도,\n\n“여기서 조금만 더 넣으면…”\n\n이 되기 쉽습니다.\n\n그래서 앞으로 재산을 늘리려면 수익률보다 원칙이 중요합니다.\n\n추천 원칙\n\n* 투자금 총액 한도\n* 종목·자산별 최대 비중\n* 대출 한도\n* 손실 제한\n* 현금 비중\n* 배우자와 합의가 필요한 금액\n\n을 미리 정하는 것이 좋습니다.\n\n⸻\n\n16. 부부 재물운과 연결하면\n\n이 부분은 꽤 흥미롭습니다.\n\n남편은 돈의 기회를 발견하는 힘이 강하고, 아내는 이전에 본 것처럼 안정성과 관리·리스크 통제가 상대적으로 강합니다.\n\n따라서 부부 재테크 역할을 나누면:\n\n남편: 기회 발굴\n아내: 위험 검토\n공동: 최종 결정\n\n이 가장 좋습니다.\n\n특히 2026년 말에는 이 구조가 중요합니다.\n\n남편이\n\n“이거 괜찮아 보이는데?”\n\n라고 하면 아내는 그냥 반대하기보다,\n\n“최악의 경우 얼마까지 손실 가능한지 계산해보자.”\n\n라고 접근하는 것이 좋습니다.\n\n그러면 두 명식의 장점을 같이 사용할 수 있습니다.\n\n⸻\n\n17. 리스크 및 보완 포인트\n\n명리적으로 2027년이 좋아도 실제 승진·연봉 상승을 보장한다는 의미는 아닙니다.\n\n특히 이 남성은 재성이 강하므로 다음 세 가지를 혼동하지 않는 것이 중요합니다.\n\n매출 ≠ 순이익\n연봉 ≠ 순자산\n투자수익 ≠ 확정수익\n\n그리고 커리어에서는 단순히 연봉이 높은 자리보다:\n\n* 경력 가치\n* 안정성\n* 권한\n* 성장 가능성\n\n을 같이 보아야 합니다.\n\n⸻\n\n18. 추가 제안\n\n2026년 9월~2027년 말까지를 하나의 전략 기간으로 본다면 저는 이렇게 권하고 싶습니다.\n\n2026년 하반기\n\n선택\n\n커리어의 방향을 결정합니다.\n\n2027년\n\n집중\n\n새로운 방향의 전문성과 직책을 만듭니다.\n\n재물\n\n확대보다 축적\n\n수익을 늘리는 것 이상으로 현금과 순자산을 남깁니다.\n\n이렇게 가면 현재 戊申 대운의 장점을 상당히 잘 활용하는 방향입니다.\n\n⸻\n\n핵심 요약\n\n커리어\n\n* 2026.9~10: 움직이기 좋은 구간\n* 2026.11: 보상·외부기회 증가\n* 2026.12: 충동 퇴사·독립 주의\n* 2027: 직책·책임·전문성 확대, 자리 잡기 좋은 해\n\n재물\n\n* 2026년 말: 돈의 기회는 많지만 변동성이 큼\n* 2027년: 버는 돈을 실제 자산으로 남기기 더 좋은 해\n* 고위험 투자보다 본업 소득·장기자산·부채 관리가 유리\n\n응. 남편분은 화면상 원국이 丁卯년 / 壬子월 / 己酉일 / 壬申시, 일간은 己土로 보여. 이번에도 앱에 나온 신살을 전부 똑같이 보지 않고, 반복 여부 + 일주·월주와의 가까움 + 원국의 실제 합충과 겹치는지를 기준으로 중요도를 나눠서 볼게.\n\n먼저 결론부터 말하면, 남편분 신살은 네 사주와 분위기가 꽤 달라. 네 쪽이 화개·현침·문창문곡 → 자기세계·감각·디테일 쪽이 강했다면, 남편분은 도화 반복 + 문창·문곡 + 천을귀인 + 역마 + 귀문관살이 중심이라서 사람·정보·이동·판단·대외활동 쪽이 더 강하게 읽혀.\n\n가장 강하게 보는 1순위: 도화살 반복\n\n화면상 도화가 酉, 子, 卯에 반복돼 있어. 이건 신살 중에서 꽤 눈에 띄는 편이야.\n\n도화는 연애운으로만 보면 너무 좁고, 핵심은 사람의 관심을 끌고 관계망 안에서 존재감이 생기는 힘이야.\n\n남편분처럼 여러 지지에 도화가 반복되면 전통적으로는:\n\n사람을 상대하는 능력\n\n첫인상이나 존재감\n\n인간관계 확장\n\n네트워크를 통한 기회\n\n외부 사람과의 접점\n\n사회적 활동성\n\n\n으로 발현되기 쉬워.\n\n특히 이 원국은 申·酉 금 + 子 수가 강해서 도화가 단순히 외모나 감성적인 매력보다 말, 능력, 사회적 이미지, 일 처리 방식으로 사람을 끄는 형태에 가까워 보여.\n\n반면 그림자는 있어.\n\n사람이 많이 붙을수록:\n\n관계 피로\n\n여러 사람의 기대를 동시에 받음\n\n인간관계가 일과 돈에 얽힘\n\n\n이 생길 수 있어.\n\n그래서 남편분은 사람을 잘 활용하는 능력은 강하지만 관계의 경계를 잘 정하는 게 중요한 타입으로 읽혀.\n\n\n---\n\n2순위: 문창귀인 + 문곡귀인 + 학당귀인\n\n이 조합도 상당히 좋아.\n\n화면상:\n\n酉에 문창귀인 + 학당귀인\n\n卯에 문곡귀인\n\n\n이 있어.\n\n이 세 개를 같이 보면 핵심은:\n\n> 배운 것을 정리하고, 구조화하고, 말이나 문서로 전달하는 능력\n\n\n\n이야.\n\n문창은 보통:\n\n기획\n\n문서\n\n구조화\n\n설명\n\n논리\n\n\n쪽이고,\n\n문곡은:\n\n감각\n\n언어\n\n커뮤니케이션\n\n사람의 마음을 읽는 표현\n\n\n쪽으로 많이 봐.\n\n학당은:\n\n새로운 분야 습득\n\n공부\n\n전문성 쌓기\n\n\n와 연결하고.\n\n그래서 이 조합이 있는 사람은 단순히 머리가 좋다기보다 배워서 실무에 적용하고, 남에게 설명하는 데 강한 사람으로 읽는 게 좋아.\n\n특히 이 원국은 己土인데 金이 강해서 식상도 살아 있거든. 그래서 문창·문곡이 실제로 기획, 보고, 설득, 문서화, PM, 문제 구조화 같은 형태로 잘 발현될 수 있어.\n\n\n---\n\n3순위: 천을귀인 반복\n\n천을귀인이 申과 子 쪽에 반복돼 보여.\n\n천을귀인은 신살 중에서도 비교적 많이 중요하게 보는 편이야.\n\n전통적 의미는:\n\n어려울 때 도와주는 사람\n\n좋은 상사·멘토\n\n문제 해결의 실마리\n\n결정적 순간의 인적 도움\n\n\n이야.\n\n그런데 남편분은 이걸 “운이 좋아서 누가 다 해결해준다” 식으로 보면 안 되고, 평소에 쌓은 관계망에서 필요할 때 실제 도움을 받을 가능성으로 보는 게 더 자연스러워.\n\n특히 도화와 천을귀인이 같이 강하면:\n\n> 사람을 많이 만나고\n그중 일부가 실제 기회나 도움으로 연결되는 구조\n\n\n\n가 될 수 있어.\n\n즉 남편분은 사람을 통한 기회가 꽤 중요한 편이야.\n\n\n---\n\n4순위: 귀문관살 반복\n\n화면상 귀문관살이 酉와 子에 반복돼 있어.\n\n귀문관살은 이름 때문에 겁먹을 필요 없어. 현대적으로는 생각이 깊고, 남들이 지나치는 것을 혼자 계속 생각하는 성향으로 해석하는 게 더 실용적이야.\n\n잘 발현되면:\n\n복잡한 문제를 끝까지 생각함\n\n패턴을 잘 읽음\n\n사람의 속뜻을 눈치챔\n\n직관이 빠름\n\n혼자 사고를 깊게 확장함\n\n\n이 될 수 있어.\n\n반대로 지나치면:\n\n생각이 많음\n\n한 번 꽂힌 문제를 계속 돌려봄\n\n의심\n\n과도한 시뮬레이션\n\n걱정을 머릿속에서 키움\n\n\n으로 갈 수 있어.\n\n남편분 원국은 원래 水가 강해서 재물·현실 문제를 많이 생각하는 구조인데 귀문까지 반복되니까, 돈·일·미래 문제를 머릿속에서 계속 계산하는 성향이 강할 수 있어.\n\n이건 실제로 장점이 될 수도 있지만, 중요한 문제에서는 오히려 판단을 너무 오래 끌 수 있어.\n\n\n---\n\n5순위: 역마살\n\n시지 申에 역마살이 있어.\n\n역마는 보통:\n\n이동\n\n변화\n\n출장\n\n이직\n\n직무 변경\n\n환경 변화\n\n외부 활동\n\n\n과 관련돼.\n\n시지에 있다는 건 특히 중년 이후 미래 방향이나 커리어에서 이동성이 커질 수 있다고 보는 경우가 많아.\n\n그런데 이 사람은 원국 자체도 금수의 흐름이 강해서 한 자리에만 고정돼 있는 것보다 사람·조직·프로젝트·역할이 계속 바뀌는 환경에 적응력이 있는 편으로 읽혀.\n\n다만 역마가 있다고 계속 이직해야 한다는 뜻은 아니야.\n\n같은 회사 안에서도:\n\n조직 이동\n\n직무 확대\n\n프로젝트 변경\n\n출장·외부 협업\n\n\n처럼 충분히 발현돼.\n\n\n---\n\n6순위: 현침살\n\n시지 申에 현침이 있어.\n\n네 경우처럼 여러 개 반복되는 건 아니기 때문에, 너보다 현침의 비중은 낮게 봐.\n\n그래도 현침이 있으니:\n\n디테일\n\n오류 탐지\n\n정확성\n\n문제점 지적\n\n\n같은 능력은 있을 수 있어.\n\n다만 이 사람은 네 사주처럼 “완성도가 눈에 밟혀서 계속 다듬는 타입”보다 문제점을 빨리 찾아서 해결하려는 타입에 더 가까워 보여.\n\n즉 현침의 발현 방식도 조금 달라.\n\n\n---\n\n금여성\n\n시지 申에 있어.\n\n금여성은 전통적으로:\n\n품위\n\n좋은 대우\n\n생활의 격\n\n배우자복\n\n사회적 예우\n\n\n같은 의미로 보는 경우가 있어.\n\n하지만 현대 명리에서는 핵심 신살로 강하게 쓰진 않아.\n\n남편분에게는 “좋은 환경이나 대우를 선호하고, 스스로도 일정 수준 이상의 생활과 사회적 위치를 중요하게 여기는 성향” 정도로 보조하면 충분해.\n\n\n---\n\n월덕귀인\n\n천간 壬 쪽에 표시돼 있네.\n\n월덕귀인은 전통적으로 갈등을 부드럽게 풀거나, 인간관계에서 지나치게 큰 화를 피하게 해주는 기운으로 많이 봐.\n\n천을귀인과 함께 있으면 “사람 복”을 보조하는 신살로 볼 수 있어.\n\n즉 남편분은 인간관계에서 문제를 아예 안 만드는 사람이라기보다, 문제가 생겨도 누군가 중재해주거나 결국 해결될 여지가 있는 타입으로 읽는 편이 맞아.\n\n\n---\n\n황은대살\n\n시지에 있어.\n\n이건 네 경우와 마찬가지로 너무 크게 안 봐도 돼.\n\n전통적으로 윗사람·조직·제도권의 도움이나 인정과 연결해 보지만, 남편분에게는 이미 천을귀인 + 월덕귀인 + 문창·학당이 있어서 이 조합이 훨씬 중요해.\n\n황은대살 하나만 따로 해석할 필요는 거의 없어.\n\n\n---\n\n실제 영향 순서로 다시 정리하면\n\n중요도\t신살\t남편분에게 보이는 핵심\n\n매우 강함\t도화살\t사람·관계·대외활동·네트워크\n강함\t문창·문곡\t기획·표현·문서·설득\n강함\t천을귀인\t사람을 통한 도움·기회\n강함\t귀문관살\t깊은 사고·직관·과잉사고\n중강\t학당귀인\t학습·전문성\n중강\t역마살\t이동·직무변화·외부활동\n중간\t월덕귀인\t갈등 완화·인간관계 도움\n중간\t현침살\t문제 탐지·정확성\n보조\t금여성\t좋은 대우·생활 수준\n약하게 봄\t황은대살\t조직·윗사람의 도움\n\n\n\n---\n\n그런데 남편분도 신살보다 더 중요한 원국 구조가 있어\n\n첫 번째는 卯酉冲이야.\n\n연지 卯와 배우자궁 酉가 정면으로 충해.\n\n그래서 이 사람은 결혼 후에 특히:\n\n> 원가족의 기준\n↔\n부부가 만든 새로운 기준\n\n\n\n을 조정해야 하는 일이 많을 수 있어.\n\n집, 돈, 부모, 자녀, 생활방식 같은 문제에서 특히 그래.\n\n이건 도화살보다 결혼생활에서는 훨씬 중요해.\n\n\n---\n\n두 번째는 子酉破야.\n\n월지 子와 일지 酉 사이의 파가 있어서 일·돈 문제와 배우자 관계가 서로 연결되기 쉬운 구조야.\n\n회사나 투자에서 스트레스를 받으면 집에서도 예민해지거나, 부부관계가 불편하면 일·돈 판단까지 흔들릴 수 있어.\n\n그래서 이 사람은 “회사 문제는 회사에서 끝내는 것”이 정말 중요해.\n\n\n---\n\n세 번째는 申子 반합水야.\n\n시지 申과 월지 子가 물 기운을 키워.\n\n己土에게 水는 재성이니까:\n\n> 돈\n자산\n시장\n기회\n현실적 성과\n\n\n\n에 대한 관심이 원래 강한 편이야.\n\n그래서 신살의 도화·천을·문창이 모두 합쳐져도 결국 이 사람의 핵심 현실 주제는 **‘사람과 능력을 돈과 성과로 연결하는 것’**에 있어.\n\n\n---\n\n네 사주와 남편 사주의 신살 차이도 꽤 재미있어\n\n너는:\n\n> 화개 + 현침 + 문창·문곡 + 도화\n\n\n\n가 중심이라\n내면·취향·디테일·표현이 강하고,\n\n남편은:\n\n> 도화 + 천을 + 문창·문곡 + 역마 + 귀문\n\n\n\n이 중심이라\n사람·네트워크·정보·활동·현실 판단이 강해.\n\n그래서 아주 단순하게 표현하면:\n\n> 너는 깊게 보고 정교하게 만드는 사람\n남편은 밖에서 기회를 찾고 연결하는 사람\n\n\n\n에 가까워.\n\n둘이 잘 맞으면 꽤 상호보완적이야.\n\n너는 남편이 놓치는 디테일·위험·완성도를 보고, 남편은 네가 너무 오래 고민할 때 현실적으로 결정하고 움직이는 힘을 줄 수 있어.\n\n반대로 갈등할 때는:\n\n> 너: “좀 더 생각하고 제대로 해야 해.”\n남편: “일단 해보고 결과를 보자.”\n\n\n\n처럼 부딪칠 가능성이 있어.\n\n한 문장으로 정리하면\n\n남편분의 신살 조합은:\n\n> 사람을 통해 기회를 만들고, 정보를 빠르게 구조화하며, 외부 변화에 적응해 성과로 연결하는 타입\n\n으로 읽히는 게 가장 자연스러워.\n\n그리고 가장 큰 장점은 사람·정보·성과를 연결하는 능력, 가장 큰 약점은 돈·일·관계를 너무 많이 동시에 생각하면서 스스로 피로해지는 것이야.\n\n여기서 남편이 나야.";
+const PILLARS = "壬申己酉壬子丁卯"; // 시·일·월·년
+const STEM = { 甲: ["갑", "wood"], 乙: ["을", "wood"], 丙: ["병", "fire"], 丁: ["정", "fire"], 戊: ["무", "earth"], 己: ["기", "earth"], 庚: ["경", "metal"], 辛: ["신", "metal"], 壬: ["임", "water"], 癸: ["계", "water"] };
+const BRANCH = { 子: ["자", "water"], 丑: ["축", "earth"], 寅: ["인", "wood"], 卯: ["묘", "wood"], 辰: ["진", "earth"], 巳: ["사", "fire"], 午: ["오", "fire"], 未: ["미", "earth"], 申: ["신", "metal"], 酉: ["유", "metal"], 戌: ["술", "earth"], 亥: ["해", "water"] };
+const EL = { wood: "목(木)", fire: "화(火)", earth: "토(土)", metal: "금(金)", water: "수(水)" };
+const info = (ch) => STEM[ch] || BRANCH[ch] || ["?", "metal"];
+
+// 글자 위치: 0 시간 1 시지 2 일간 3 일지 4 월간 5 월지 6 연간 7 연지
+const TAGS = { 0: ["월덕"], 1: ["천을", "역마", "현침", "금여", "황은"], 3: ["도화", "문창", "학당", "귀문"], 4: ["월덕"], 5: ["도화", "천을", "귀문"], 7: ["도화", "문곡"] };
+
+const SHINSAL = [
+  { n: "도화살", lv: 5, lt: "매우 강함", pos: [3, 5, 7], key: "사람·관계·대외활동·네트워크",
+    sec: [["핵심", ["사람의 관심을 끌고 관계망 안에서 존재감이 생기는 힘"]],
+          ["발현", ["사람을 상대하는 능력", "첫인상이나 존재감", "인간관계 확장", "네트워크를 통한 기회", "외부 사람과의 접점", "사회적 활동성"]],
+          ["이 원국에서", ["외모나 감성적인 매력보다 말, 능력, 사회적 이미지, 일 처리 방식으로 사람을 끄는 형태"]],
+          ["그림자", ["관계 피로", "여러 사람의 기대를 동시에 받음", "인간관계가 일과 돈에 얽힘", "→ 관계의 경계를 잘 정하는 게 중요한 타입"]]] },
+  { n: "문창·문곡", lv: 4, lt: "강함", pos: [3, 7], key: "기획·표현·문서·설득",
+    sec: [["핵심", ["배운 것을 정리하고, 구조화하고, 말이나 문서로 전달하는 능력"]],
+          ["문창 (酉)", ["기획", "문서", "구조화", "설명", "논리"]],
+          ["문곡 (卯)", ["감각", "언어", "커뮤니케이션", "사람의 마음을 읽는 표현"]],
+          ["실제 발현", ["기획, 보고, 설득, 문서화, PM, 문제 구조화"]]] },
+  { n: "천을귀인", lv: 4, lt: "강함", pos: [1, 5], key: "사람을 통한 도움·기회",
+    sec: [["전통적 의미", ["어려울 때 도와주는 사람", "좋은 상사·멘토", "문제 해결의 실마리", "결정적 순간의 인적 도움"]],
+          ["이렇게 읽기", ["평소에 쌓은 관계망에서 필요할 때 실제 도움을 받을 가능성", "사람을 많이 만나고 그중 일부가 실제 기회나 도움으로 연결되는 구조"]]] },
+  { n: "귀문관살", lv: 4, lt: "강함", pos: [3, 5], key: "깊은 사고·직관·과잉사고",
+    sec: [["잘 발현되면", ["복잡한 문제를 끝까지 생각함", "패턴을 잘 읽음", "사람의 속뜻을 눈치챔", "직관이 빠름", "혼자 사고를 깊게 확장함"]],
+          ["지나치면", ["생각이 많음", "한 번 꽂힌 문제를 계속 돌려봄", "의심", "과도한 시뮬레이션", "걱정을 머릿속에서 키움"]],
+          ["주의", ["돈·일·미래 문제를 머릿속에서 계속 계산하는 성향", "중요한 문제에서는 오히려 판단을 너무 오래 끌 수 있음"]]] },
+  { n: "학당귀인", lv: 3, lt: "중강", pos: [3], key: "학습·전문성",
+    sec: [["연결", ["새로운 분야 습득", "공부", "전문성 쌓기"]]] },
+  { n: "역마살", lv: 3, lt: "중강", pos: [1], key: "이동·직무변화·외부활동",
+    sec: [["관련", ["이동", "변화", "출장", "이직", "직무 변경", "환경 변화", "외부 활동"]],
+          ["같은 회사 안에서도", ["조직 이동", "직무 확대", "프로젝트 변경", "출장·외부 협업", "→ 계속 이직해야 한다는 뜻은 아님"]]] },
+  { n: "월덕귀인", lv: 2, lt: "중간", pos: [0, 4], key: "갈등 완화·인간관계 도움",
+    sec: [["이렇게 읽기", ["문제가 생겨도 누군가 중재해주거나 결국 해결될 여지가 있는 타입", "천을귀인과 함께 “사람 복”을 보조"]]] },
+  { n: "현침살", lv: 2, lt: "중간", pos: [1], key: "문제 탐지·정확성",
+    sec: [["능력", ["디테일", "오류 탐지", "정확성", "문제점 지적"]],
+          ["발현 방식", ["문제점을 빨리 찾아서 해결하려는 타입"]]] },
+  { n: "금여성", lv: 1, lt: "보조", pos: [1], key: "좋은 대우·생활 수준",
+    sec: [["보조 해석", ["좋은 환경이나 대우를 선호하고, 스스로도 일정 수준 이상의 생활과 사회적 위치를 중요하게 여기는 성향"]]] },
+  { n: "황은대살", lv: 1, lt: "약하게 봄", pos: [1], key: "조직·윗사람의 도움",
+    sec: [["참고", ["천을귀인 + 월덕귀인 + 문창·학당 조합이 훨씬 중요", "따로 해석할 필요는 거의 없음"]]] },
+];
+
+// [커리어, 재물, 리스크] — [최소, 최대] 별점
+const PERIODS = [
+  { id: "2026-09", from: "2026-09", to: "2026-09", when: "2026.9", gz: "丁酉", kw: "내 시장가치 확인", r: { 커리어: [4, 4], 재물: [3, 3] },
+    lead: "전문성 → 결과물",
+    cols: [["커리어에서 생기기 좋은 일", ["평가", "발표", "프로젝트 결과 공개", "포트폴리오", "실적 인정", "직무 전문성 부각"]],
+           ["생각이 많아질 수 있음", ["“나는 앞으로 이 일을 계속할 것인가?”", "“지금 역할보다 다른 역할이 맞지 않을까?”"]],
+           ["이직은?", ["가능. 다만 “지금 회사가 싫어서”보다는 내 전문성을 더 인정해주는 자리로 이동하는 것이 좋음"]],
+           ["재물", ["돈을 버는 것보다 자신의 가치를 높이는 데 초점", "연봉 협상, 조건 협의, 성과급 결정 등에 유리", "충동 투자에는 특별히 좋은 달은 아님"]]] },
+  { id: "2026-10", from: "2026-10", to: "2026-10", when: "2026.10", gz: "戊戌", kw: "방향 결정", r: { 커리어: [5, 5], 재물: [4, 4] },
+    lead: "“내가 무엇을 할 것인가”를 결정하기가 쉬워지는 달",
+    cols: [["좋게 작용할 수 있는 것", ["이직 결정", "직무 전환", "승진·리더 역할", "장기 프로젝트 선택", "연봉 협상", "사업 구조 결정"]],
+           ["재물: 돈의 구조를 정리하기 좋음", ["대출 점검", "투자 비중 조절", "현금 확보", "자산 리밸런싱", "부부 재정 계획"]],
+           ["기준", ["[추정] 큰 투자를 한다면 단순 기대수익보다 현금흐름이 버틸 수 있는가를 기준으로"]]] },
+  { id: "2026-11", from: "2026-11", to: "2026-11", when: "2026.11", gz: "己亥", kw: "보상·수입 기회 확대", r: { 커리어: [4, 4], 재물: [4, 5] },
+    lead: "이때부터 돈이 움직입니다",
+    cols: [["들어올 가능성", ["추가 수입", "성과 보상", "부업", "투자 기회", "사업 제안", "외부 프로젝트"]],
+           ["욕심도 같이 커질 수 있음", ["“이 정도면 더 투자해도 되겠다.”", "“이번 기회에 크게 해볼까?”", "“돈이 되니까 이것도 같이 하자.”"]],
+           ["좋은 방향", ["100을 벌 기회가 생겼다면 200으로 베팅하기보다 50을 확실히 남기는 것"]]] },
+  { id: "2026-12", from: "2026-12", to: "2026-12", when: "2026.12", gz: "庚子", kw: "욕심 조절", r: { 커리어: [3, 3], 재물: [4, 4], 리스크: [5, 5] },
+    lead: "아이디어 + 돈 · 벌 수 있는 달이면서 크게 잃을 수도 있는 달",
+    cols: [["강해질 수 있는 것", ["상사와 충돌", "조직에 대한 불만", "“내가 직접 하는 게 낫겠다”는 생각", "사업·독립 욕구", "충동적인 퇴사"]],
+           ["가장 조심할 것", ["성과가 잘 나온다고 갑자기 독립하는 것"]],
+           ["공격적으로 움직이고 싶어질 수 있음", ["주식", "부동산", "사업", "레버리지", "→ 수익률보다 리스크 관리가 중요"]]] },
+  { id: "2027", from: "2027-01", to: "2027-12", when: "2027", gz: "丁未", kw: "자리 잡고 직책·보상 확대", r: { 커리어: [4, 5], 재물: [4, 4] },
+    lead: "2026년의 변화를 내 것으로 만드는 해 · 부족했던 화·토가 동시에 들어옴",
+    cols: [["커리어: 직책과 책임", ["중요한 업무 담당", "리더 역할", "의사결정 권한 증가", "후배 관리", "전문성 인정", "회사에서 핵심 인력으로 자리 잡음", "→ 새로운 걸 계속 찾아다니기보다 한 자리에서 경력을 쌓아 올리기"]],
+           ["숨은 포인트: 지금 하는 일 + 새로운 전문성", ["금융 + 데이터", "영업 + 기술", "기획 + AI", "엔지니어링 + 관리", "기존 업무 + 자격증"]],
+           ["재물: 2026 → 2027", ["2026: 돈의 기회 ↑ · 변화 ↑ · 변동성 ↑", "2027: 소득 안정 ↑ · 관리능력 ↑ · 축적 가능성 ↑"]],
+           ["좋은 돈의 형태: 본업 기반 자산 형성", ["연봉 상승", "성과급", "승진에 따른 급여 상승", "장기 적립", "대출 상환", "주택 구입 준비", "우량자산 장기 보유", "→ 한방을 노리는 투기성 재물은 항상 주의"]],
+           ["사업: 좋은 형태", ["본업 유지 → 전문성 기반 부업 → 고정 고객 확보 → 매출 검증 → 독립"]],
+           ["사업: 좋지 않은 형태", ["회사 불만 → 퇴사 → 사업 아이템 찾음 → 대출 → 매출 확보"]]] },
+];
+const ym = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+const nowPeriod = () => PERIODS.find((p) => ym(TODAY) >= p.from && ym(TODAY) <= p.to);
+
+function segs([lo, hi], risk) {
+  return `<div class="segs ${risk ? "risk" : ""}">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= lo ? "on" : i <= hi ? "maybe" : ""}"></i>`).join("")}</div>`;
+}
+const rates = (r) => Object.entries(r).map(([k, v]) => `<div class="rate"><span>${k}</span>${segs(v, k === "리스크")}</div>`).join("");
+const fmtItem = (t) => esc(t).replace(/^\[추정\]\s*/, '<span class="est">추정</span>');
+
+let subTab = "sum";
+let selPeriod = (nowPeriod() || PERIODS[0]).id;
+let selShinsal = null;
+let selRel = null;
+
+function goSub(s) {
+  subTab = s;
+  $$("[data-sub]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.sub === s)));
+  $$("[data-subview]").forEach((v) => (v.hidden = v.dataset.subview !== s));
+}
+$$("[data-sub]").forEach((b) => b.addEventListener("click", () => goSub(b.dataset.sub)));
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-goto-saju]");
+  if (!b) return;
+  go("saju"); goSub(b.dataset.gotoSaju);
+});
+
+const RELS = [
+  { id: "hap", a: 0, b: 2, depth: 30, cls: "water", name: "申子 반합(水)", text: "시지 申과 월지 子가 물 기운을 키워. 己土에게 水는 재성이니까 돈·자산·시장·기회·현실적 성과에 대한 관심이 원래 강한 편이야." },
+  { id: "pa", a: 1, b: 2, depth: 14, cls: "earth", name: "子酉 파", find: "子酉破", spouse: true },
+  { id: "chung", a: 1, b: 3, depth: 46, cls: "fire", name: "卯酉 충", find: "卯酉冲", spouse: true },
+];
+
+function renderSaju() {
+  $("#saju-sub").textContent = `${PROFILE.birthText} · 남 · 일간 己土 · 대운 戊申`;
+  const chars = [...PILLARS];
+  const hl = new Set(selShinsal != null ? SHINSAL[selShinsal].pos : []);
+  const caps = ["시주", "일주", "월주", "연주"];
+  $("#pillars").innerHTML = caps.map((cap, i) => {
+    const cell = (idx) => { const c = chars[idx]; const [ko, el] = info(c); return `<div class="ch el-${el} ${hl.has(idx) ? "hl" : ""}"><b>${c}</b><span>${ko} · ${EL[el].slice(0, 1)}</span></div>`; };
+    const tags = (idx) => `<div class="tags">${(TAGS[idx] || []).map((t) => `<span>${t}</span>`).join("")}</div>`;
+    return `<div class="pillar ${i === 1 ? "day" : ""}"><div class="cap">${cap}${i === 1 ? " · 나" : ""}</div>${cell(i * 2)}${tags(i * 2)}${cell(i * 2 + 1)}${tags(i * 2 + 1)}</div>`;
+  }).join("");
+
+  // 지지 관계선: 기둥 중심 x = 50, 150, 250, 350
+  const X = (i) => 50 + i * 100;
+  $("#rel").innerHTML = `<svg class="rel" viewBox="0 0 400 66" role="img" aria-label="지지 관계">
+    ${RELS.map((r) => {
+      const x1 = X(r.a), x2 = X(r.b), mx = (x1 + x2) / 2;
+      return `<path d="M${x1},2 Q${mx},${r.depth * 2} ${x2},2" style="stroke:var(--${r.cls})" ${r.id === "pa" ? 'stroke-dasharray="4 3"' : ""}/>
+        <g data-rel="${r.id}"><rect class="bg" x="${mx - 38}" y="${r.depth - 7}" width="76" height="15" rx="7"/><text x="${mx}" y="${r.depth + 4}" text-anchor="middle" style="fill:var(--${r.cls})">${r.name}</text></g>`;
+    }).join("")}
+  </svg>`;
+  const rel = RELS.find((r) => r.id === selRel);
+  $("#rel-note").hidden = !rel;
+  if (rel) $("#rel-note").innerHTML = rel.spouse
+    ? `<b>${rel.name}</b> · 배우자·결혼생활과 관련된 해석이라 원문에만 두었습니다. <button class="linkbtn" type="button" data-raw-find="${rel.find}">원문에서 보기</button>`
+    : `<b>${rel.name}</b> · ${esc(rel.text)}`;
+
+  const count = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
+  chars.forEach((c) => count[info(c)[1]]++);
+  const max = Math.max(...Object.values(count));
+  $("#ohaeng").innerHTML = Object.keys(count).map((k) =>
+    `<div class="r" style="color:var(--${k})"><span style="color:var(--ink)">${EL[k]}</span><div class="bar"><div style="width:${(count[k] / max) * 100}%"></div></div><b class="num" style="color:var(--ink)">${count[k]}</b></div>`).join("");
+
+  $("#shinsal").innerHTML = SHINSAL.map((s, i) => `
+    <div class="ss-row">
+      <button type="button" data-ss="${i}" aria-expanded="${selShinsal === i}">
+        <span class="nm">${s.n}</span>
+        <span style="display:flex;flex-direction:column;gap:2px"><span class="lv">${[1, 2, 3, 4, 5].map((k) => `<i class="${k <= s.lv ? "on" : ""}"></i>`).join("")}</span><span class="lv-t">${s.lt}</span></span>
+        <span class="key">${s.key}</span>
+        <span class="pos">${s.pos.map((p) => chars[p]).join(" ")}</span>
+      </button>
+      ${selShinsal === i ? `<div class="ss-body">${s.sec.map(([h, items]) => `<div><h4>${h}</h4><ul class="plain">${items.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>`).join("")}</div>` : ""}
+    </div>`).join("");
+
+  const cur = nowPeriod();
+  $("#timeline").innerHTML = PERIODS.map((p) => {
+    const past = ym(TODAY) > p.to, now = p === cur;
+    return `<button type="button" class="period ${past ? "past" : ""} ${now ? "now" : ""}" data-period="${p.id}" aria-pressed="${p.id === selPeriod}">
+      <span class="when"><span>${p.when}</span>${now ? '<span class="pill iron">지금</span>' : p.r.리스크 ? '<span class="pill warn">주의</span>' : ""}</span>
+      <span class="gz">${p.gz}</span><span class="kw">${p.kw}</span>${rates(p.r)}</button>`;
+  }).join("");
+  const P = PERIODS.find((p) => p.id === selPeriod);
+  $("#period-detail").innerHTML = `
+    <h2>${P.when} · ${P.gz}</h2>
+    <p class="lead">${esc(P.lead)}</p>
+    <div class="cols">${P.cols.map(([h, items]) => `<div><h3>${h}</h3><ul class="plain">${items.map((t) => `<li>${fmtItem(t)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+}
+$("#v-saju").addEventListener("click", (e) => {
+  const ss = e.target.closest("[data-ss]");
+  if (ss) { selShinsal = selShinsal === +ss.dataset.ss ? null : +ss.dataset.ss; renderSaju(); return; }
+  const pr = e.target.closest("[data-period]");
+  if (pr) { selPeriod = pr.dataset.period; renderSaju(); return; }
+  const rl = e.target.closest("[data-rel]");
+  if (rl) { selRel = selRel === rl.dataset.rel ? null : rl.dataset.rel; renderSaju(); }
+});
+
+function renderHomeSaju() {
+  const p = nowPeriod();
+  $("#h-saju-card").hidden = !p;
+  if (!p) return;
+  const top = p.cols[0];
+  $("#h-saju").innerHTML = `
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px"><span style="font-family:var(--display);font-size:1.8rem">${p.gz}</span><b>${p.kw}</b></div>
+    <p class="muted" style="margin:0 0 10px;font-size:.88rem">${esc(p.lead)}</p>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">${rates(p.r)}</div>
+    <div class="chips">${top[1].slice(0, 6).map((t) => `<span>${esc(t)}</span>`).join("")}</div>`;
+}
+
+/* ---------- 원문 보기 ---------- */
+const HEAD_RE = /^(\d+\.\s.+|핵심 요약|이직한다면\?|\d순위:.+|금여성|월덕귀인|황은대살|실제 영향 순서로 다시 정리하면|그런데 남편분도 .+|네 사주와 남편 사주의 .+|한 문장으로 정리하면)$/;
+function openRaw(find) {
+  const lines = SAJU_RAW.split("\n");
+  const toc = [];
+  const q = (find ?? $("#raw-q")?.value ?? "").trim();
+  const mark = (s) => { const e = esc(s); return q ? e.split(esc(q)).join(`<mark>${esc(q)}</mark>`) : e; };
+  const html = lines.map((l, i) => {
+    if (HEAD_RE.test(l.trim()) || i === 0) { toc.push([i, l.trim()]); return `<span class="h" id="raw-${i}">${mark(l)}</span>`; }
+    return mark(l);
+  }).join("\n");
+  let el = $("#reader");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "reader"; el.className = "reader";
+    el.innerHTML = `<div class="reader-bar"><b>원문 · 채주엽 사주_260903</b><input type="text" id="raw-q" placeholder="원문에서 찾기" /><span class="muted num" id="raw-n" style="font-size:.8rem"></span><button class="btn" type="button" id="raw-close">닫기</button></div>
+      <div class="reader-main"><nav class="toc" id="raw-toc"></nav><div class="raw" id="raw-scroll"><div class="raw-inner" id="raw-body"></div></div></div>`;
+    document.body.append(el);
+    $("#raw-close").addEventListener("click", () => el.remove());
+    $("#raw-q").addEventListener("input", () => openRaw());
+    $("#raw-toc").addEventListener("click", (e) => { const b = e.target.closest("[data-line]"); if (b) $("#raw-" + b.dataset.line).scrollIntoView({ block: "start" }); });
+    document.addEventListener("keydown", function onKey(e) { if (e.key === "Escape" && $("#reader")) { $("#reader").remove(); document.removeEventListener("keydown", onKey); } });
+  }
+  if (find != null) $("#raw-q").value = find;
+  $("#raw-toc").innerHTML = toc.map(([i, t]) => `<button type="button" data-line="${i}">${esc(t)}</button>`).join("");
+  $("#raw-body").innerHTML = html;
+  const n = q ? $$("#raw-body mark").length : 0;
+  $("#raw-n").textContent = q ? `${n}건` : "";
+  if (n) $("#raw-body mark").scrollIntoView({ block: "center" });
+}
+$("#open-raw").addEventListener("click", () => openRaw(""));
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-raw-find]"); if (b) openRaw(b.dataset.rawFind); });
+
+/* ---------- 몸 ---------- */
+let calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+let selDate = ymd(TODAY);
+
+function renderBody() {
+  const L = latest();
+  $("#g-w").textContent = `${L ? fmt1(L.w) : "–"} → ${S.goal.weight}kg`;
+  $("#g-f").textContent = `${L ? fmt1(L.f) : "–"} → ${S.goal.fat}%`;
+  $("#g-ffm").textContent = `${L ? fmt1(L.w * (1 - L.f / 100)) : "–"} → ${fmt1(targetFFM())}kg`;
+  const bulking = !L || L.w < 69;
+  $("#ph1").classList.toggle("on", bulking);
+  $("#ph2").classList.toggle("on", !bulking);
+
+  const rows = sortedInbody();
+  const lab = (r) => r.date.slice(5).replace("-", ".");
+  const minis = [
+    { t: "체중", u: "kg", v: (r) => r.w, target: S.goal.weight },
+    { t: "골격근량", u: "kg", v: (r) => r.m },
+    { t: "체지방률", u: "%", v: (r) => r.f, target: S.goal.fat },
+  ];
+  $("#minis").innerHTML = minis.map((m) => `<div class="mini"><h3>${m.t}<span class="num">${rows.length ? fmt1(m.v(rows.at(-1))) + m.u : ""}</span></h3>${lineChart(rows.map((r) => ({ v: m.v(r), label: lab(r) })), { target: m.target, unit: m.u, w: 320, h: 150 })}</div>`).join("");
+  $("#ib-table").innerHTML = rows.length
+    ? `<thead><tr><th>측정일</th><th>체중</th><th>골격근량</th><th>체지방률</th><th>제지방량</th><th>기초대사량</th><th></th></tr></thead><tbody>${[...rows].reverse().map((r) =>
+        `<tr><td class="num">${r.date.replaceAll("-", ".")}</td><td class="num">${fmt1(r.w)}</td><td class="num">${fmt1(r.m)}</td><td class="num">${fmt1(r.f)}%</td><td class="num">${fmt1(r.w * (1 - r.f / 100))}</td><td class="num">${r.bmr ?? "–"}</td><td><button class="btn small" data-del="${r.date}" type="button">삭제</button></td></tr>`).join("")}</tbody>`
+    : "";
+  $("#ib-date").value ||= ymd(TODAY);
+  renderCalendar();
+}
+
+$("#inbody-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const r = { date: $("#ib-date").value, w: +$("#ib-w").value, m: +$("#ib-m").value, f: +$("#ib-f").value, bmr: $("#ib-bmr").value ? +$("#ib-bmr").value : null };
+  S.inbody = S.inbody.filter((x) => x.date !== r.date).concat(r);
+  save(); renderBody(); renderHome(); toast("인바디 기록을 저장했어요");
+  ["#ib-w", "#ib-m", "#ib-f", "#ib-bmr"].forEach((s) => ($(s).value = ""));
+});
+$("#ib-table").addEventListener("click", (e) => {
+  const d = e.target.dataset.del;
+  if (!d) return;
+  S.inbody = S.inbody.filter((x) => x.date !== d);
+  save(); renderBody(); renderHome(); toast("기록을 삭제했어요");
+});
+
+const trainedDays = (prefix) => Object.keys(S.workouts).filter((d) => d.startsWith(prefix) && S.workouts[d].length).length;
+
+function renderCalendar() {
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  const mKey = `${y}-${pad(m + 1)}`;
+  $("#cal-title").textContent = `${y}년 ${m + 1}월`;
+
+  // 이번 달 부위별 횟수
+  const cnt = Object.fromEntries(PARTS.map((p) => [p.k, 0]));
+  for (const [d, ps] of Object.entries(S.workouts)) if (d.startsWith(mKey)) ps.forEach((p) => cnt[p] !== undefined && cnt[p]++);
+  const monthDays = trainedDays(mKey);
+  const yearDays = trainedDays(`${y}-`);
+  const isCurMonth = y === TODAY.getFullYear() && m === TODAY.getMonth();
+  const nDays = new Date(y, m + 1, 0).getDate();
+  const weeks = Math.max(1, (isCurMonth ? TODAY.getDate() : nDays) / 7);
+  const monday = new Date(TODAY); monday.setDate(TODAY.getDate() - ((TODAY.getDay() + 6) % 7));
+  let weekDays = 0;
+  for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(monday.getDate() + i); if ((S.workouts[ymd(d)] || []).length) weekDays++; }
+  const prev = new Date(y, m - 1, 1);
+  const prevDays = trainedDays(`${prev.getFullYear()}-${pad(prev.getMonth() + 1)}`);
+  const diff = monthDays - prevDays;
+
+  $("#tiles").innerHTML = `
+    <div class="tile hero"><div class="k">${m + 1}월 운동</div><div class="v">${monthDays}<small>회</small></div><div class="s">지난달 ${prevDays}회 · ${diff >= 0 ? "+" : ""}${diff}</div></div>
+    <div class="tile"><div class="k">${y}년 누적</div><div class="v">${yearDays}<small>회</small></div><div class="s">${y === TODAY.getFullYear() ? `월평균 ${fmt1(yearDays / (TODAY.getMonth() + 1))}회` : "&nbsp;"}</div></div>
+    <div class="tile"><div class="k">이번 주</div><div class="v">${weekDays}<small>회</small></div><div class="s">월~일 기준</div></div>
+    <div class="tile"><div class="k">${m + 1}월 주당 평균</div><div class="v">${fmt1(monthDays / weeks)}<small>회</small></div><div class="s">${isCurMonth ? "오늘까지 기준" : "한 달 기준"}</div></div>`;
+
+  // 달력: 운동한 날은 칸 전체를 채워 강조
+  const startPad = (new Date(y, m, 1).getDay() + 6) % 7;
+  let html = "월화수목금토일".split("").map((d) => `<div class="wd">${d}</div>`).join("");
+  for (let i = 0; i < startPad; i++) html += `<button class="day out" tabindex="-1" aria-hidden="true"></button>`;
+  for (let d = 1; d <= nDays; d++) {
+    const key = `${mKey}-${pad(d)}`;
+    const ps = S.workouts[key] || [];
+    const label = ps.length ? `${m + 1}월 ${d}일, ${ps.map((p) => PARTS.find((x) => x.k === p).n).join(", ")}` : `${m + 1}월 ${d}일, 기록 없음`;
+    html += `<button class="day ${ps.length ? "on" : ""} ${key === ymd(TODAY) ? "today" : ""}" data-date="${key}" aria-pressed="${key === selDate}" aria-label="${label}" type="button">
+      <span class="num">${d}</span>${ps.length ? `<span class="cnt">${ps.length}</span>` : ""}
+      <div class="dots">${ps.map((p) => `<i class="dot" style="background:${partColor(p)}"></i>`).join("")}</div></button>`;
+  }
+  $("#cal").innerHTML = html;
+  $("#cal-legend").innerHTML = PARTS.map((p) => `<span><i class="dot" style="background:${partColor(p.k)}"></i>${p.n}</span>`).join("");
+
+  // 선택한 날의 부위 체크 — 각 부위 옆에 그 달 누적 횟수
+  const sel = new Date(selDate + "T00:00");
+  const selMonth = selDate.slice(0, 7);
+  const selCnt = Object.fromEntries(PARTS.map((p) => [p.k, 0]));
+  for (const [d, ps] of Object.entries(S.workouts)) if (d.startsWith(selMonth)) ps.forEach((p) => selCnt[p] !== undefined && selCnt[p]++);
+  const done = S.workouts[selDate] || [];
+  $("#sel-date").textContent = `${sel.getMonth() + 1}월 ${sel.getDate()}일 (${"일월화수목금토"[sel.getDay()]})${selDate === ymd(TODAY) ? " · 오늘" : ""}`;
+  $("#sel-sub").textContent = done.length ? `${done.length}개 부위 운동 · 누르면 체크/해제` : "운동한 부위를 눌러 체크하세요";
+  $("#parts").innerHTML = GROUPS.map((g) => `
+    <div class="pgroup"><h4>${g.n}</h4><div class="parts ${g.g === "cardio" ? "one" : ""}">${PARTS.filter((p) => p.g === g.g).map((p) => {
+      const on = done.includes(p.k);
+      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? `background:${partColor(p.k)}` : `border-left:4px solid ${partColor(p.k)}`}"><span class="ck"></span><span class="pn">${p.n}</span><span class="pc">${selMonth.slice(5).replace(/^0/, "")}월 ${selCnt[p.k]}회</span></button>`;
+    }).join("")}</div></div>`).join("");
+
+  // 이번 달 부위별 횟수 (그룹별)
+  const mx = Math.max(1, ...Object.values(cnt));
+  $("#count-title").innerHTML = `${m + 1}월 부위별 횟수 <span class="pill iron">${monthDays}회 운동</span>`;
+  $("#counts").innerHTML = GROUPS.map((g) => `<div><h4>${g.n}</h4><div class="counts">${PARTS.filter((p) => p.g === g.g).map((p) =>
+    `<div class="r" style="color:${partColor(p.k)}"><span style="color:var(--ink)">${p.n}</span><div class="bar"><div style="width:${(cnt[p.k] / mx) * 100}%"></div></div><span class="num" style="color:var(--muted);text-align:right">${cnt[p.k]}회 · 주${fmt1(cnt[p.k] / weeks)}</span></div>`).join("")}</div></div>`).join("");
+  const weak = ["shoulder", "back"].filter((k) => cnt[k] / weeks < 2);
+  $("#frame-tip").innerHTML = weak.length
+    ? `<span class="pill warn">보강 필요</span> 프레임을 넓히는 핵심은 어깨·등입니다. ${m + 1}월 <b>${weak.map((k) => PARTS.find((p) => p.k === k).n).join("·")}</b>이(가) 주 2회에 못 미쳐요.`
+    : `<span class="pill ok">좋아요</span> 어깨·등을 주 2회 이상 하고 있어요. 프레임 확장 페이스를 유지하세요.`;
+}
+$("#cal").addEventListener("click", (e) => {
+  const b = e.target.closest("button.day[data-date]");
+  if (!b) return;
+  selDate = b.dataset.date; renderCalendar();
+});
+$("#parts").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-part]");
+  if (!b) return;
+  const cur = new Set(S.workouts[selDate] || []);
+  cur.has(b.dataset.part) ? cur.delete(b.dataset.part) : cur.add(b.dataset.part);
+  S.workouts[selDate] = PARTS.map((p) => p.k).filter((k) => cur.has(k));
+  if (!S.workouts[selDate].length) delete S.workouts[selDate];
+  save(); renderCalendar(); renderHome();
+});
+$("#cal-prev").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCalendar(); });
+$("#cal-next").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCalendar(); });
+
+/* ---------- 정신 ---------- */
+
+function renderMind() {
+  $("#in-identity").value = S.identity;
+  $("#in-vision").value = S.vision || DEFAULT_VISION;
+  $("#kw-edit").innerHTML = S.keywords.map((k, i) => `<span>${esc(k)}<button type="button" data-kw="${i}" aria-label="${esc(k)} 삭제">×</button></span>`).join("");
+  $("#principles").innerHTML = S.principles.length
+    ? S.principles.map((p, i) => `<li><span>${esc(p)}</span><button type="button" data-p="${i}">삭제</button></li>`).join("")
+    : `<li style="grid-template-columns:1fr"><span class="muted">흔들릴 때 돌아볼 원칙을 추가해 보세요.</span></li>`;
+
+  $("#check-form").innerHTML = CHECK_ITEMS.map((c) =>
+    `<div class="sl"><label for="sl-${c.k}">${c.n}<small style="display:block;color:var(--muted);font-size:.72rem">${c.hint}</small></label><input type="range" min="1" max="5" step="1" value="3" id="sl-${c.k}" /><b class="num" id="slv-${c.k}">3</b></div>`).join("") +
+    `<textarea id="check-note" rows="2" placeholder="한 줄 메모 (선택)"></textarea><div><button class="btn primary" type="submit">점검 저장</button></div>`;
+
+  const cs = [...S.checks].sort((a, b) => a.date.localeCompare(b.date));
+  $("#trend").innerHTML = CHECK_ITEMS.map((c) =>
+    `<div class="mini"><h3>${c.n}<span class="num">${cs.length && cs.at(-1).s[c.k] != null ? cs.at(-1).s[c.k] + "점" : ""}</span></h3>${lineChart(cs.filter((x) => x.s[c.k] != null).map((x) => ({ v: x.s[c.k], label: x.date.slice(5).replace("-", ".") })), { w: 320, h: 120, digits: 0 })}</div>`).join("");
+  $("#check-log").innerHTML = cs.length
+    ? [...cs].reverse().map((x) => `<div class="e"><div class="when num">${x.date.replaceAll("-", ".")} · ${CHECK_ITEMS.filter((c) => x.s[c.k] != null).map((c) => `${c.n} ${x.s[c.k]}`).join(" · ")}</div>${esc(x.note || "")}</div>`).join("")
+    : `<p class="muted">아직 점검 기록이 없어요.</p>`;
+}
+$("#in-vision").addEventListener("change", (e) => { S.vision = e.target.value.trim() || DEFAULT_VISION; save(); renderHome(); toast("내가 그리는 나를 저장했어요"); });
+$("#in-identity").addEventListener("change", (e) => { S.identity = e.target.value.trim(); save(); renderHome(); toast("정체성 문장을 저장했어요"); });
+$("#add-kw").addEventListener("click", () => {
+  const v = $("#in-kw").value.trim();
+  if (!v) return;
+  S.keywords.push(v); $("#in-kw").value = ""; save(); renderMind(); renderHome();
+});
+$("#kw-edit").addEventListener("click", (e) => { const i = e.target.dataset.kw; if (i == null) return; S.keywords.splice(+i, 1); save(); renderMind(); renderHome(); });
+$("#add-principle").addEventListener("click", () => {
+  const v = $("#in-principle").value.trim();
+  if (!v) return;
+  S.principles.push(v); $("#in-principle").value = ""; save(); renderMind(); renderHome(); toast("원칙을 추가했어요");
+});
+$("#principles").addEventListener("click", (e) => { const i = e.target.dataset.p; if (i == null) return; S.principles.splice(+i, 1); save(); renderMind(); renderHome(); });
+$("#check-form").addEventListener("input", (e) => { if (e.target.type === "range") $("#slv-" + e.target.id.slice(3)).textContent = e.target.value; });
+$("#check-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const s = Object.fromEntries(CHECK_ITEMS.map((c) => [c.k, +$("#sl-" + c.k).value]));
+  S.checks = S.checks.filter((x) => x.date !== ymd(TODAY)).concat({ date: ymd(TODAY), s, note: $("#check-note").value.trim() });
+  save(); renderMind(); renderHome(); toast("오늘의 점검을 저장했어요");
+});
+
+/* ---------- 빠른 기록 ---------- */
+$("#quick-btn").addEventListener("click", (e) => { e.stopPropagation(); $("#quick-menu").hidden = !$("#quick-menu").hidden; });
+document.addEventListener("click", () => ($("#quick-menu").hidden = true));
+$("#quick-menu").addEventListener("click", (e) => {
+  const q = e.target.dataset.q;
+  if (!q) return;
+  if (q === "workout") { go("body"); selDate = ymd(TODAY); calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); renderCalendar(); $("#cal").scrollIntoView({ block: "center" }); }
+  if (q === "inbody") { go("body"); $("#ib-w").focus(); }
+  if (q === "check") { go("mind"); $("#check-form").scrollIntoView({ block: "center" }); }
+});
+
+/* ---------- 예시 데이터 ---------- */
+function renderExampleBar() { $("#example-bar").hidden = !S.example; }
+$("#clear-examples").addEventListener("click", () => {
+  const keep = { identity: S.identity, vision: S.vision, keywords: S.keywords };
+  S = { ...EMPTY(), ...keep };
+  save(); renderAll(); toast("예시 데이터를 지웠어요");
+});
+
+function renderAll() { renderExampleBar(); renderHome(); renderSaju(); renderBody(); renderMind(); }
+renderAll();
+go(tab);
+if (RUN) {
+  setSync("시트에서 불러오는 중…");
+  google.script.run
+    .withSuccessHandler((d) => {
+      S = { ...EMPTY(), ...d, example: false };
+      S.workouts = normWorkouts(S.workouts);
+      S.checks = normChecks(S.checks);
+      if (!S.vision) S.vision = DEFAULT_VISION;
+      if (d.saju) SAJU_RAW = d.saju;
+      renderAll();
+      setSync("시트와 동기화됨");
+    })
+    .withFailureHandler((e) => setSync("불러오기 실패: " + ((e && e.message) || e), true))
+    .getData();
+}
+</script>
+</body>
+</html>
