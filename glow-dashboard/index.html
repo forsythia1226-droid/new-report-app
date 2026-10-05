@@ -143,6 +143,8 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; col
 .week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .week-strip .d { text-align: center; font-size: .75rem; color: var(--muted); display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .week-strip .d.today b { color: var(--iron); }
+.week-strip b.sun { color: var(--fire); }
+.week-strip b.sat { color: var(--water); }
 .dots { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; min-height: 10px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: .78rem; color: var(--muted); margin-top: 10px; }
@@ -300,6 +302,13 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .cal-head b { font-size: 1.05rem; }
 .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
 .cal .wd { text-align: center; font-size: .72rem; color: var(--muted); padding-bottom: 4px; }
+.cal .wd.sun, .cal .sun .num, .cal .hol .num { color: var(--fire); }
+.cal .wd.sat, .cal .sat .num { color: var(--water); }
+.cal button.day.on .num { color: inherit; }
+.cal button.day.other { background: transparent; opacity: .45; }
+.cal .hname { font-size: .6rem; color: var(--fire); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.1; }
+.cal .hname.obs { color: var(--muted); }
+.cal button.day .top { display: flex; gap: 4px; align-items: baseline; max-width: calc(100% - 12px); min-width: 0; }
 .cal button.day {
   height: 52px; min-width: 0; border: 0; background: var(--bg); border-radius: 8px;
   display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 5px 6px; font-size: .8rem;
@@ -329,13 +338,6 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .today-card .todo span { background: var(--iron-soft); color: var(--iron); border-radius: 99px; padding: 4px 12px; font-weight: 600; font-size: .9rem; }
 .done-btn { border: 2px solid var(--iron); background: var(--surface); color: var(--iron); border-radius: 12px; padding: 12px 16px; font-weight: 700; font-size: 1rem; display: flex; justify-content: center; gap: 8px; align-items: center; }
 .done-btn[aria-pressed="true"] { background: var(--iron); color: var(--surface); }
-.routine { width: 100%; border-collapse: collapse; font-size: .85rem; }
-.routine th, .routine td { text-align: center; padding: 6px 4px; border-bottom: 1px solid var(--line); }
-.routine th:first-child, .routine td:first-child { text-align: left; font-weight: 600; width: 44px; }
-.routine thead th { font-weight: 500; color: var(--muted); font-size: .78rem; }
-.routine thead th.grp { color: var(--iron); font-size: .72rem; letter-spacing: .04em; border-bottom: 0; padding-bottom: 0; }
-.routine input { width: 18px; height: 18px; accent-color: var(--iron); cursor: pointer; }
-.routine-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
 .tile { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; min-width: 0; }
 .tile .k { font-size: .78rem; color: var(--muted); }
 .tile .v { font-family: var(--mono); font-size: 1.7rem; line-height: 1.2; }
@@ -660,15 +662,6 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
           <div id="parts"></div>
         </div>
         <div class="card c12">
-          <h2>주간 루틴 <span class="muted" style="font-weight:400;letter-spacing:0">요일마다 할 부위를 정해 두고 한 달에 한 번에 채우기</span></h2>
-          <div class="table-wrap"><table class="routine" id="routine"></table></div>
-          <div class="routine-actions">
-            <button class="btn primary" id="fill-month" type="button">이 달의 빈 날에 루틴 채우기</button>
-            <button class="btn" id="clear-month" type="button">이 달 계획 비우기</button>
-            <span class="muted" style="font-size:.8rem" id="routine-note"></span>
-          </div>
-        </div>
-        <div class="card c12">
           <h2>인바디 입력 <span class="muted" style="font-weight:400;letter-spacing:0">결과지 보고 직접 입력</span></h2>
           <form id="inbody-form" class="form-row">
             <label class="f">측정일<input type="date" id="ib-date" required /></label>
@@ -758,7 +751,7 @@ const PART_NAME = Object.fromEntries(PARTS.map((p) => [p.k, p.n]));
 const PART_SHORT = { chest: "가", shoulder: "어", back: "등", legs: "하", biceps: "이", triceps: "삼", forearm: "전", abs: "복" };
 const sortParts = (ks) => { const set = new Set((ks || []).map((k) => (k === "core" ? "abs" : k))); return PARTS.map((p) => p.k).filter((k) => set.has(k)); };
 const planText = (ks) => ks.map((k) => PART_NAME[k]).join(" · ");
-// done: 운동한 날 / plans: 날짜별 계획 부위 / routine: 요일(0=일)별 기본 부위
+// done: 운동한 날 / plans: 날짜별 계획 부위
 // 예전 기록(날짜별 운동한 부위 목록)은 "운동한 날"로만 옮긴다
 function normBody(s) {
   const done = {};
@@ -766,10 +759,8 @@ function normBody(s) {
   for (const [d, v] of Object.entries(s.workouts || {})) if (Array.isArray(v) ? v.length : v) done[d] = true;
   const plans = {};
   for (const [d, ps] of Object.entries(s.plans || {})) { const k = sortParts(ps); if (k.length) plans[d] = k; }
-  const routine = {};
-  for (let i = 0; i < 7; i++) routine[i] = sortParts((s.routine || {})[i]);
-  s.done = done; s.plans = plans; s.routine = routine;
-  delete s.workouts;
+  s.done = done; s.plans = plans;
+  delete s.workouts; delete s.routine;
   return s;
 }
 
@@ -785,7 +776,7 @@ function exampleBody() {
     if (d.getMonth() === TODAY.getMonth()) plans[ymd(d)] = [...p];
     if (d < TODAY && (d.getDate() * 7) % 10 !== 3) done[ymd(d)] = true;
   }
-  return { done, plans, routine: EXAMPLE_ROUTINE };
+  return { done, plans };
 }
 const EXAMPLE = () => ({
   example: true,
@@ -818,7 +809,7 @@ const EXAMPLE = () => ({
 const DEFAULT_VISION = "그를 처음 보았을 때, 나는 그가 다른 이들과 다르다는 것을 느꼈다. 다부진 체구에서는 단단함을, 총명한 눈빛에서는 미래를 아는 듯한 자신감을 부드러운 말투에서는 여유와 편안함이 느껴졌다. 그 사람에게서 나오는 아우라가 그와 함께 있는 공간을 가득채웠다.";
 const DEFAULT_YEAR_BASE = { month: "2026-09", count: 100 };
 const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
-const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, routine: {}, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
+const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
 
 /* ---------- 저장 (이 브라우저에만) ---------- */
 // Apps Script 웹 앱으로 열리면 구글시트에, 파일로 그냥 열면 이 브라우저에 저장한다(미리보기).
@@ -930,13 +921,13 @@ function renderHome() {
   $("#h-chart").innerHTML = lineChart(sortedInbody().map((r) => ({ v: r.w, label: r.date.slice(5).replace("-", ".") })), { target: S.goal.weight, unit: "kg" });
 
   // 이번 주
-  const monday = new Date(TODAY); monday.setDate(TODAY.getDate() - ((TODAY.getDay() + 6) % 7));
+  const monday = new Date(TODAY); monday.setDate(TODAY.getDate() - TODAY.getDay()); // 일요일 시작
   let days = 0;
   $("#h-week").innerHTML = [...Array(7)].map((_, i) => {
     const d = new Date(monday); d.setDate(monday.getDate() + i);
     const k = ymd(d), did = !!S.done[k], plan = S.plans[k] || [];
     if (did) days++;
-    return `<div class="d ${k === ymd(TODAY) ? "today" : ""}"><b>${"월화수목금토일"[i]}</b><span class="num">${d.getDate()}</span><span class="star" style="min-height:1em">${did ? "★" : ""}</span><span style="font-size:.68rem;color:var(--muted)">${plan.map((p) => PART_SHORT[p]).join("")}</span></div>`;
+    return `<div class="d ${k === ymd(TODAY) ? "today" : ""}"><b class="${i === 0 ? "sun" : i === 6 ? "sat" : ""}">${"일월화수목금토"[i]}</b><span class="num">${d.getDate()}</span><span class="star" style="min-height:1em">${did ? "★" : ""}</span><span style="font-size:.68rem;color:var(--muted)">${plan.map((p) => PART_SHORT[p]).join("")}</span></div>`;
   }).join("");
   $("#h-week-pill").textContent = `${days}일 운동`;
 
@@ -1315,6 +1306,33 @@ function yearCount(y) {
 const trainedDays = (prefix) => Object.keys(S.done).filter((d) => d.startsWith(prefix)).length;
 const dayLabel = (k) => { const d = new Date(k + "T00:00"); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${"일월화수목금토"[d.getDay()]})`; };
 
+// 내장 공휴일 표 (구글 캘린더를 못 읽을 때만 사용). off=false는 쉬는 날이 아닌 기념일.
+const KR_HOLIDAYS = {
+  "2026-01-01": "신정", "2026-02-16": "설날 연휴", "2026-02-17": "설날", "2026-02-18": "설날 연휴", "2026-03-01": "삼일절", "2026-03-02": "대체공휴일",
+  "2026-05-05": "어린이날", "2026-05-24": "부처님오신날", "2026-05-25": "대체공휴일", "2026-06-03": "지방선거", "2026-06-06": "현충일",
+  "2026-08-15": "광복절", "2026-08-17": "대체공휴일", "2026-09-24": "추석 연휴", "2026-09-25": "추석", "2026-09-26": "추석 연휴",
+  "2026-10-03": "개천절", "2026-10-05": "대체공휴일", "2026-10-09": "한글날", "2026-12-25": "성탄절",
+  "2027-01-01": "신정", "2027-02-06": "설날 연휴", "2027-02-07": "설날", "2027-02-08": "설날 연휴", "2027-02-09": "대체공휴일", "2027-03-01": "삼일절",
+  "2027-05-05": "어린이날", "2027-05-13": "부처님오신날", "2027-06-06": "현충일", "2027-08-15": "광복절", "2027-08-16": "대체공휴일",
+  "2027-09-14": "추석 연휴", "2027-09-15": "추석", "2027-09-16": "추석 연휴", "2027-10-03": "개천절", "2027-10-04": "대체공휴일",
+  "2027-10-09": "한글날", "2027-10-11": "대체공휴일", "2027-12-25": "성탄절", "2027-12-27": "대체공휴일",
+};
+const holidayCache = {}; // 연도 → { "yyyy-mm-dd": {name, off} } (구글 캘린더에서 읽은 값)
+function holidayOf(key) {
+  const g = holidayCache[key.slice(0, 4)];
+  if (g) return g[key] || null;
+  return KR_HOLIDAYS[key] ? { name: KR_HOLIDAYS[key], off: true } : null;
+}
+function ensureHolidays(year) {
+  if (!RUN || holidayCache[year] || ensureHolidays.pending[year]) return;
+  ensureHolidays.pending[year] = true;
+  google.script.run
+    .withSuccessHandler((map) => { if (map && Object.keys(map).length) { holidayCache[year] = map; renderCalendar(); } })
+    .withFailureHandler(() => {}) // 권한·네트워크 문제면 내장 표를 그대로 쓴다
+    .getHolidays(year);
+}
+ensureHolidays.pending = {};
+
 function renderToday() {
   const k = ymd(TODAY), plan = S.plans[k] || [], did = !!S.done[k];
   $("#today-card").innerHTML = `
@@ -1334,9 +1352,9 @@ function renderCalendar() {
   const monthDays = trainedDays(mKey);
   const yc = yearCount(y);
   const nDays = new Date(y, m + 1, 0).getDate();
-  const monday = new Date(TODAY); monday.setDate(TODAY.getDate() - ((TODAY.getDay() + 6) % 7));
+  const sunday = new Date(TODAY); sunday.setDate(TODAY.getDate() - TODAY.getDay());
   let weekDays = 0;
-  for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(monday.getDate() + i); if (S.done[ymd(d)]) weekDays++; }
+  for (let i = 0; i < 7; i++) { const d = new Date(sunday); d.setDate(sunday.getDate() + i); if (S.done[ymd(d)]) weekDays++; }
   const prev = new Date(y, m - 1, 1);
   const prevKey = `${prev.getFullYear()}-${pad(prev.getMonth() + 1)}`;
   const prevDays = trainedDays(prevKey);
@@ -1349,20 +1367,25 @@ function renderCalendar() {
   $("#tiles").innerHTML = `
     <div class="tile hero"><div class="k">${m + 1}월 운동</div><div class="v">${monthDays}<small>회</small></div><div class="s">${prevBeforeApp ? "지난달은 앱 기록 이전" : `지난달 ${prevDays}회 · ${diff >= 0 ? "+" : ""}${diff}`}</div></div>
     <div class="tile"><div class="k">${y}년 누적</div><div class="v">${yc.total}<small>회</small></div><div class="s">${yc.base != null ? `${yc.baseMonth}월까지 ${yc.base}회 + 이후 ${yc.after}회` : y === TODAY.getFullYear() ? `월평균 ${fmt1(yc.total / (TODAY.getMonth() + 1))}회` : "&nbsp;"}</div></div>
-    <div class="tile"><div class="k">이번 주</div><div class="v">${weekDays}<small>회</small></div><div class="s">월~일 기준</div></div>
+    <div class="tile"><div class="k">이번 주</div><div class="v">${weekDays}<small>회</small></div><div class="s">일~토 기준</div></div>
     <div class="tile"><div class="k">${m + 1}월 계획 달성</div><div class="v">${hit}<small>/ ${plannedSoFar.length}일</small></div><div class="s">${plannedSoFar.length ? `${Math.round((hit / plannedSoFar.length) * 100)}% · 오늘까지 계획한 날 기준` : "아직 계획 없음"}</div></div>`;
 
-  // 달력: 운동한 날 = 칸 채움 + ★, 계획 부위는 글자로
-  const startPad = (new Date(y, m, 1).getDay() + 6) % 7;
-  let html = "월화수목금토일".split("").map((d) => `<div class="wd">${d}</div>`).join("");
-  for (let i = 0; i < startPad; i++) html += `<button class="day out" tabindex="-1" aria-hidden="true"></button>`;
-  for (let d = 1; d <= nDays; d++) {
-    const key = `${mKey}-${pad(d)}`;
+  // 달력: 네이버·구글 캘린더처럼 일요일 시작, 앞뒤 달 날짜까지 채워 주 단위로 보여 준다
+  ensureHolidays(y);
+  const first = new Date(y, m, 1);
+  const gridStart = new Date(y, m, 1 - first.getDay());
+  const weeksShown = Math.ceil((first.getDay() + nDays) / 7);
+  let html = "일월화수목금토".split("").map((d, i) => `<div class="wd ${i === 0 ? "sun" : i === 6 ? "sat" : ""}">${d}</div>`).join("");
+  for (let i = 0; i < weeksShown * 7; i++) {
+    const date = new Date(gridStart); date.setDate(gridStart.getDate() + i);
+    const key = ymd(date), d = date.getDate(), other = date.getMonth() !== m;
     const did = !!S.done[key], plan = S.plans[key] || [];
     const missed = !did && plan.length && key < todayKey;
-    const label = `${m + 1}월 ${d}일${plan.length ? `, 계획 ${planText(plan)}` : ""}${did ? ", 운동함" : ""}`;
-    html += `<button class="day ${did ? "on" : ""} ${missed ? "missed" : ""} ${key === todayKey ? "today" : ""}" data-date="${key}" aria-pressed="${key === selDate}" aria-label="${label}" type="button">
-      <span class="num">${d}</span>${did ? '<span class="star">★</span>' : ""}
+    const hol = holidayOf(key);
+    const cls = [did && "on", missed && "missed", key === todayKey && "today", other && "other", date.getDay() === 0 && "sun", date.getDay() === 6 && "sat", hol && hol.off && "hol"].filter(Boolean).join(" ");
+    const label = `${date.getMonth() + 1}월 ${d}일${hol ? ` ${hol.name}` : ""}${plan.length ? `, 계획 ${planText(plan)}` : ""}${did ? ", 운동함" : ""}`;
+    html += `<button class="day ${cls}" data-date="${key}" aria-pressed="${key === selDate}" aria-label="${label}" type="button">
+      <span class="top"><span class="num">${d}</span>${hol ? `<span class="hname ${hol.off ? "" : "obs"}">${esc(hol.name)}</span>` : ""}</span>${did ? '<span class="star">★</span>' : ""}
       ${plan.length ? `<span class="plan"><span class="l">${plan.map((p) => PART_NAME[p]).join("·")}</span><span class="s">${plan.map((p) => PART_SHORT[p]).join("")}</span></span>` : ""}</button>`;
   }
   $("#cal").innerHTML = html;
@@ -1381,20 +1404,6 @@ function renderCalendar() {
       return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}"><span class="ck"></span><span class="pn">${p.n}</span></button>`;
     }).join("")}</div></div>`).join("");
 
-  renderRoutine();
-}
-
-function renderRoutine() {
-  const order = [1, 2, 3, 4, 5, 6, 0];
-  const big = PARTS.filter((p) => p.g === "big"), small = PARTS.filter((p) => p.g === "small");
-  $("#routine").innerHTML = `<thead>
-      <tr><th class="grp"></th><th class="grp" colspan="${big.length}">대근육</th><th class="grp" colspan="${small.length}">소근육</th></tr>
-      <tr><th></th>${[...big, ...small].map((p) => `<th>${p.n}</th>`).join("")}</tr></thead>
-    <tbody>${order.map((dow) => `<tr><td>${"일월화수목금토"[dow]}</td>${[...big, ...small].map((p) =>
-      `<td><input type="checkbox" data-dow="${dow}" data-rpart="${p.k}" aria-label="${"일월화수목금토"[dow]}요일 ${p.n}" ${S.routine[dow].includes(p.k) ? "checked" : ""}/></td>`).join("")}</tr>`).join("")}</tbody>`;
-  const y = calMonth.getFullYear(), m = calMonth.getMonth();
-  $("#fill-month").textContent = `${m + 1}월의 빈 날에 루틴 채우기`;
-  $("#clear-month").textContent = `${m + 1}월 계획 비우기`;
 }
 
 function toggleDone(k) {
@@ -1406,7 +1415,9 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-to
 $("#cal").addEventListener("click", (e) => {
   const b = e.target.closest("button.day[data-date]");
   if (!b) return;
-  selDate = b.dataset.date; renderCalendar();
+  selDate = b.dataset.date;
+  if (b.classList.contains("other")) { const d = new Date(selDate + "T00:00"); calMonth = new Date(d.getFullYear(), d.getMonth(), 1); }
+  renderCalendar();
 });
 $("#parts").addEventListener("click", (e) => {
   const b = e.target.closest("[data-part]");
@@ -1416,35 +1427,6 @@ $("#parts").addEventListener("click", (e) => {
   const next = sortParts([...cur]);
   if (next.length) S.plans[selDate] = next; else delete S.plans[selDate];
   save(); renderCalendar(); renderHome();
-});
-$("#routine").addEventListener("change", (e) => {
-  const t = e.target;
-  if (!t.dataset.rpart) return;
-  const dow = +t.dataset.dow, cur = new Set(S.routine[dow]);
-  t.checked ? cur.add(t.dataset.rpart) : cur.delete(t.dataset.rpart);
-  S.routine[dow] = sortParts([...cur]);
-  save();
-  $("#routine-note").textContent = "루틴을 저장했어요. 달력에 반영하려면 '빈 날에 루틴 채우기'를 누르세요.";
-});
-$("#fill-month").addEventListener("click", () => {
-  const y = calMonth.getFullYear(), m = calMonth.getMonth();
-  const nDays = new Date(y, m + 1, 0).getDate();
-  let n = 0;
-  for (let d = 1; d <= nDays; d++) {
-    const date = new Date(y, m, d), key = ymd(date), r = S.routine[date.getDay()];
-    if (!S.plans[key] && r.length) { S.plans[key] = [...r]; n++; }
-  }
-  save(); renderCalendar(); renderHome();
-  toast(n ? `${m + 1}월 ${n}일에 루틴을 채웠어요` : "채울 빈 날이 없어요 (루틴이 비었거나 이미 계획됨)");
-});
-let clearArmed = false;
-$("#clear-month").addEventListener("click", () => {
-  const y = calMonth.getFullYear(), m = calMonth.getMonth();
-  if (!clearArmed) { clearArmed = true; $("#clear-month").textContent = "한 번 더 누르면 비워요"; setTimeout(() => { clearArmed = false; renderRoutine(); }, 3000); return; }
-  clearArmed = false;
-  const mKey = `${y}-${pad(m + 1)}`;
-  for (const k of Object.keys(S.plans)) if (k.startsWith(mKey)) delete S.plans[k];
-  save(); renderCalendar(); renderHome(); toast(`${m + 1}월 계획을 비웠어요`);
 });
 $("#cal-prev").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCalendar(); });
 $("#cal-next").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCalendar(); });

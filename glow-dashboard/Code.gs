@@ -14,7 +14,7 @@ var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm"
 // 부위 이름 → 키. 예전 workouts 탭의 부위별 열과 plans 탭의 "계획 부위" 글자를 읽을 때 쓴다.
 var PART_BY_NAME = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs" };
 var PART_NAMES = { chest: "가슴", shoulder: "어깨", back: "등", legs: "하체", biceps: "이두", triceps: "삼두", forearm: "전완근", abs: "복근" };
-var DOW = ["일", "월", "화", "수", "목", "금", "토"];
+var KR_HOLIDAY_CALENDAR = "ko.south_korea#holiday@group.v.calendar.google.com";
 var CHECK_KEYS = ["solid", "confidence", "ease", "principle"];
 // checks 탭 머리글 → 점검 키. 예전 시트의 "부드러운 태도"는 여유로, "에너지"는 버린다.
 var CHECK_BY_HEADER = { 단단함: "solid", 자신감: "confidence", 여유: "ease", "부드러운 태도": "ease", "원칙 지킴": "principle" };
@@ -49,7 +49,6 @@ function setup() {
     ["목표 체지방률", 12],
     ["누적 기준 월", "2026-09"],
     ["누적 기준 횟수", 100],
-    ["주간 루틴", ""],
     ["지향 묘사", DEFAULT_VISION],
     ["정체성 문장", "단단한 몸처럼 흔들리지 않고, 부드러운 태도로 사람을 대한다."],
     ["키워드", "단단함, 자신감, 여유, 편안함, 아우라"],
@@ -106,7 +105,6 @@ function getData() {
       .map(function (r) { return { date: day_(r[0]), w: num_(r[1]), m: num_(r[2]), f: num_(r[3]), bmr: num_(r[4]) }; }),
     done: done,
     plans: plans,
-    routine: routineFromText_(settings["주간 루틴"]),
     checks: readChecks_(),
     principles: rows_("principles")
       .sort(function (a, b) { return num_(a[0], 0) - num_(b[0], 0); })
@@ -114,6 +112,35 @@ function getData() {
       .filter(String),
     saju: str_(sheet_("saju").getRange("A2").getValue()),
   };
+}
+
+/**
+ * 구글 캘린더 "대한민국의 휴일"에서 한 해의 공휴일·기념일을 읽는다.
+ * 반환: { "2026-10-03": { name: "개천절", off: true }, ... }  off=false는 쉬지 않는 기념일(어버이날 등).
+ * 처음 쓸 때 캘린더 읽기 권한을 한 번 더 묻는다.
+ */
+function getHolidays(year) {
+  var cal;
+  try {
+    cal = CalendarApp.getCalendarById(KR_HOLIDAY_CALENDAR) || CalendarApp.subscribeToCalendar(KR_HOLIDAY_CALENDAR, { hidden: true });
+  } catch (e) {
+    return null; // 권한이 없거나 캘린더를 못 열면 화면의 내장 공휴일 표를 쓴다
+  }
+  if (!cal) return null;
+  var tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+  var out = {};
+  cal.getEvents(new Date(year, 0, 1), new Date(year + 1, 0, 1)).forEach(function (ev) {
+    var desc = String(ev.getDescription() || "");
+    var off = !/기념일|observance/i.test(desc);
+    var allDay = ev.isAllDayEvent();
+    var end = allDay ? ev.getAllDayEndDate() : ev.getEndTime();
+    for (var t = new Date(allDay ? ev.getAllDayStartDate() : ev.getStartTime()); t < end; t.setDate(t.getDate() + 1)) {
+      var k = Utilities.formatDate(t, tz, "yyyy-MM-dd");
+      if (out[k] && out[k].off && !off) continue; // 공휴일이 겹치면 공휴일 이름을 우선
+      out[k] = { name: ev.getTitle(), off: off };
+    }
+  });
+  return out;
 }
 
 /** 화면에서 바뀐 내용을 통째로 다시 쓴다 (탭마다 수백 행 수준이라 충분히 빠르다). */
@@ -142,7 +169,6 @@ function saveAll(s) {
       ["목표 체지방률", s.goal.fat],
       ["누적 기준 월", s.yearBase && s.yearBase.month ? "'" + s.yearBase.month : ""],
       ["누적 기준 횟수", s.yearBase ? s.yearBase.count : ""],
-      ["주간 루틴", routineToText_(s.routine)],
       ["지향 묘사", s.vision || DEFAULT_VISION],
       ["정체성 문장", s.identity || ""],
       ["키워드", (s.keywords || []).join(", ")],
@@ -165,22 +191,6 @@ function partsFromText_(v) {
 }
 function partsToText_(keys) {
   return PARTS.filter(function (k) { return (keys || []).indexOf(k) >= 0; }).map(function (k) { return PART_NAMES[k]; }).join(", ");
-}
-// 주간 루틴: "월: 가슴, 삼두 / 화: 등, 이두" ↔ { 1: [...], 2: [...] }
-function routineFromText_(v) {
-  var out = {};
-  for (var i = 0; i < 7; i++) out[i] = [];
-  String(v == null ? "" : v).split("/").forEach(function (seg) {
-    var m = seg.match(/^\s*([일월화수목금토])\s*[:：]\s*(.*)$/);
-    if (m) out[DOW.indexOf(m[1])] = partsFromText_(m[2]);
-  });
-  return out;
-}
-function routineToText_(r) {
-  return [1, 2, 3, 4, 5, 6, 0]
-    .filter(function (d) { return r && r[d] && r[d].length; })
-    .map(function (d) { return DOW[d] + ": " + partsToText_(r[d]); })
-    .join(" / ");
 }
 
 // 머리글 이름으로 열을 찾아 읽는다 (열 순서·구성이 바뀐 예전 시트도 읽힘)
