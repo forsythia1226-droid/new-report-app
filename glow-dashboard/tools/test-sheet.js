@@ -80,6 +80,7 @@ function load() {
   d.inbody = [{ date: "2026-10-06", w: 62.5, m: 28, f: 18.2, bmr: null }];
   d.checks = [{ date: "2026-10-06", s: { solid: 4, confidence: 4, ease: 5, principle: null }, note: "메모" }];
   d.principles = ["원칙1"];
+  d.rm = [{ date: "2026-10-06", part: "chest", kg: 60 }, { date: "2026-09-01", part: "triceps", kg: 27.5 }];
   ctx.saveAll(d);
   const e = ctx.getData();
   eq(e.done, d.done);
@@ -87,6 +88,7 @@ function load() {
   eq(e.inbody, d.inbody);
   eq(e.checks, d.checks);
   eq(e.principles, d.principles);
+  eq(e.rm, [{ date: "2026-09-01", part: "triceps", kg: 27.5 }, { date: "2026-10-06", part: "chest", kg: 60 }]);
 }
 
 // 3. 예전 형식 시트 이전 (부위별 운동 열, 부드러운 태도 점검)

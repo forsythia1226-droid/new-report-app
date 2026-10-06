@@ -351,14 +351,18 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .parts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .part { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 8px; display: flex; gap: 6px; align-items: center; justify-content: center; min-width: 0; font-size: .9rem; }
 .part .pn { font-weight: 600; min-width: 0; white-space: nowrap; }
-.sel-card .part { gap: 6px; padding: 6px 8px; }
-.pi { width: 26px; height: 26px; flex: none; }
-.pi .f { fill: currentColor; opacity: .22; }
-.pi .h { fill: var(--iron); }
-.pi .s { fill: none; stroke: var(--iron); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.part[aria-pressed="true"] .pi .h { fill: currentColor; }
-.part[aria-pressed="true"] .pi .f { opacity: .3; }
-.part[aria-pressed="true"] .pi .s { stroke: currentColor; }
+.sel-card .part { flex-direction: column; gap: 0; padding: 4px 6px; line-height: 1.25; }
+.part .pk { font: 500 .78rem var(--mono); color: var(--muted); }
+.part .pk.none { opacity: .6; }
+.part[aria-pressed="true"] .pk { color: inherit; opacity: .8; }
+.pgroup h4 { display: flex; justify-content: space-between; align-items: center; }
+.rm-toggle { border: 0; background: transparent; color: var(--iron); font-size: .78rem; font-weight: 600; padding: 0; }
+.part.rm { cursor: default; padding: 4px 6px; gap: 2px; }
+.part.rm .rm-in { display: flex; align-items: baseline; gap: 2px; width: 100%; justify-content: center; }
+.part.rm input { width: 100%; max-width: 64px; border: 0; border-bottom: 1.5px solid var(--iron); border-radius: 0; background: transparent; padding: 0 2px; text-align: right; font: 600 1rem var(--mono); color: var(--ink); }
+.part.rm input:focus { outline: none; border-bottom-color: var(--warn); }
+.part.rm .u { font-size: .75rem; color: var(--muted); }
+.rm-note { font-size: .75rem; color: var(--muted); margin: -4px 0 8px; }
 .part .pc { font: 500 .78rem var(--mono); color: var(--muted); white-space: nowrap; }
 .part[aria-pressed="true"] { color: var(--surface); border-color: transparent; }
 .part[aria-pressed="true"] .pc { color: inherit; opacity: .85; }
@@ -779,21 +783,6 @@ const PARTS = [
   { k: "biceps", n: "이두", g: "small" }, { k: "triceps", n: "삼두", g: "small" }, { k: "forearm", n: "전완근", g: "small" }, { k: "abs", n: "복근", g: "small" },
   { k: "walking", n: "워킹", g: "cardio" }, { k: "running", n: "러닝", g: "cardio" },
 ];
-// 부위 아이콘 (단순형): 해당 근육 모양만 진하게 채운다. 팔 아이콘은 옅은 팔 실루엣(f) 위에 부위를 칠한다. currentColor 기준.
-const ARM = `<path class="f" d="M3 19 Q11 12.5 17.5 16.5 L18.5 7.5 Q21.5 4 25.5 6.5 L23 21.5 Q12 27 3 25 Z"/>`;
-const PART_ICONS = {
-  chest: `<rect class="h" x="5" y="9" width="10" height="11" rx="4"/><rect class="h" x="17" y="9" width="10" height="11" rx="4"/>`,
-  shoulder: `<circle class="h" cx="16" cy="7" r="3"/><path class="h" d="M3 18 Q3 12 9 11 L11 11 L11 18 Z"/><path class="h" d="M29 18 Q29 12 23 11 L21 11 L21 18 Z"/>`,
-  back: `<path class="h" d="M4 8 L15 11 L15 25 Z"/><path class="h" d="M28 8 L17 11 L17 25 Z"/>`,
-  legs: `<rect class="h" x="8" y="5" width="7" height="22" rx="3"/><rect class="h" x="17" y="5" width="7" height="22" rx="3"/>`,
-  biceps: ARM + `<path class="h" d="M4.5 19.6 Q11 13.6 17.6 17.2 Q12 20.8 4.5 21.6 Z"/>`,
-  triceps: ARM + `<path class="h" d="M3.6 22.6 Q12 22 22.6 19.4 L22.4 21.8 Q12 26.4 3.6 24.8 Z"/>`,
-  forearm: ARM + `<path class="h" d="M17.6 17.4 L18.6 8 Q21.6 4.6 25.4 6.8 L22.8 20.2 Z"/>`,
-  abs: `<rect class="h" x="9.5" y="6" width="6" height="5.5" rx="1.6"/><rect class="h" x="16.5" y="6" width="6" height="5.5" rx="1.6"/><rect class="h" x="9.5" y="13" width="6" height="5.5" rx="1.6"/><rect class="h" x="16.5" y="13" width="6" height="5.5" rx="1.6"/><rect class="h" x="9.5" y="20" width="6" height="5.5" rx="1.6"/><rect class="h" x="16.5" y="20" width="6" height="5.5" rx="1.6"/>`,
-  walking: `<circle class="h" cx="16.5" cy="5" r="2.8"/><path class="s" d="M16 10 L15 18 L12 27 M15 18 L19.5 26.5 M15.8 12 L12 16 M15.8 12 L19.8 15.5"/>`,
-  running: `<circle class="h" cx="20" cy="5" r="2.8"/><path class="s" d="M18.6 9.6 L15.4 16.6 L9.6 19.6 L7.4 25.6 M15.4 16.6 L20.6 20.2 L19.4 27 M17.8 11 L12 12.6 M17.8 11 L23.6 14.6"/>`,
-};
-const partIcon = (k) => `<svg class="pi" viewBox="0 0 32 32" aria-hidden="true">${PART_ICONS[k] || ""}</svg>`;
 const GROUPS = [{ g: "big", n: "대근육" }, { g: "small", n: "소근육" }, { g: "cardio", n: "유산소" }];
 const CHECK_ITEMS = [
   { k: "solid", n: "단단함", hint: "체구·자세·컨디션" }, { k: "confidence", n: "자신감", hint: "눈빛·판단·결정" },
@@ -820,6 +809,7 @@ function normBody(s) {
   const plans = {};
   for (const [d, ps] of Object.entries(s.plans || {})) { const k = sortParts(ps); if (k.length) plans[d] = k; }
   s.done = done; s.plans = plans;
+  s.rm = (s.rm || []).filter((r) => r && r.date && PARTS.some((p) => p.k === r.part && p.g !== "cardio") && Number(r.kg) > 0).map((r) => ({ date: r.date, part: r.part, kg: Number(r.kg) }));
   delete s.workouts; delete s.routine;
   return s;
 }
@@ -836,7 +826,12 @@ function exampleBody() {
     if (d.getMonth() === TODAY.getMonth()) plans[ymd(d)] = [...p];
     if (d < TODAY && (d.getDate() * 7) % 10 !== 3) done[ymd(d)] = true;
   }
-  return { done, plans };
+  const rm = [
+    { date: "2026-09-01", part: "chest", kg: 55 }, { date: "2026-09-29", part: "chest", kg: 60 },
+    { date: "2026-09-10", part: "back", kg: 70 }, { date: "2026-09-12", part: "legs", kg: 90 },
+    { date: "2026-09-20", part: "shoulder", kg: 35 }, { date: "2026-09-22", part: "biceps", kg: 20 },
+  ];
+  return { done, plans, rm };
 }
 const EXAMPLE = () => ({
   example: true,
@@ -869,7 +864,7 @@ const EXAMPLE = () => ({
 const DEFAULT_VISION = "그를 처음 보았을 때, 나는 그가 다른 이들과 다르다는 것을 느꼈다. 다부진 체구에서는 단단함을, 총명한 눈빛에서는 미래를 아는 듯한 자신감을 부드러운 말투에서는 여유와 편안함이 느껴졌다. 그 사람에게서 나오는 아우라가 그와 함께 있는 공간을 가득채웠다.";
 const DEFAULT_YEAR_BASE = { month: "2026-09", count: 100 };
 const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
-const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
+const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, rm: [], identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
 
 /* ---------- 저장소 ----------
    APPS: Apps Script 웹 앱(script.google.com)에서 열림 → google.script.run 으로 시트에 저장
@@ -1472,14 +1467,30 @@ function renderCalendar() {
   $("#sel-done").dataset.toggleDone = selDate;
   $("#sel-done").textContent = did ? "★ 운동함" : "운동 완료 체크";
   $("#sel-done").title = did ? "누르면 운동 체크를 취소합니다" : selDate > todayKey ? "미래 날짜예요" : "이 날 운동했으면 누르세요";
-  $("#parts").innerHTML = GROUPS.map((g) => `
-    <div class="pgroup"><h4>${g.n}</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
+  // 계획 모드: 부위를 눌러 계획 / 1RM 모드: 근력 부위마다 kg 입력 (선택한 날짜로 기록)
+  const groups = rmMode ? GROUPS.filter((g) => g.g !== "cardio") : GROUPS;
+  $("#parts").innerHTML = (rmMode ? `<p class="rm-note">${dayLabel(selDate)} 기록으로 저장돼요 · 비우면 그날 기록 삭제</p>` : "") + groups.map((g, gi) => `
+    <div class="pgroup"><h4>${g.n}${gi === 0 ? `<button class="rm-toggle" type="button" id="rm-toggle">${rmMode ? "1RM 기록 끝내기" : "1RM 기록하기"}</button>` : ""}</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
+      const last = latestRM(p.k);
+      if (rmMode) {
+        const today = (S.rm || []).find((r) => r.part === p.k && r.date === selDate);
+        return `<div class="part rm"><span class="pn">${p.n}</span><span class="rm-in"><input type="number" inputmode="decimal" min="0" step="0.5" data-rm="${p.k}" value="${today ? today.kg : ""}" placeholder="${last ? last.kg : "–"}" aria-label="${p.n} 1RM kg"/><span class="u">kg</span></span></div>`;
+      }
       const on = plan.includes(p.k);
-      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}">${partIcon(p.k)}<span class="pn">${p.n}</span></button>`;
+      const kg = g.g === "cardio" ? "" : last ? `<span class="pk">${fmtKg(last.kg)}kg</span>` : `<span class="pk none">1RM –</span>`;
+      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}" title="${last ? `1RM ${fmtKg(last.kg)}kg · ${last.date.replaceAll("-", ".")} 기록` : "1RM 기록 없음"}"><span class="pn">${p.n}</span>${kg}</button>`;
     }).join("")}</div></div>`).join("");
 
 }
 
+// 1RM: 부위별로 가장 최근 날짜의 기록
+let rmMode = false;
+const fmtKg = (v) => (Math.round(v * 10) / 10).toString();
+function latestRM(part) {
+  let best = null;
+  for (const r of S.rm || []) if (r.part === part && (!best || r.date >= best.date)) best = r;
+  return best;
+}
 function toggleDone(k) {
   if (S.done[k]) delete S.done[k]; else S.done[k] = true;
   save(); renderCalendar(); renderHome();
@@ -1494,6 +1505,7 @@ $("#cal").addEventListener("click", (e) => {
   renderCalendar();
 });
 $("#parts").addEventListener("click", (e) => {
+  if (e.target.closest("#rm-toggle")) { rmMode = !rmMode; renderCalendar(); if (rmMode) { const f = $("#parts input[data-rm]"); f && f.focus(); } return; }
   const b = e.target.closest("[data-part]");
   if (!b) return;
   const cur = new Set(S.plans[selDate] || []);
@@ -1501,6 +1513,16 @@ $("#parts").addEventListener("click", (e) => {
   const next = sortParts([...cur]);
   if (next.length) S.plans[selDate] = next; else delete S.plans[selDate];
   save(); renderCalendar(); renderHome();
+});
+$("#parts").addEventListener("change", (e) => {
+  const part = e.target.dataset && e.target.dataset.rm;
+  if (!part) return;
+  const v = e.target.value.trim();
+  S.rm = (S.rm || []).filter((r) => !(r.part === part && r.date === selDate));
+  const name = PARTS.find((p) => p.k === part).n;
+  if (v !== "" && Number(v) > 0) { S.rm.push({ date: selDate, part, kg: Number(v) }); toast(`${name} 1RM ${fmtKg(Number(v))}kg 기록`); }
+  else toast(`${name} 1RM 기록을 지웠어요`);
+  save();
 });
 $("#cal-prev").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCalendar(); });
 $("#cal-next").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCalendar(); });
@@ -1584,6 +1606,7 @@ const WEB_API = (() => {
     principles: ["순서", "원칙"],
     settings: ["항목", "값"],
     saju: ["원문"],
+    rm: ["날짜", "부위", "1RM(kg)"],
   };
   const PART_BY_NAME = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs", 워킹: "walking", 러닝: "running" };
   const CHECK_KEYS = ["solid", "confidence", "ease", "principle"];
@@ -1709,6 +1732,7 @@ const WEB_API = (() => {
       done, plans, checks,
       principles: rowsOf(tab.principles).sort((a, b) => num(a[0], 0) - num(b[0], 0)).map((r) => str(r[1])).filter(Boolean),
       saju: str((tab.saju[1] || [])[0]),
+      rm: rowsOf(tab.rm).map((r) => ({ date: day(r[0]), part: PART_BY_NAME[str(r[1]).trim()], kg: num(r[2]) })).filter((r) => r.part && r.kg > 0),
     };
   }
 
@@ -1722,6 +1746,7 @@ const WEB_API = (() => {
       plans: Object.keys(s.plans || {}).sort().map((d) => [d, partsToText(s.plans[d])]),
       checks: (s.checks || []).slice().sort(byDate).map((c) => [c.date, ...CHECK_KEYS.map((k) => (c.s[k] == null ? "" : c.s[k])), c.note || ""]),
       principles: (s.principles || []).map((p, i) => [i + 1, p]),
+      rm: (s.rm || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((r) => [r.date, PARTS.find((p) => p.k === r.part).n, r.kg]),
       settings: [
         ["목표 체중", s.goal.weight], ["목표 체지방률", s.goal.fat],
         ["누적 기준 월", (s.yearBase && s.yearBase.month) || ""], ["누적 기준 횟수", s.yearBase ? s.yearBase.count : ""],

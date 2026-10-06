@@ -37,7 +37,13 @@ setTimeout(() => {
     const after = text("#tiles").match(/\d+월 운동(\d+)회/)[1];
     check("오늘 완료 토글로 이번 달 횟수 변화", before !== after, `${before} → ${after}`);
 
-    check("부위 버튼마다 아이콘", w.document.querySelectorAll("#parts .part svg.pi").length === w.document.querySelectorAll("#parts .part").length && w.document.querySelectorAll("#parts .part").length === 10);
+    check("부위 버튼에 최근 1RM 표시", /60kg/.test(text("[data-part=chest]")) && /1RM –/.test(text("[data-part=abs]")), text("[data-part=chest]") + " / " + text("[data-part=abs]"));
+    $("#rm-toggle").click();
+    const rmIn = $("input[data-rm=triceps]");
+    check("1RM 입력 모드", !!rmIn && w.document.querySelectorAll("#parts input[data-rm]").length === 8);
+    rmIn.value = "32.5"; rmIn.dispatchEvent(new w.Event("change", { bubbles: true }));
+    $("#rm-toggle").click();
+    check("1RM 저장 후 버튼에 표시", /32.5kg/.test(text("[data-part=triceps]")), text("[data-part=triceps]"));
     const free = [...w.document.querySelectorAll(".cal .day[data-date]")].find((b) => !b.classList.contains("other") && !b.querySelector(".plan"));
     free.click();
     $("[data-part=legs]").click();
