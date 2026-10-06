@@ -465,6 +465,16 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .part[aria-pressed="true"] .pk { color: inherit; opacity: .8; }
 .pgroup h4 { display: flex; justify-content: space-between; align-items: center; }
 .part { position: relative; }
+.pc-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+@media (max-width: 860px) { .pc-groups { grid-template-columns: minmax(0, 1fr); } }
+.pc-group h4 { margin: 0 0 8px; font-size: .75rem; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+.pc-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) 40px; gap: 10px; align-items: center; font-size: .88rem; padding: 4px 0; }
+.pc-name { font-weight: 600; }
+.pc-cells { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; max-width: 180px; }
+.pc-cells i { height: 10px; border-radius: 3px; background: var(--surface-2); }
+.pc-cells i.on { background: var(--iron); }
+.pc-n { text-align: right; font-weight: 600; color: var(--iron); }
+.pc-row.zero .pc-name, .pc-row.zero .pc-n { color: var(--muted); font-weight: 500; }
 .part .pcount { position: absolute; top: 5px; right: 7px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--iron-soft); color: var(--iron); font: 700 .68rem/18px var(--mono); text-align: center; pointer-events: none; }
 .part .pcount.zero { background: transparent; color: var(--muted); opacity: .5; font-weight: 500; }
 .part.on .pcount { background: color-mix(in srgb, var(--surface) 22%, transparent); color: var(--surface); }
@@ -837,6 +847,10 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
           </div>
           <p class="sel-sub" id="sel-sub"></p>
           <div id="parts"></div>
+        </div>
+        <div class="card c12">
+          <h2 id="pc-title"></h2>
+          <div class="pc-groups" id="part-counts"></div>
         </div>
         <div class="card c12">
           <h2>인바디 입력 <span class="muted" style="font-weight:400;letter-spacing:0">결과지 보고 직접 입력</span></h2>
@@ -1825,34 +1839,30 @@ function renderCalendar() {
 
   // 선택한 날: 운동 완료 + 계획 부위
   const plan = S.plans[selDate] || [];
-  // 이 달 부위별 횟수: 계획한 부위 중 그날 운동함(★)이면 1회
-  const monthKey = selDate.slice(0, 7), monthNo = +selDate.slice(5, 7);
-  const partCount = {};
-  for (const [d, ps] of Object.entries(S.plans)) if (d.startsWith(monthKey) && S.done[d]) ps.forEach((k) => { partCount[k] = (partCount[k] || 0) + 1; });
   const did = !!S.done[selDate];
   $("#sel-date").textContent = dayLabel(selDate) + (selDate === todayKey ? " · 오늘" : "") + (did ? " ★" : "");
   $("#sel-sub").textContent = plan.length ? `계획: ${planText(plan)}` : "이 날 할 부위를 아래에서 골라 계획하세요";
-  // 부위 카드: 이름을 누르면 그날 계획에 넣고 빼기, 아래 칸에 근력은 1RM(kg) · 유산소는 시간(분)을 바로 입력
+  // 부위 카드: 이름을 누르면 그날 계획에 넣고 빼기
+  renderPartCounts();
   $("#parts").innerHTML = GROUPS.map((g) => `
     <div class="pgroup"><h4>${g.n}</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
-      const cardio = g.g === "cardio";
       const on = plan.includes(p.k);
-      let input;
-      if (cardio) {
-        const min = cardioMin(p.k, selDate);
-        const sel = `<select data-cardio="${p.k}" aria-label="${p.n} 시간(분)" title="${dayLabel(selDate)} 시간(분)">${pickOptions(MIN_OPTS, min, "–")}</select>`;
-        input = valChip(sel, min ? `<b>${min}</b> 분` : "+ 분", !!min);
-      } else {
-        const last = latestRM(p.k);
-        const day = (S.rm || []).find((r) => r.part === p.k && r.date === selDate);
-        // 복근은 무게가 아니라 횟수(회)로 기록한다
-        const u = PART_UNIT[p.k] || PART_UNIT.default;
-        const sel = `<select data-rm="${p.k}" aria-label="${p.n} ${u.label}" title="${last ? `최근 ${u.label} ${fmtKg(last.kg)}${u.unit} (${last.date.replaceAll("-", ".")})` : `${u.label} 기록 없음`} · 고르면 ${dayLabel(selDate)} 기록">${pickOptions(u.opts, day ? day.kg : null, last ? fmtKg(last.kg) : "–")}</select>`;
-        input = valChip(sel, day ? `<b>${fmtKg(day.kg)}</b> ${u.unit}` : last ? `최근 ${fmtKg(last.kg)}${u.unit}` : `+ ${u.unit}`, !!day);
-      }
-      const n = partCount[p.k] || 0;
-      return `<div class="part ${on ? "on" : ""}"><span class="pcount ${n ? "" : "zero"}" title="${monthNo}월 ${n}회 (계획 + 운동함 기준)" aria-label="${monthNo}월 ${n}회">${n}</span><button class="pn-btn" type="button" data-part="${p.k}" aria-pressed="${on}">${p.n}</button>${input}</div>`;
+      return `<div class="part ${on ? "on" : ""}"><button class="pn-btn" type="button" data-part="${p.k}" aria-pressed="${on}">${p.n}</button></div>`;
     }).join("")}</div></div>`).join("");
+}
+
+// 달력에 보이는 달의 부위별 횟수: 계획한 부위 중 그날 운동함(★)이면 1회. 막대는 6칸까지, 넘으면 숫자만 늘어난다.
+const COUNT_CELLS = 6;
+function renderPartCounts() {
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  const key = `${y}-${pad(m + 1)}`;
+  const cnt = {};
+  for (const [d, ps] of Object.entries(S.plans)) if (d.startsWith(key) && S.done[d]) ps.forEach((k) => { cnt[k] = (cnt[k] || 0) + 1; });
+  $("#pc-title").innerHTML = `${m + 1}월 부위별 횟수 <span class="muted" style="font-weight:400;letter-spacing:0">계획한 부위 중 그날 운동함(★)이면 1회</span>`;
+  $("#part-counts").innerHTML = GROUPS.map((g) => `<div class="pc-group"><h4>${g.n}</h4>${PARTS.filter((p) => p.g === g.g).map((p) => {
+    const n = cnt[p.k] || 0;
+    return `<div class="pc-row ${n ? "" : "zero"}"><span class="pc-name">${p.n}</span><span class="pc-cells" aria-hidden="true">${Array.from({ length: COUNT_CELLS }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("")}</span><span class="pc-n num">${n}회</span></div>`;
+  }).join("")}</div>`).join("");
 }
 
 // 기록: 1RM은 부위별 가장 최근 값, 유산소는 날짜별 시간(분)

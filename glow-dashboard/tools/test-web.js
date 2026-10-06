@@ -89,19 +89,12 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   await wait(800);
   assert.deepStrictEqual(store.workouts.filter((r) => r[0]).map((r) => r.slice(0, 2)), [["날짜", "운동함"], [todayKey, true]]);
   assert.ok(store.plans.some((r) => r[0] === todayKey && /워킹/.test(r[1])), "계획 저장");
-  const rmIn = p.$("select[data-rm=chest]");
-  rmIn.value = "62.5"; rmIn.dispatchEvent(new p.w.Event("change", { bubbles: true }));
-  const wIn = p.$("select[data-cardio=walking]");
-  wIn.value = "45"; wIn.dispatchEvent(new p.w.Event("change", { bubbles: true }));
-  await wait(800);
-  assert.ok(store.rm.some((r) => r[0] === todayKey && r[1] === "가슴" && r[2] === 62.5), "1RM 저장");
   p.$("[data-tab=career]").click();
   const st = p.$("select[data-stage=adsp][data-field=status]");
   st.value = "합격"; st.dispatchEvent(new p.w.Event("change", { bubbles: true }));
   await wait(800);
   assert.ok(store.career.some((r) => r[0] === "ADsP" && r[1] === "합격"), "커리어 저장");
   p.$("[data-tab=body]").click();
-  assert.ok(store.cardio.some((r) => r[0] === todayKey && r[1] === "워킹" && r[2] === 45), "워킹 시간 저장");
   assert.deepStrictEqual(p.errors, []);
   p.w.close();
 
@@ -112,8 +105,6 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   await wait(150);
   p.$("[data-tab=body]").click();
   assert.match(p.text("#today-card .done-btn"), /완료/);
-  assert.strictEqual(p.$("select[data-rm=chest]").value, "62.5", "다시 열어도 1RM 표시");
-  assert.strictEqual(p.$("select[data-cardio=walking]").value, "45", "다시 열어도 워킹 시간 표시");
   p.$("[data-tab=career]").click();
   assert.strictEqual(p.$("select[data-stage=adsp][data-field=status]").value, "합격", "다시 열어도 자격증 상태");
   assert.match(p.text("#cert-summary"), /1 \/ 3 합격 · 6\/32학점/);
