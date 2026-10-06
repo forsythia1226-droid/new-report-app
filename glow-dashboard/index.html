@@ -310,12 +310,12 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .cal .hname.obs { color: var(--muted); }
 .cal button.day .top { display: flex; gap: 4px; align-items: baseline; max-width: calc(100% - 12px); min-width: 0; }
 .cal button.day {
-  height: 52px; min-width: 0; border: 0; background: var(--bg); border-radius: 8px;
+  min-height: 52px; height: 100%; min-width: 0; border: 0; background: var(--bg); border-radius: 8px;
   display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 5px 6px; font-size: .8rem;
 }
 .cal .plan { font-size: .66rem; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
 .cal .plan .s { display: none; }
-@media (max-width: 560px) { .cal button.day { height: 46px; padding: 4px 5px; } .cal .plan .l { display: none; } .cal .plan .s { display: inline; } }
+@media (max-width: 560px) { .cal button.day { min-height: 46px; padding: 4px 5px; } .cal .plan .l { display: none; } .cal .plan .s { display: inline; } }
 .cal button.day.on .plan { color: inherit; opacity: .85; }
 .cal button.day.missed { box-shadow: inset 0 0 0 1px var(--warn); }
 .cal button.day.missed .plan { color: var(--warn); }
@@ -357,6 +357,13 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .part[aria-pressed="true"] .pc { color: inherit; opacity: .85; }
 .part[aria-pressed="true"] .ck { border-color: currentColor; }
 .part[aria-pressed="true"] .ck::after { content: "✓"; }
+/* 달력 카드와 오른쪽 패널이 같은 높이를 꽉 채운다: 짧은 쪽이 늘어난다 */
+.cal-card, .sel-card { display: flex; flex-direction: column; }
+.cal-card .cal { flex: 1; }
+.sel-card #parts { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.sel-card .pgroup { flex: 1; display: flex; flex-direction: column; margin: 0; }
+.sel-card .parts { flex: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(42px, 1fr); gap: 8px; }
+.sel-card .part { font-size: 1rem; }
 .sel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .sel-date { font-family: var(--display); font-size: 1.25rem; margin: 0; }
 .sel-sub { font-size: .82rem; color: var(--muted); margin: 4px 0 12px; }
@@ -676,7 +683,7 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
           <h2>운동 기록</h2>
           <div class="tiles" id="tiles"></div>
         </div>
-        <div class="card c7">
+        <div class="card c7 cal-card">
           <div class="cal-head">
             <button class="btn small" id="cal-prev" type="button" aria-label="이전 달">‹</button>
             <b id="cal-title"></b>
@@ -685,7 +692,7 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
           <div class="cal" id="cal"></div>
           <div class="legend"><span><span class="star">★</span> 운동한 날</span><span>글자 = 계획한 부위</span><span style="color:var(--warn)">테두리 = 계획했는데 못 한 날</span></div>
         </div>
-        <div class="card c5">
+        <div class="card c5 sel-card">
           <div class="sel-head">
             <p class="sel-date" id="sel-date"></p>
             <button class="done-btn small" id="sel-done" type="button" aria-pressed="false"></button>
@@ -1422,6 +1429,7 @@ function renderCalendar() {
       ${plan.length ? `<span class="plan"><span class="l">${plan.map((p) => PART_NAME[p]).join("·")}</span><span class="s">${plan.map((p) => PART_SHORT[p]).join("")}</span></span>` : ""}</button>`;
   }
   $("#cal").innerHTML = html;
+  $("#cal").style.gridTemplateRows = `auto repeat(${weeksShown}, 1fr)`;
 
   // 선택한 날: 운동 완료 + 계획 부위
   const plan = S.plans[selDate] || [];
