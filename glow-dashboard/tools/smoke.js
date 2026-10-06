@@ -37,6 +37,7 @@ setTimeout(() => {
     const after = text("#tiles").match(/\d+월 운동(\d+)회/)[1];
     check("오늘 완료 토글로 이번 달 횟수 변화", before !== after, `${before} → ${after}`);
 
+    check("목표 달성 모수 12일", /목표 달성\d+\/ 12일/.test(text("#tiles")), (text("#tiles").match(/\d+월 목표 달성[^%]*%/) || [""])[0]);
     check("패널에 운동 완료 버튼 없음", !$("#sel-done"));
     check("부위마다 바로 입력칸 (kg 8 + 분 2)", w.document.querySelectorAll("#parts input[data-rm]").length === 8 && w.document.querySelectorAll("#parts input[data-cardio]").length === 2);
     check("최근 1RM이 입력칸에 흐리게", $("input[data-rm=chest]").placeholder === "60" && $("input[data-rm=abs]").placeholder === "–", $("input[data-rm=chest]").placeholder);

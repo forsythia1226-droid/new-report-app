@@ -1375,6 +1375,8 @@ function yearCount(y) {
   }
   return { total: trainedDays(`${y}-`), base: null };
 }
+// 매월 운동 목표 일수 (계획 달성률의 모수)
+const MONTH_TARGET = 12;
 const trainedDays = (prefix) => Object.keys(S.done).filter((d) => d.startsWith(prefix)).length;
 const dayLabel = (k) => { const d = new Date(k + "T00:00"); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${"일월화수목금토"[d.getDay()]})`; };
 
@@ -1431,15 +1433,15 @@ function renderCalendar() {
   const prevDays = trainedDays(prevKey);
   const diff = monthDays - prevDays;
   const prevBeforeApp = S.yearBase && prevKey <= S.yearBase.month && prevDays === 0;
-  // 계획 달성: 이 달 중 오늘까지 계획한 날 가운데 운동한 날
-  const plannedSoFar = Object.keys(S.plans).filter((d) => d.startsWith(mKey) && d <= todayKey);
-  const hit = plannedSoFar.filter((d) => S.done[d]).length;
+  // 목표 달성: 매월 운동 12일(MONTH_TARGET)을 모수로 고정 → 이 달 운동한 날 ÷ 12
+  const goalPct = Math.round((monthDays / MONTH_TARGET) * 100);
+  const goalLeft = Math.max(0, MONTH_TARGET - monthDays);
 
   $("#tiles").innerHTML = `
     <div class="tile hero"><div class="k">${m + 1}월 운동</div><div class="v">${monthDays}<small>회</small></div><div class="s">${prevBeforeApp ? "지난달은 앱 기록 이전" : `지난달 ${prevDays}회 · ${diff >= 0 ? "+" : ""}${diff}`}</div></div>
     <div class="tile"><div class="k">${y}년 누적</div><div class="v">${yc.total}<small>회</small></div><div class="s">${yc.base != null ? `${yc.baseMonth}월까지 ${yc.base}회 + 이후 ${yc.after}회` : y === TODAY.getFullYear() ? `월평균 ${fmt1(yc.total / (TODAY.getMonth() + 1))}회` : "&nbsp;"}</div></div>
     <div class="tile"><div class="k">이번 주</div><div class="v">${weekDays}<small>회</small></div><div class="s">일~토 기준</div></div>
-    <div class="tile"><div class="k">${m + 1}월 계획 달성</div><div class="v">${hit}<small>/ ${plannedSoFar.length}일</small></div><div class="s">${plannedSoFar.length ? `${Math.round((hit / plannedSoFar.length) * 100)}% · 오늘까지 계획한 날 기준` : "아직 계획 없음"}</div></div>`;
+    <div class="tile"><div class="k">${m + 1}월 목표 달성</div><div class="v">${monthDays}<small>/ ${MONTH_TARGET}일</small></div><div class="bar" style="margin:4px 0"><div style="width:${Math.min(100, goalPct)}%"></div></div><div class="s">${goalPct}% · ${goalLeft ? `목표까지 ${goalLeft}일` : "이번 달 목표 달성 ★"}</div></div>`;
 
   // 달력: 네이버·구글 캘린더처럼 일요일 시작, 앞뒤 달 날짜까지 채워 주 단위로 보여 준다
   ensureHolidays(y);
