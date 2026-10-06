@@ -124,7 +124,7 @@ function getData() {
   });
 
   return {
-    goal: { weight: num_(settings["목표 체중"], 68), fat: num_(settings["목표 체지방률"], 12), muscle: num_(settings["목표 골격근량"]) },
+    goal: { weight: num_(settings["목표 체중"], 68), fat: num_(settings["목표 체지방률"], 12), muscle: num_(settings["목표 골격근량"]), phases: str_(settings["단계 계획"]), phase: num_(settings["현재 단계"], 1) - 1 },
     // 앱 이전 운동 기록: 기준 월까지 N회 (그 다음 달부터 앱 기록을 더한다)
     yearBase: { month: month_(settings["누적 기준 월"]), count: num_(settings["누적 기준 횟수"], 0) },
     vision: str_(settings["지향 묘사"]),
@@ -227,6 +227,8 @@ function saveAll(s) {
     write_("settings", [
       ["목표 체중", s.goal.weight],
       ["목표 골격근량", s.goal.muscle > 0 ? s.goal.muscle : ""],
+      ["단계 계획", s.phasesText || ""],
+      ["현재 단계", (Number(s.goal.phase) || 0) + 1],
       ["목표 체지방률", s.goal.fat],
       ["누적 기준 월", s.yearBase && s.yearBase.month ? "'" + s.yearBase.month : ""],
       ["누적 기준 횟수", s.yearBase ? s.yearBase.count : ""],

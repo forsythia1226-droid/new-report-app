@@ -388,10 +388,23 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .goal-edit summary { cursor: pointer; color: var(--iron); font-size: .82rem; font-weight: 500; }
 .goal-edit form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 10px; }
 .goal-edit label.f { width: 120px; }
-.phases { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-.phase { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: .85rem; }
-.phase.on { border-color: var(--iron); background: var(--iron-soft); }
-.phase b { display: block; }
+.phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+@media (max-width: 900px) { .phases { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.phase { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: .8rem; background: var(--surface); text-align: left; display: flex; flex-direction: column; gap: 3px; cursor: pointer; color: inherit; font-family: inherit; }
+.phase .ph-n { font-size: .72rem; color: var(--muted); }
+.phase b { font-size: .95rem; }
+.phase .ph-t { font-family: var(--mono); font-weight: 600; color: var(--iron); }
+.phase .ph-g { color: var(--muted); line-height: 1.45; }
+.phase .ph-left { font-weight: 600; color: var(--iron); }
+.phase.cut .ph-t { color: var(--sage); }
+.phase.done { opacity: .55; }
+.phase.done b::after { content: " ✓"; color: var(--sage); }
+.phase.on { border-color: var(--iron); background: var(--iron-soft); box-shadow: 0 0 0 1px var(--iron); }
+.phase-in { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+@media (max-width: 640px) { .phase-in { grid-template-columns: minmax(0, 1fr); } }
+.phase-in fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px 8px; margin: 0; display: flex; gap: 6px; }
+.phase-in legend { font-size: .72rem; color: var(--muted); padding: 0 4px; }
+.phase-in label.f { width: auto; flex: 1; }
 
 .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .cal-head b { font-size: 1.05rem; }
@@ -785,16 +798,14 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
             <div class="goal-main" id="goal-main"></div>
             <div>
               <div class="goal-rings" id="goal-rings"></div>
-              <div class="phases">
-                <div class="phase" id="ph1"><b>1단계 · 벌크</b>근육 위주로 69~70kg까지 · 하루 약 2,600kcal, 단백질 100~135g</div>
-                <div class="phase" id="ph2"><b>2단계 · 컷</b>지방만 덜어내 68kg · 체지방률 12%</div>
-              </div>
+              <div class="phases" id="phases" role="list" aria-label="린매스업·커팅 단계 (눌러서 지금 단계 정하기)"></div>
               <details class="goal-edit" style="margin-top:12px">
                 <summary>목표 수정</summary>
                 <form id="goal-form">
                   <label class="f">목표 체중 kg<input type="number" id="goal-w" step="0.1" required /></label>
                   <label class="f">목표 골격근량 kg<input type="number" id="goal-m" step="0.1" /></label>
                   <label class="f">목표 체지방률 %<input type="number" id="goal-f" step="0.1" required /></label>
+                  <div class="phase-in" id="phase-in"></div>
                   <button class="btn primary" type="submit">저장</button>
                 </form>
               </details>
@@ -996,7 +1007,7 @@ const WEB = !APPS && !!GLOW_WEB.clientId && /(\.github\.io|^localhost|^127\.0\.0
 const RUN = APPS || WEB;
 const callApps = (fn, ...args) => new Promise((ok, fail) => google.script.run.withSuccessHandler(ok).withFailureHandler(fail)[fn](...args));
 const api = () => (APPS
-  ? { whoAmI: () => callApps("whoAmI"), getData: () => callApps("getData"), saveAll: (s) => callApps("saveAll", { ...s, careerRows: careerToRows(s.career) }), getHolidays: (y) => callApps("getHolidays", y) }
+  ? { whoAmI: () => callApps("whoAmI"), getData: () => callApps("getData"), saveAll: (s) => callApps("saveAll", { ...s, careerRows: careerToRows(s.career), phasesText: phaseTargets().slice(0, 3).map((x) => x.join("/")).join(",") }), getHolidays: (y) => callApps("getHolidays", y) }
   : WEB_API);
 let SIGNED_IN = false; // 시작 화면에서 계정 확인이 끝나야 서버를 부른다
 let S = RUN ? EMPTY() : (() => { try { return JSON.parse(localStorage.getItem(KEY)) || EXAMPLE(); } catch { return EXAMPLE(); } })();
@@ -1606,6 +1617,39 @@ function goalProgress() {
   ].map((x) => ({ ...x, p: prog(x.start, x.cur, x.goal) }));
   return { items, overall: items.reduce((a, x) => a + x.p, 0) / items.length, L, F };
 }
+// 린매스업 → 커팅을 두 번: 단계별 목표 [체중, 체지방률]. 마지막 단계 목표 = 최종 목표.
+const PHASES = [{ n: "1차", kind: "린매스업" }, { n: "1차", kind: "커팅" }, { n: "2차", kind: "린매스업" }, { n: "2차", kind: "커팅" }];
+const DEFAULT_PHASE_TARGETS = [[66, 20], [63.5, 16], [70, 18]];
+function phaseTargets() {
+  let t = S.goal.phases;
+  if (typeof t === "string") t = t.split(",").map((x) => x.split("/").map(Number));
+  if (!Array.isArray(t) || t.length < 3 || t.some((x) => !(x[0] > 0) || !(x[1] > 0))) t = DEFAULT_PHASE_TARGETS;
+  return [...t.slice(0, 3), [S.goal.weight, S.goal.fat]];
+}
+const currentPhase = () => Math.max(0, Math.min(3, Number(S.goal.phase) || 0));
+function renderPhases() {
+  const L = latest();
+  const t = phaseTargets(), cur = currentPhase();
+  $("#phases").innerHTML = PHASES.map((p, i) => {
+    const [w, f] = t[i];
+    const lean = p.kind === "린매스업";
+    const guide = lean ? "유지 칼로리 +200~300kcal · 단백질 100~135g · 근육 위주로 천천히" : "유지 칼로리 −300~500kcal · 단백질은 그대로 · 근손실 최소화";
+    const left = i === cur && L ? `<span class="ph-left">목표까지 ${w - L.w >= 0 ? "+" : "−"}${fmt1(Math.abs(w - L.w))}kg · 체지방 ${fmt1(L.f)}→${f}%</span>` : "";
+    return `<button type="button" class="phase ${lean ? "" : "cut"} ${i === cur ? "on" : ""} ${i < cur ? "done" : ""}" data-phase="${i}" role="listitem" aria-pressed="${i === cur}">
+      <span class="ph-n">${i + 1}단계${i === cur ? " · 지금" : ""}</span><b>${p.n} ${p.kind}</b>
+      <span class="ph-t">${fmt1(w)}kg · ${lean ? "체지방 " + f + "% 이하" : "체지방 " + f + "%"}</span>
+      <span class="ph-g">${guide}</span>${left}</button>`;
+  }).join("");
+  $("#phase-in").innerHTML = PHASES.slice(0, 3).map((p, i) => `<fieldset><legend>${i + 1}단계 · ${p.n} ${p.kind}</legend>
+      <label class="f">체중 kg<input type="number" step="0.1" data-ph="${i}" data-ph-k="0" value="${t[i][0]}"/></label>
+      <label class="f">체지방 %<input type="number" step="0.1" data-ph="${i}" data-ph-k="1" value="${t[i][1]}"/></label></fieldset>`).join("");
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-phase]");
+  if (!b) return;
+  S.goal.phase = Number(b.dataset.phase);
+  save(); renderPhases(); toast(`지금 단계: ${PHASES[S.goal.phase].n} ${PHASES[S.goal.phase].kind}`);
+});
 function renderGoal() {
   const g = goalProgress();
   $("#goal-w").value = S.goal.weight;
@@ -1636,16 +1680,15 @@ function renderGoal() {
 }
 $("#goal-form").addEventListener("submit", (e) => {
   e.preventDefault();
-  S.goal = { weight: +$("#goal-w").value, fat: +$("#goal-f").value, muscle: $("#goal-m").value ? +$("#goal-m").value : null };
+  const ph = [0, 1, 2].map((i) => [0, 1].map((k) => +$(`[data-ph="${i}"][data-ph-k="${k}"]`).value));
+  S.goal = { weight: +$("#goal-w").value, fat: +$("#goal-f").value, muscle: $("#goal-m").value ? +$("#goal-m").value : null, phases: ph, phase: currentPhase() };
   save(); renderBody(); renderHome(); toast("목표를 저장했어요");
 });
 
 function renderBody() {
   const L = latest();
   renderGoal();
-  const bulking = !L || L.w < 69;
-  $("#ph1").classList.toggle("on", bulking);
-  $("#ph2").classList.toggle("on", !bulking);
+  renderPhases();
 
   const rows = sortedInbody();
   const lab = (r) => r.date.slice(5).replace("-", ".");
@@ -2289,7 +2332,7 @@ const WEB_API = (() => {
     });
 
     return {
-      goal: { weight: num(settings["목표 체중"], 68), fat: num(settings["목표 체지방률"], 12), muscle: num(settings["목표 골격근량"]) },
+      goal: { weight: num(settings["목표 체중"], 68), fat: num(settings["목표 체지방률"], 12), muscle: num(settings["목표 골격근량"]), phases: str(settings["단계 계획"]), phase: num(settings["현재 단계"], 1) - 1 },
       yearBase: { month: month(settings["누적 기준 월"]), count: num(settings["누적 기준 횟수"], 0) },
       vision: str(settings["지향 묘사"]),
       identity: str(settings["정체성 문장"]),
@@ -2323,7 +2366,7 @@ const WEB_API = (() => {
       cardio: (s.cardio || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((c) => [c.date, PARTS.find((p) => p.k === c.part).n, c.min]),
       rm: (s.rm || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((r) => [r.date, PARTS.find((p) => p.k === r.part).n, r.kg]),
       settings: [
-        ["목표 체중", s.goal.weight], ["목표 골격근량", s.goal.muscle > 0 ? s.goal.muscle : ""], ["목표 체지방률", s.goal.fat],
+        ["목표 체중", s.goal.weight], ["목표 골격근량", s.goal.muscle > 0 ? s.goal.muscle : ""], ["목표 체지방률", s.goal.fat], ["단계 계획", phaseTargets().slice(0, 3).map((x) => x.join("/")).join(",")], ["현재 단계", currentPhase() + 1],
         ["누적 기준 월", (s.yearBase && s.yearBase.month) || ""], ["누적 기준 횟수", s.yearBase ? s.yearBase.count : ""],
         ["지향 묘사", s.vision || DEFAULT_VISION], ["정체성 문장", s.identity || ""], ["키워드", (s.keywords || []).join(", ")],
       ],

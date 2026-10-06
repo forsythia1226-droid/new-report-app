@@ -64,7 +64,7 @@ function load() {
   const { ctx } = load();
   ctx.setup();
   const d = ctx.getData();
-  eq(d.goal, { weight: 68, fat: 12, muscle: null }); // 목표 골격근량은 비어 있으면 화면이 추정한다
+  eq(d.goal, { weight: 68, fat: 12, muscle: null, phases: "", phase: 0 }); // 비어 있으면 화면이 추정·기본값을 쓴다
   eq(d.yearBase, { month: "2026-09", count: 100 });
   assert.ok(d.saju.startsWith("응. 남편분은"), "saju 탭 = 신살 원문");
   assert.strictEqual(d.sajuMonthly.length, 1);
