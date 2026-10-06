@@ -352,17 +352,14 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .part { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 8px; display: flex; gap: 6px; align-items: center; justify-content: center; min-width: 0; font-size: .9rem; }
 .part .pn { font-weight: 600; min-width: 0; white-space: nowrap; }
 .part .pc { font: 500 .78rem var(--mono); color: var(--muted); white-space: nowrap; }
-.part .ck { width: 15px; height: 15px; border-radius: 5px; border: 2px solid var(--line); display: grid; place-items: center; font-size: .7rem; flex: none; }
 .part[aria-pressed="true"] { color: var(--surface); border-color: transparent; }
 .part[aria-pressed="true"] .pc { color: inherit; opacity: .85; }
-.part[aria-pressed="true"] .ck { border-color: currentColor; }
-.part[aria-pressed="true"] .ck::after { content: "✓"; }
 /* 달력 카드와 오른쪽 패널이 같은 높이를 꽉 채운다: 짧은 쪽이 늘어난다 */
 .cal-card, .sel-card { display: flex; flex-direction: column; }
 .cal-card .cal { flex: 1; }
 .sel-card #parts { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.sel-card .pgroup { flex: 1; display: flex; flex-direction: column; margin: 0; }
-.sel-card .parts { flex: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(42px, 1fr); gap: 8px; }
+.sel-card .pgroup { flex: 1; display: flex; flex-direction: column; justify-content: center; margin: 0; }
+.sel-card .parts { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(46px, 64px); gap: 8px; }
 .sel-card .part { font-size: 1rem; }
 .sel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .sel-date { font-family: var(--display); font-size: 1.25rem; margin: 0; }
@@ -1443,7 +1440,7 @@ function renderCalendar() {
   $("#parts").innerHTML = GROUPS.map((g) => `
     <div class="pgroup"><h4>${g.n} 계획</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
       const on = plan.includes(p.k);
-      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}"><span class="ck"></span><span class="pn">${p.n}</span></button>`;
+      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}"><span class="pn">${p.n}</span></button>`;
     }).join("")}</div></div>`).join("");
 
 }
