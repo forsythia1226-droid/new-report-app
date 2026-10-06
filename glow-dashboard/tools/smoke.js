@@ -39,14 +39,14 @@ setTimeout(() => {
 
     check("목표 달성 모수 12일", /목표 달성\d+\/ 12일/.test(text("#tiles")), (text("#tiles").match(/\d+월 목표 달성[^%]*%/) || [""])[0]);
     check("패널에 운동 완료 버튼 없음", !$("#sel-done"));
-    check("부위마다 바로 입력칸 (kg 8 + 분 2)", w.document.querySelectorAll("#parts input[data-rm]").length === 8 && w.document.querySelectorAll("#parts input[data-cardio]").length === 2);
-    check("최근 1RM이 입력칸에 흐리게", $("input[data-rm=chest]").placeholder === "60" && $("input[data-rm=abs]").placeholder === "–", $("input[data-rm=chest]").placeholder);
-    const rmIn = $("input[data-rm=triceps]");
+    check("부위마다 드롭다운 (kg 8 + 분 2)", w.document.querySelectorAll("#parts select[data-rm]").length === 8 && w.document.querySelectorAll("#parts select[data-cardio]").length === 2);
+    check("최근 1RM이 드롭다운에 흐리게", $("select[data-rm=chest]").options[0].text === "60" && $("select[data-rm=abs]").options[0].text === "–", $("select[data-rm=chest]").options[0].text);
+    const rmIn = $("select[data-rm=triceps]");
     rmIn.value = "32.5"; rmIn.dispatchEvent(new w.Event("change", { bubbles: true }));
-    check("1RM 입력 후 다음 표시에 반영", $("input[data-rm=triceps]").value === "32.5");
-    const runIn = $("input[data-cardio=running]");
+    check("1RM 입력 후 다음 표시에 반영", $("select[data-rm=triceps]").value === "32.5");
+    const runIn = $("select[data-cardio=running]");
     runIn.value = "30"; runIn.dispatchEvent(new w.Event("change", { bubbles: true }));
-    check("러닝 시간 입력 유지", $("input[data-cardio=running]").value === "30");
+    check("러닝 시간 입력 유지", $("select[data-cardio=running]").value === "30");
     check("기록하면 그날 ★", /★/.test(text("#sel-date")), text("#sel-date"));
     const free = [...w.document.querySelectorAll(".cal .day[data-date]")].find((b) => !b.classList.contains("other") && !b.querySelector(".plan"));
     free.click();
