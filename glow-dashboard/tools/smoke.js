@@ -55,6 +55,7 @@ setTimeout(() => {
 
     $("[data-tab=body]").click();
     check("신체 맨 위 = 목표 달성", $("#v-body .grid > .card h2").textContent.includes("목표 달성"));
+    check("목표 달성 순서: 체중 → 골격근량 → 체지방률", [...w.document.querySelectorAll("#goal-rings .goal-item .k")].map((e) => e.textContent.split(" ·")[0]).join(",") === "체중,골격근량,체지방률" && !text("#goal-rings").includes("제지방"));
     check("종합 달성률 표시", /\d+%/.test(text("#goal-main")), text("#goal-main"));
     check("달력 일요일 시작", [...w.document.querySelectorAll(".cal .wd")].map((e) => e.textContent).join("") === "일월화수목금토");
     check("오늘 카드", text("#today-card").length > 0, text("#today-card").slice(0, 40));

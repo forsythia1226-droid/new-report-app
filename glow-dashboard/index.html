@@ -638,7 +638,7 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
         <div class="card c4 stat">
           <h2>골격근량 <span class="pill" id="h-m-pill"></span></h2>
           <div class="big num" id="h-m"></div>
-          <div class="row muted"><span>목표 제지방량</span><span class="num" id="h-ffm"></span></div>
+          <div class="row muted"><span>목표 골격근량</span><span class="num" id="h-ffm"></span></div>
           <div class="row muted"><span>최근 측정</span><span class="num" id="h-last"></span></div>
         </div>
         <div class="card c7">
@@ -793,6 +793,7 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
                 <summary>목표 수정</summary>
                 <form id="goal-form">
                   <label class="f">목표 체중 kg<input type="number" id="goal-w" step="0.1" required /></label>
+                  <label class="f">목표 골격근량 kg<input type="number" id="goal-m" step="0.1" /></label>
                   <label class="f">목표 체지방률 %<input type="number" id="goal-f" step="0.1" required /></label>
                   <button class="btn primary" type="submit">저장</button>
                 </form>
@@ -1066,6 +1067,13 @@ const sortedInbody = () => [...S.inbody].sort((a, b) => a.date.localeCompare(b.d
 const latest = () => sortedInbody().at(-1);
 const first = () => sortedInbody()[0];
 const targetFFM = () => S.goal.weight * (1 - S.goal.fat / 100);
+const muscleEstimated = () => !(S.goal.muscle > 0);
+function targetMuscle() {
+  if (!muscleEstimated()) return S.goal.muscle;
+  const L = latest();
+  const ratio = L && L.w * (1 - L.f / 100) > 0 ? L.m / (L.w * (1 - L.f / 100)) : 0.56;
+  return Math.round(targetFFM() * ratio * 10) / 10;
+}
 
 /* ---------- 홈 ---------- */
 function renderHome() {
@@ -1093,7 +1101,7 @@ function renderHome() {
     const dm = L.m - F.m;
     $("#h-m-pill").textContent = `${dm >= 0 ? "+" : ""}${fmt1(dm)}kg`;
     $("#h-m-pill").className = `pill ${dm > 0 ? "ok" : ""}`;
-    $("#h-ffm").textContent = `${fmt1(L.w * (1 - L.f / 100))} → ${fmt1(targetFFM())}kg`;
+    $("#h-ffm").textContent = `${fmt1(L.m)} → ${fmt1(targetMuscle())}kg`;
     $("#h-last").textContent = L.date.replaceAll("-", ".");
   } else {
     ["#h-w", "#h-f", "#h-m"].forEach((s) => ($(s).innerHTML = `<span class="muted" style="font-size:1rem">인바디 입력 전</span>`));
@@ -1590,12 +1598,11 @@ function ring(p, { size = 76, stroke = 8, big = false, cls = "" } = {}) {
 function goalProgress() {
   const L = latest(), F = first();
   if (!L) return null;
-  const ffm = (r) => r.w * (1 - r.f / 100);
   const prog = (start, cur, goal) => (goal === start ? (cur === goal ? 1 : 0) : Math.max(0, Math.min(1, (cur - start) / (goal - start))));
   const items = [
     { k: "체중", unit: "kg", start: F.w, cur: L.w, goal: S.goal.weight, cls: "" },
+    { k: "골격근량", unit: "kg", start: F.m, cur: L.m, goal: targetMuscle(), cls: "", hint: muscleEstimated() ? "목표 추정치" : "" },
     { k: "체지방률", unit: "%", start: F.f, cur: L.f, goal: S.goal.fat, cls: "sage" },
-    { k: "제지방량", unit: "kg", start: ffm(F), cur: ffm(L), goal: targetFFM(), cls: "", hint: "근육·뼈 등" },
   ].map((x) => ({ ...x, p: prog(x.start, x.cur, x.goal) }));
   return { items, overall: items.reduce((a, x) => a + x.p, 0) / items.length, L, F };
 }
@@ -1603,10 +1610,12 @@ function renderGoal() {
   const g = goalProgress();
   $("#goal-w").value = S.goal.weight;
   $("#goal-f").value = S.goal.fat;
+  $("#goal-m").value = muscleEstimated() ? "" : S.goal.muscle;
+  $("#goal-m").placeholder = `추정 ${fmt1(targetMuscle())}`;
   if (!g) {
     $("#goal-basis").textContent = "";
     $("#goal-main").innerHTML = `<div class="cap">종합 달성률</div><div style="width:180px">${ring(null, { size: 180, stroke: 16, big: true })}</div><div class="sub">인바디를 한 번 입력하면 달성률이 계산돼요</div>`;
-    $("#goal-rings").innerHTML = [["체중", S.goal.weight, "kg"], ["체지방률", S.goal.fat, "%"], ["제지방량", fmt1(targetFFM()), "kg"]].map(([k, v, u]) =>
+    $("#goal-rings").innerHTML = [["체중", S.goal.weight, "kg"], ["골격근량", fmt1(targetMuscle()), "kg"], ["체지방률", S.goal.fat, "%"]].map(([k, v, u]) =>
       `<div class="goal-item">${ring(null)}<div><div class="k">${k}</div><div class="tg">목표 <b>${v}${u}</b></div></div></div>`).join("");
     return;
   }
@@ -1614,7 +1623,7 @@ function renderGoal() {
   $("#goal-basis").textContent = `시작 ${F.date.replaceAll("-", ".")} → 최근 ${L.date.replaceAll("-", ".")} 인바디 기준`;
   $("#goal-main").innerHTML = `<div class="cap">종합 달성률</div>
     <div style="width:180px">${ring(overall, { size: 180, stroke: 16, big: true })}</div>
-    <div class="sub">체중 · 체지방률 · 제지방량 달성률의 평균</div>`;
+    <div class="sub">체중 · 골격근량 · 체지방률 달성률의 평균</div>`;
   $("#goal-rings").innerHTML = items.map((x) => {
     const left = x.goal - x.cur;
     const leftTxt = Math.abs(left) < 0.05 ? "목표 도달" : `목표까지 ${left > 0 ? "+" : "−"}${fmt1(Math.abs(left))}${x.unit === "%" ? "%p" : x.unit}`;
@@ -1627,7 +1636,7 @@ function renderGoal() {
 }
 $("#goal-form").addEventListener("submit", (e) => {
   e.preventDefault();
-  S.goal = { weight: +$("#goal-w").value, fat: +$("#goal-f").value };
+  S.goal = { weight: +$("#goal-w").value, fat: +$("#goal-f").value, muscle: $("#goal-m").value ? +$("#goal-m").value : null };
   save(); renderBody(); renderHome(); toast("목표를 저장했어요");
 });
 
@@ -2280,7 +2289,7 @@ const WEB_API = (() => {
     });
 
     return {
-      goal: { weight: num(settings["목표 체중"], 68), fat: num(settings["목표 체지방률"], 12) },
+      goal: { weight: num(settings["목표 체중"], 68), fat: num(settings["목표 체지방률"], 12), muscle: num(settings["목표 골격근량"]) },
       yearBase: { month: month(settings["누적 기준 월"]), count: num(settings["누적 기준 횟수"], 0) },
       vision: str(settings["지향 묘사"]),
       identity: str(settings["정체성 문장"]),
@@ -2314,7 +2323,7 @@ const WEB_API = (() => {
       cardio: (s.cardio || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((c) => [c.date, PARTS.find((p) => p.k === c.part).n, c.min]),
       rm: (s.rm || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((r) => [r.date, PARTS.find((p) => p.k === r.part).n, r.kg]),
       settings: [
-        ["목표 체중", s.goal.weight], ["목표 체지방률", s.goal.fat],
+        ["목표 체중", s.goal.weight], ["목표 골격근량", s.goal.muscle > 0 ? s.goal.muscle : ""], ["목표 체지방률", s.goal.fat],
         ["누적 기준 월", (s.yearBase && s.yearBase.month) || ""], ["누적 기준 횟수", s.yearBase ? s.yearBase.count : ""],
         ["지향 묘사", s.vision || DEFAULT_VISION], ["정체성 문장", s.identity || ""], ["키워드", (s.keywords || []).join(", ")],
       ],
