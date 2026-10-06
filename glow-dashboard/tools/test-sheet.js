@@ -76,7 +76,7 @@ function load() {
   ctx.setup();
   const d = ctx.getData();
   d.done = { "2026-10-06": true };
-  d.plans = { "2026-10-07": ["back", "biceps"] };
+  d.plans = { "2026-10-07": ["back", "biceps"], "2026-10-08": ["walking", "running"] };
   d.inbody = [{ date: "2026-10-06", w: 62.5, m: 28, f: 18.2, bmr: null }];
   d.checks = [{ date: "2026-10-06", s: { solid: 4, confidence: 4, ease: 5, principle: null }, note: "메모" }];
   d.principles = ["원칙1"];

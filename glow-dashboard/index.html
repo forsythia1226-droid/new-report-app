@@ -769,8 +769,9 @@ const age = (() => { const b = PROFILE.birth; let a = TODAY.getFullYear() - b.ge
 const PARTS = [
   { k: "chest", n: "가슴", g: "big" }, { k: "shoulder", n: "어깨", g: "big" }, { k: "back", n: "등", g: "big" }, { k: "legs", n: "하체", g: "big" },
   { k: "biceps", n: "이두", g: "small" }, { k: "triceps", n: "삼두", g: "small" }, { k: "forearm", n: "전완근", g: "small" }, { k: "abs", n: "복근", g: "small" },
+  { k: "walking", n: "워킹", g: "cardio" }, { k: "running", n: "러닝", g: "cardio" },
 ];
-const GROUPS = [{ g: "big", n: "대근육" }, { g: "small", n: "소근육" }];
+const GROUPS = [{ g: "big", n: "대근육" }, { g: "small", n: "소근육" }, { g: "cardio", n: "유산소" }];
 const CHECK_ITEMS = [
   { k: "solid", n: "단단함", hint: "체구·자세·컨디션" }, { k: "confidence", n: "자신감", hint: "눈빛·판단·결정" },
   { k: "ease", n: "여유", hint: "말투·표정·편안함" }, { k: "principle", n: "원칙 지킴", hint: "오늘 원칙대로 했나" },
@@ -784,7 +785,7 @@ function normChecks(list) {
   });
 }
 const PART_NAME = Object.fromEntries(PARTS.map((p) => [p.k, p.n]));
-const PART_SHORT = { chest: "가", shoulder: "어", back: "등", legs: "하", biceps: "이", triceps: "삼", forearm: "전", abs: "복" };
+const PART_SHORT = { chest: "가", shoulder: "어", back: "등", legs: "하", biceps: "이", triceps: "삼", forearm: "전", abs: "복", walking: "워", running: "러" };
 const sortParts = (ks) => { const set = new Set((ks || []).map((k) => (k === "core" ? "abs" : k))); return PARTS.map((p) => p.k).filter((k) => set.has(k)); };
 const planText = (ks) => ks.map((k) => PART_NAME[k]).join(" · ");
 // done: 운동한 날 / plans: 날짜별 계획 부위
@@ -1438,7 +1439,7 @@ function renderCalendar() {
   $("#sel-done").textContent = did ? "★ 운동함" : "운동 완료 체크";
   $("#sel-done").title = did ? "누르면 운동 체크를 취소합니다" : selDate > todayKey ? "미래 날짜예요" : "이 날 운동했으면 누르세요";
   $("#parts").innerHTML = GROUPS.map((g) => `
-    <div class="pgroup"><h4>${g.n} 계획</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
+    <div class="pgroup"><h4>${g.n}</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
       const on = plan.includes(p.k);
       return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}"><span class="pn">${p.n}</span></button>`;
     }).join("")}</div></div>`).join("");

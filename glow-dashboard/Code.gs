@@ -10,10 +10,10 @@ var TABS = {
   settings: ["항목", "값"],
   saju: ["원문"],
 };
-var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm", "abs"];
+var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm", "abs", "walking", "running"];
 // 부위 이름 → 키. 예전 workouts 탭의 부위별 열과 plans 탭의 "계획 부위" 글자를 읽을 때 쓴다.
-var PART_BY_NAME = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs" };
-var PART_NAMES = { chest: "가슴", shoulder: "어깨", back: "등", legs: "하체", biceps: "이두", triceps: "삼두", forearm: "전완근", abs: "복근" };
+var PART_BY_NAME = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs", 워킹: "walking", 러닝: "running" };
+var PART_NAMES = { chest: "가슴", shoulder: "어깨", back: "등", legs: "하체", biceps: "이두", triceps: "삼두", forearm: "전완근", abs: "복근", walking: "워킹", running: "러닝" };
 // 이 대시보드를 쓸 수 있는 유일한 구글 계정. 웹 앱 접근 권한("나만")에 더해 서버에서 한 번 더 확인한다.
 var OWNER_EMAIL = "forsythia1226@gmail.com";
 var KR_HOLIDAY_CALENDAR ="ko.south_korea#holiday@group.v.calendar.google.com";
