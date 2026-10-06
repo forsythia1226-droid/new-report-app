@@ -433,6 +433,9 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
   main { padding-inline: 16px; padding-block: 20px 110px; }
 }
 @media (prefers-reduced-motion: no-preference) { .bar > div { transition: width .4s ease; } }
+
+/* 맨 끝에 둔다: hidden 속성이 어떤 display 지정보다도 이기게 (Apps Script 웹 앱에는 이 기본 규칙이 없다) */
+[hidden] { display: none !important; }
 </style>
 </head>
 <body>

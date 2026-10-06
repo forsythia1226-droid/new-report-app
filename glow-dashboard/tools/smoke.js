@@ -14,14 +14,16 @@ const w = dom.window;
 w.HTMLElement.prototype.scrollIntoView = () => {};
 const $ = (s) => w.document.querySelector(s);
 const text = (s) => $(s).textContent.replace(/\s+/g, " ").trim();
+const shown = (el) => w.getComputedStyle(el).display !== "none"; // 실제로 보이는지 (hidden 속성만으로는 부족)
 const check = (name, ok, detail = "") => { if (!ok) errors.push(`${name} ${detail}`); console.log(`${ok ? "✓" : "✗"} ${name}${detail ? " — " + detail : ""}`); };
 
 setTimeout(() => {
   try {
     check("시작 화면 표시", !$("#gate").hidden && text("#gate-status").includes("미리보기"), text("#gate-status"));
     $("#gate-start").click();
-    check("시작하기 누르면 닫힘", $("#gate").hidden);
+    check("시작하기 누르면 화면에서 사라짐", !shown($("#gate")));
     check("카테고리 6개", w.document.querySelectorAll(".tab").length === 6, [...w.document.querySelectorAll(".tab")].map((t) => t.textContent.trim()).join(" "));
+    check("사주 하위 탭은 하나만 보임", [...w.document.querySelectorAll("[data-subview]")].filter(shown).length === 1);
     check("홈 지향 묘사", text("#home-vision").startsWith("그를 처음 보았을 때"));
 
     $("[data-tab=body]").click();
