@@ -29,6 +29,7 @@ function doGet() {
 /** 처음 한 번 실행: 탭과 머리글을 만들고 기본 설정·사주 원문을 넣는다. 다시 실행해도 기존 기록은 지우지 않는다. */
 function setup() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss.getSpreadsheetTimeZone() !== "Asia/Seoul") ss.setSpreadsheetTimeZone("Asia/Seoul");
   Object.keys(TABS).forEach(function (name) {
     var head = TABS[name];
     var sh = sheet_(name);
@@ -71,6 +72,10 @@ function setup() {
 
 /** 화면이 처음 열릴 때 전체 데이터를 읽어 간다. */
 function getData() {
+  // 처음 열 때(탭이 아직 없을 때) 자동으로 설정한다. 이후에는 탭이 있으니 건너뛴다.
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (Object.keys(TABS).some(function (n) { return !ss.getSheetByName(n); })) setup();
+
   var settings = {};
   rows_("settings").forEach(function (r) { settings[String(r[0]).trim()] = r[1]; });
 

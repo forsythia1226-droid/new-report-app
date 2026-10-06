@@ -67,8 +67,12 @@
 3. 미리보기: `npm run preview` → `preview.html`을 claude.ai 아티팩트로 올린다.
    미리보기 주소: https://claude.ai/artifact/7N8qxQfUxTb1FVxhcvsWXx (aitaihanit 계정, 비공개. 다른 세션에서는 Artifact 도구에 이 URL을 `url`로 넘겨 read 후 publish. 예전 개인 계정 주소 KoJZ1hEAQP7P2tEwJeHwYR 는 더 이상 쓰지 않음)
 4. 기능 단위로 커밋 (브랜치 `glow-dashboard`)
-5. 사용자가 Apps Script 편집기에 바뀐 파일을 붙여넣고 **배포 → 배포 관리 → 새 버전**. `Code.gs`의 탭·설정이 바뀌었으면 `setup` 한 번 실행.
-   - clasp로 자동 배포하는 방안은 제안만 했고 아직 설정 안 함.
+5. **`npm run deploy`** — clasp로 Apps Script에 올리고 같은 웹 앱 주소에 새 버전을 배포한다. 사용자는 웹 앱을 새로고침만 하면 된다.
+   - 구글 계정: forsythia1226@gmail.com (clasp 로그인 정보는 이 PC의 `~/.clasprc.json`. 다른 PC에서는 `npx @google/clasp login`부터)
+   - 시트: https://drive.google.com/open?id=1IaNAAiPgWUDcVrO2GOd4oCgnGwNsgXjraln5P6rRTeg
+   - 스크립트 편집기: https://script.google.com/d/14_XiXxgwxr73Xgy2n-8l7UyTcW2Up0wcdvFSS7o8g_2nHP260DwS3R-O/edit
+   - **웹 앱(실사용 주소):** https://script.google.com/macros/s/AKfycbwFw9riOo-EUVtWNvV3iyrbcEZGrztC2EXTgIsL26tPrjQZPHe4qESjnMU68E-yjZ00/exec (접근: 나만)
+   - 탭이 없으면 `getData()`가 처음 열릴 때 `setup()`을 자동 실행한다. 업로드 대상은 `.claspignore`로 4개 파일만.
 
 ## 함정 (실제로 겪은 것)
 
@@ -83,5 +87,4 @@
 
 - 실제 구글 시트·캘린더에서 동작 확인 (지금까지는 가짜 시트와 jsdom으로만 검증)
 - 커리어 · 투자 카테고리 내용 정하기 (사주 원문의 커리어/재물 원칙을 연결할지 사용자에게 물었고, 당시엔 홈 연결만 선택함)
-- clasp 설정으로 배포 자동화
 - (정리됨) 신체 부제 "다부진 체구에서 단단함이 보여지게"는 삭제, 제목 위 인용만 남김

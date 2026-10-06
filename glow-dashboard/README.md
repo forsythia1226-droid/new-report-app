@@ -12,7 +12,13 @@
 | `Saju.gs` | 사주 원문. `setup()`이 `saju` 탭에 넣는다 |
 | `appsscript.json` | 매니페스트 (clasp로 올릴 때 사용) |
 
-## 처음 설정 (10분)
+## 지금 배포된 곳
+
+- 웹 앱: https://script.google.com/macros/s/AKfycbwFw9riOo-EUVtWNvV3iyrbcEZGrztC2EXTgIsL26tPrjQZPHe4qESjnMU68E-yjZ00/exec
+- 시트: https://drive.google.com/open?id=1IaNAAiPgWUDcVrO2GOd4oCgnGwNsgXjraln5P6rRTeg
+- 코드를 고친 뒤 `npm run deploy` (clasp 로그인 필요: `npx @google/clasp login`)
+
+## 처음 설정 (손으로 할 때, 10분)
 
 1. Google Drive에서 **새 스프레드시트**를 만든다. (이름 예: `Glow 대시보드`)
 2. 메뉴 **확장 프로그램 → Apps Script**를 연다.

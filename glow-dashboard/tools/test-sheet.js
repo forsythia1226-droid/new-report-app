@@ -41,6 +41,7 @@ function load() {
     getSheets: () => sheets.slice(),
     deleteSheet: (s) => sheets.splice(sheets.indexOf(s), 1),
     getSpreadsheetTimeZone: () => "Asia/Seoul",
+    setSpreadsheetTimeZone() {},
   };
   const fmt = (d, tz, f) => { const y = d.getFullYear(), m = ("0" + (d.getMonth() + 1)).slice(-2), dd = ("0" + d.getDate()).slice(-2); return f === "yyyy-MM" ? `${y}-${m}` : `${y}-${m}-${dd}`; };
   const ctx = {

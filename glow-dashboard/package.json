@@ -4,7 +4,8 @@
   "description": "Glow 개인 대시보드 (Google Apps Script 웹 앱) — 로컬 검증 도구",
   "scripts": {
     "test": "node tools/test-sheet.js && node tools/smoke.js",
-    "preview": "node tools/build-preview.js"
+    "preview": "node tools/build-preview.js",
+    "deploy": "npx -y @google/clasp push --force && npx -y @google/clasp redeploy AKfycbwFw9riOo-EUVtWNvV3iyrbcEZGrztC2EXTgIsL26tPrjQZPHe4qESjnMU68E-yjZ00 --description \"Glow 대시보드\""
   },
   "devDependencies": {
     "jsdom": "^26.0.0"
