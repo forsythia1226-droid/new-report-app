@@ -464,6 +464,11 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .part .pk.none { opacity: .6; }
 .part[aria-pressed="true"] .pk { color: inherit; opacity: .8; }
 .pgroup h4 { display: flex; justify-content: space-between; align-items: center; }
+.part { position: relative; }
+.part .pcount { position: absolute; top: 5px; right: 7px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--iron-soft); color: var(--iron); font: 700 .68rem/18px var(--mono); text-align: center; pointer-events: none; }
+.part .pcount.zero { background: transparent; color: var(--muted); opacity: .5; font-weight: 500; }
+.part.on .pcount { background: color-mix(in srgb, var(--surface) 22%, transparent); color: var(--surface); }
+.part.on .pcount.zero { background: transparent; color: var(--surface); }
 .part .pn-btn { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; width: 100%; padding: 2px 0; border-radius: 6px; cursor: pointer; }
 /* 값 알약: 가운데 정렬, 알약 전체가 드롭다운 */
 .part .val { position: relative; display: inline-flex; align-items: baseline; justify-content: center; gap: 2px; max-width: 100%; padding: 1px 12px 1px 18px; border-radius: 6px; background: transparent; color: var(--muted); font: 500 .72rem var(--body); white-space: nowrap; font-variant-numeric: tabular-nums; transition: background .15s; }
@@ -1820,6 +1825,10 @@ function renderCalendar() {
 
   // 선택한 날: 운동 완료 + 계획 부위
   const plan = S.plans[selDate] || [];
+  // 이 달 부위별 횟수: 계획한 부위 중 그날 운동함(★)이면 1회
+  const monthKey = selDate.slice(0, 7), monthNo = +selDate.slice(5, 7);
+  const partCount = {};
+  for (const [d, ps] of Object.entries(S.plans)) if (d.startsWith(monthKey) && S.done[d]) ps.forEach((k) => { partCount[k] = (partCount[k] || 0) + 1; });
   const did = !!S.done[selDate];
   $("#sel-date").textContent = dayLabel(selDate) + (selDate === todayKey ? " · 오늘" : "") + (did ? " ★" : "");
   $("#sel-sub").textContent = plan.length ? `계획: ${planText(plan)}` : "이 날 할 부위를 아래에서 골라 계획하세요";
@@ -1841,7 +1850,8 @@ function renderCalendar() {
         const sel = `<select data-rm="${p.k}" aria-label="${p.n} ${u.label}" title="${last ? `최근 ${u.label} ${fmtKg(last.kg)}${u.unit} (${last.date.replaceAll("-", ".")})` : `${u.label} 기록 없음`} · 고르면 ${dayLabel(selDate)} 기록">${pickOptions(u.opts, day ? day.kg : null, last ? fmtKg(last.kg) : "–")}</select>`;
         input = valChip(sel, day ? `<b>${fmtKg(day.kg)}</b> ${u.unit}` : last ? `최근 ${fmtKg(last.kg)}${u.unit}` : `+ ${u.unit}`, !!day);
       }
-      return `<div class="part ${on ? "on" : ""}"><button class="pn-btn" type="button" data-part="${p.k}" aria-pressed="${on}">${p.n}</button>${input}</div>`;
+      const n = partCount[p.k] || 0;
+      return `<div class="part ${on ? "on" : ""}"><span class="pcount ${n ? "" : "zero"}" title="${monthNo}월 ${n}회 (계획 + 운동함 기준)" aria-label="${monthNo}월 ${n}회">${n}</span><button class="pn-btn" type="button" data-part="${p.k}" aria-pressed="${on}">${p.n}</button>${input}</div>`;
     }).join("")}</div></div>`).join("");
 }
 

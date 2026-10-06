@@ -69,6 +69,7 @@ setTimeout(() => {
     check("오늘 완료 토글로 이번 달 횟수 변화", before !== after, `${before} → ${after}`);
 
     check("목표 달성 모수 12일", /목표 달성\d+\/ 12일/.test(text("#tiles")), (text("#tiles").match(/\d+월 목표 달성[^%]*%/) || [""])[0]);
+    check("부위 카드에 이 달 횟수 (계획+운동함)", w.document.querySelectorAll("#parts .part .pcount").length === 10 && Number($("[data-part=chest]").closest(".part").querySelector(".pcount").textContent) >= 1, $("[data-part=chest]").closest(".part").querySelector(".pcount").title);
     check("패널에 운동 완료 버튼 없음", !$("#sel-done"));
     check("부위마다 드롭다운 (kg 8 + 분 2)", w.document.querySelectorAll("#parts select[data-rm]").length === 8 && w.document.querySelectorAll("#parts select[data-cardio]").length === 2);
     check("최근 1RM이 드롭다운에 흐리게", $("select[data-rm=chest]").options[0].text === "60" && $("select[data-rm=abs]").options[0].text === "–", $("select[data-rm=chest]").options[0].text);
