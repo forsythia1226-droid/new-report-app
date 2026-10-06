@@ -22,6 +22,19 @@ setTimeout(() => {
     check("시작 화면 표시", !$("#gate").hidden && text("#gate-status").includes("미리보기"), text("#gate-status"));
     $("#gate-start").click();
     check("시작하기 누르면 화면에서 사라짐", !shown($("#gate")));
+    $("[data-tab=saju]").click(); $("[data-sub=flow]").click();
+    check("월별 운세: 원문에서 기간 5개", w.document.querySelectorAll("#timeline .period").length === 5, [...w.document.querySelectorAll("#timeline .period .when span:first-child")].map((e) => e.textContent).join(" "));
+    w.document.querySelector("[data-period=\"2026-12\"]").click();
+    check("기간 누르면 원문 해당 부분", text("#period-detail").includes("주의해서 볼 달입니다"));
+    // 새 자료 붙여넣기 → 미리보기 → 저장
+    $("#up-paste-btn").click();
+    $("#up-paste-text").value = ["새 자료", "", "1. 2026년 10월 — 戊戌", "", "커리어 ★★★☆☆", "", "새 10월 해석입니다.", "", "2. 2026년 11월 — 己亥", "", "재물 ★★★★★", "", "새 11월."].join("\n");
+    $("#up-paste-ok").click();
+    check("업로드 미리보기에서 기간 인식", text("#up-found").includes("2026.10") && text("#up-found").includes("2026.11"), text("#up-found"));
+    $("#up-save").click();
+    check("새 자료로 교체", w.document.querySelectorAll("#timeline .period").length === 2 && text("#monthly-hist").includes("사용 중"), text("#monthly-src"));
+    check("신살 화면은 그대로", w.document.querySelectorAll("#shinsal .ss-row").length === 10);
+    $("[data-tab=home]").click();
     check("카테고리 6개", w.document.querySelectorAll(".tab").length === 6, [...w.document.querySelectorAll(".tab")].map((t) => t.textContent.trim()).join(" "));
     check("사주 하위 탭은 하나만 보임", [...w.document.querySelectorAll("[data-subview]")].filter(shown).length === 1);
     check("홈 지향 묘사", text("#home-vision").startsWith("그를 처음 보았을 때"));

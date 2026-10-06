@@ -244,6 +244,18 @@ ul.plain li { margin-bottom: 3px; }
 .ss-body { padding: 0 14px 14px; font-size: .88rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .ss-body h4 { margin: 0 0 4px; font-size: .75rem; color: var(--muted); letter-spacing: .04em; }
 
+.sec { margin-bottom: 14px; }
+.sec h3 { font-size: .85rem; color: var(--iron); margin: 0 0 6px; font-weight: 600; }
+.sec p { margin: 0 0 6px; font-size: .9rem; line-height: 1.7; }
+.sec ul.plain { margin: 0 0 8px; font-size: .9rem; }
+.detail .sec { max-width: 72ch; }
+.sum-key .sec h3 { color: var(--muted); }
+.up-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.up-file { cursor: pointer; }
+.up-preview { margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
+.hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: .88rem; }
+.hist li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.linkbtn.danger { color: var(--warn); }
 .placeholder { text-align: center; padding: 56px 16px; }
 .placeholder .glyph { font-family: var(--display); font-size: 3rem; color: var(--iron); }
 
@@ -570,12 +582,11 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
     <section id="v-saju" data-view="saju" hidden>
       <div class="view-head">
         <div><div class="tagline">“미래를 아는 듯한 자신감”</div><h1>命 사주</h1><p id="saju-sub"></p></div>
-        <button class="linkbtn" type="button" id="open-raw">원문 보기</button>
       </div>
       <div class="subtabs" role="tablist" style="margin-bottom:16px">
         <button type="button" data-sub="sum" aria-selected="true">요약</button>
         <button type="button" data-sub="chart" aria-selected="false">원국 · 신살</button>
-        <button type="button" data-sub="flow" aria-selected="false">운 흐름</button>
+        <button type="button" data-sub="flow" aria-selected="false">월별 운세</button>
       </div>
 
       <!-- 요약 -->
@@ -600,40 +611,20 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
           <p class="quote" style="margin:0 0 10px">戊土가 일간을 도와주므로 예전보다 훨씬 적극적으로 움직일 수 있는 시기. 다만 申이 원국의 수를 다시 강화하므로 활동 범위와 돈의 흐름도 동시에 커집니다.</p>
           <div class="src">30대 후반~40대 초반 = “돈을 크게 움직이기 시작하는 시기”</div>
         </div>
-        <div class="card c12">
-          <h2>2026.9 ~ 2027 전략 <span class="muted" style="font-weight:400;letter-spacing:0">“커리어를 바꾸고 재정 구조를 다시 짜는 1년 반”</span></h2>
-          <div class="flow">
-            <div><span class="muted">2026 하반기</span><b>선택</b>커리어의 방향을 결정합니다.</div><i>→</i>
-            <div><span class="muted">2027</span><b>집중</b>새로운 방향의 전문성과 직책을 만듭니다.</div><i>→</i>
-            <div><span class="muted">재물</span><b>확대보다 축적</b>수익을 늘리는 것 이상으로 현금과 순자산을 남깁니다.</div>
-          </div>
-          <p class="src" style="font-size:.85rem"><span class="est">추정</span>가장 좋은 시나리오: 2026년 하반기 역할 변경·이직·새 기회 확보 → 2027년 자리 안착·보상 현실화</p>
+        <div class="card c5">
+          <h2>이번 달 운세 <button class="linkbtn" type="button" data-goto-saju="flow" style="font-size:.8rem;letter-spacing:0">월별 운세 보기</button></h2>
+          <div id="sum-month"></div>
         </div>
-        <div class="card c4">
-          <h2>커리어 핵심</h2>
-          <ul class="plain"><li>2026.9~10: 움직이기 좋은 구간</li><li>2026.11: 보상·외부기회 증가</li><li>2026.12: 충동 퇴사·독립 주의</li><li>2027: 직책·책임·전문성 확대, 자리 잡기 좋은 해</li></ul>
-        </div>
-        <div class="card c4">
-          <h2>재물 핵심</h2>
-          <ul class="plain"><li>2026년 말: 돈의 기회는 많지만 변동성이 큼</li><li>2027년: 버는 돈을 실제 자산으로 남기기 더 좋은 해</li><li>고위험 투자보다 본업 소득·장기자산·부채 관리가 유리</li></ul>
-        </div>
-        <div class="card c4">
-          <h2>혼동하지 말 것</h2>
-          <div class="neq"><span>매출 ≠ 순이익</span><span>연봉 ≠ 순자산</span><span>투자수익 ≠ 확정수익</span></div>
-          <div class="src">커리어는 연봉보다 경력 가치·안정성·권한·성장 가능성을 같이</div>
-        </div>
-        <div class="card c12">
-          <h2>특히 조심해야 할 재물 패턴</h2>
-          <p class="quote" style="margin:0 0 10px">“돈을 못 버는 것”이 아니라 “돈을 더 벌 수 있을 것 같아서 계속 움직이는 것”</p>
-          <p style="margin:0 0 6px;font-size:.88rem">수익률보다 원칙이 중요 · 미리 정할 것</p>
-          <div class="chips"><span>투자금 총액 한도</span><span>종목·자산별 최대 비중</span><span>대출 한도</span><span>손실 제한</span><span>현금 비중</span><span>배우자와 합의가 필요한 금액</span></div>
+        <div class="card c7">
+          <h2>월별 운세 핵심 <span class="muted" style="font-weight:400;letter-spacing:0" id="sum-src"></span></h2>
+          <div class="sum-key" id="sum-key"></div>
         </div>
       </div>
 
       <!-- 원국 · 신살 -->
       <div class="grid" data-subview="chart" hidden>
         <div class="card c7">
-          <h2>원국 <span class="muted" style="font-weight:400;letter-spacing:0">글자 아래 = 신살 · 선 = 지지 관계</span></h2>
+          <h2>원국 <span class="muted" style="font-weight:400;letter-spacing:0">글자 아래 = 신살 · 선 = 지지 관계</span><button class="linkbtn" type="button" id="open-raw-shinsal" style="font-size:.8rem;letter-spacing:0">신살 원문 보기</button></h2>
           <div class="pillars" id="pillars"></div>
           <div id="rel"></div>
           <div class="rel-note" id="rel-note" hidden></div>
@@ -649,14 +640,33 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
         </div>
       </div>
 
-      <!-- 운 흐름 -->
+      <!-- 월별 운세 (새로 받을 때마다 교체) -->
       <div data-subview="flow" hidden>
         <div class="card" style="margin-bottom:16px">
-          <h2>운 흐름 <span class="muted" style="font-weight:400;letter-spacing:0">막대 = 원문 별점(5점) · 옅은 칸 = 범위 · 눌러서 자세히</span></h2>
+          <h2>운 흐름 <span class="muted" style="font-weight:400;letter-spacing:0" id="monthly-src"></span><button class="linkbtn" type="button" id="open-raw-monthly" style="font-size:.8rem;letter-spacing:0">월별 원문 보기</button></h2>
           <div class="timeline" id="timeline"></div>
-          <p class="src">명리적으로 2027년이 좋아도 실제 승진·연봉 상승을 보장한다는 의미는 아닙니다.</p>
+          <p class="src">막대 = 원문 별점(5점) · 옅은 칸 = 범위 · 기간을 누르면 아래에 원문 해당 부분</p>
         </div>
-        <div class="card detail" id="period-detail"></div>
+        <div class="card detail" id="period-detail" style="margin-bottom:16px"></div>
+        <div class="card upload">
+          <h2>월별 사주 자료</h2>
+          <p class="muted" style="margin:0 0 10px;font-size:.88rem">새로 받은 월별 사주를 올리면 운 흐름·이번 달 운세가 그 자료로 바뀌어요. 텍스트 파일(.txt, .md) 또는 붙여넣기.</p>
+          <div class="up-actions">
+            <label class="btn primary up-file">파일 올리기<input type="file" id="up-file" accept=".txt,.md,text/plain,text/markdown" hidden /></label>
+            <button class="btn" type="button" id="up-paste-btn">붙여넣기로 올리기</button>
+          </div>
+          <div id="up-paste" hidden style="margin-top:10px">
+            <textarea id="up-paste-text" rows="8" placeholder="받은 월별 사주 내용을 그대로 붙여넣으세요"></textarea>
+            <div style="margin-top:8px"><button class="btn" type="button" id="up-paste-ok">확인</button></div>
+          </div>
+          <div id="up-preview" class="up-preview" hidden>
+            <label class="f">자료 이름<input type="text" id="up-title" maxlength="40" /></label>
+            <p id="up-found" style="margin:8px 0;font-size:.88rem"></p>
+            <div class="up-actions"><button class="btn primary" type="button" id="up-save">이 자료로 바꾸기</button><button class="btn" type="button" id="up-cancel">취소</button></div>
+          </div>
+          <h3 style="font-size:.8rem;color:var(--muted);margin:16px 0 6px">올린 자료</h3>
+          <ul class="hist" id="monthly-hist"></ul>
+        </div>
       </div>
     </section>
 
@@ -875,7 +885,7 @@ const EXAMPLE = () => ({
 const DEFAULT_VISION = "그를 처음 보았을 때, 나는 그가 다른 이들과 다르다는 것을 느꼈다. 다부진 체구에서는 단단함을, 총명한 눈빛에서는 미래를 아는 듯한 자신감을 부드러운 말투에서는 여유와 편안함이 느껴졌다. 그 사람에게서 나오는 아우라가 그와 함께 있는 공간을 가득채웠다.";
 const DEFAULT_YEAR_BASE = { month: "2026-09", count: 100 };
 const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
-const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, rm: [], cardio: [], identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
+const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, rm: [], cardio: [], sajuShinsal: "", sajuMonthly: [], identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
 
 /* ---------- 저장소 ----------
    APPS: Apps Script 웹 앱(script.google.com)에서 열림 → google.script.run 으로 시트에 저장
@@ -1103,40 +1113,97 @@ const SHINSAL = [
     sec: [["참고", ["천을귀인 + 월덕귀인 + 문창·학당 조합이 훨씬 중요", "따로 해석할 필요는 거의 없음"]]] },
 ];
 
-// [커리어, 재물, 리스크] — [최소, 최대] 별점
-const PERIODS = [
-  { id: "2026-09", from: "2026-09", to: "2026-09", when: "2026.9", gz: "丁酉", kw: "내 시장가치 확인", r: { 커리어: [4, 4], 재물: [3, 3] },
-    lead: "전문성 → 결과물",
-    cols: [["커리어에서 생기기 좋은 일", ["평가", "발표", "프로젝트 결과 공개", "포트폴리오", "실적 인정", "직무 전문성 부각"]],
-           ["생각이 많아질 수 있음", ["“나는 앞으로 이 일을 계속할 것인가?”", "“지금 역할보다 다른 역할이 맞지 않을까?”"]],
-           ["이직은?", ["가능. 다만 “지금 회사가 싫어서”보다는 내 전문성을 더 인정해주는 자리로 이동하는 것이 좋음"]],
-           ["재물", ["돈을 버는 것보다 자신의 가치를 높이는 데 초점", "연봉 협상, 조건 협의, 성과급 결정 등에 유리", "충동 투자에는 특별히 좋은 달은 아님"]]] },
-  { id: "2026-10", from: "2026-10", to: "2026-10", when: "2026.10", gz: "戊戌", kw: "방향 결정", r: { 커리어: [5, 5], 재물: [4, 4] },
-    lead: "“내가 무엇을 할 것인가”를 결정하기가 쉬워지는 달",
-    cols: [["좋게 작용할 수 있는 것", ["이직 결정", "직무 전환", "승진·리더 역할", "장기 프로젝트 선택", "연봉 협상", "사업 구조 결정"]],
-           ["재물: 돈의 구조를 정리하기 좋음", ["대출 점검", "투자 비중 조절", "현금 확보", "자산 리밸런싱", "부부 재정 계획"]],
-           ["기준", ["[추정] 큰 투자를 한다면 단순 기대수익보다 현금흐름이 버틸 수 있는가를 기준으로"]]] },
-  { id: "2026-11", from: "2026-11", to: "2026-11", when: "2026.11", gz: "己亥", kw: "보상·수입 기회 확대", r: { 커리어: [4, 4], 재물: [4, 5] },
-    lead: "이때부터 돈이 움직입니다",
-    cols: [["들어올 가능성", ["추가 수입", "성과 보상", "부업", "투자 기회", "사업 제안", "외부 프로젝트"]],
-           ["욕심도 같이 커질 수 있음", ["“이 정도면 더 투자해도 되겠다.”", "“이번 기회에 크게 해볼까?”", "“돈이 되니까 이것도 같이 하자.”"]],
-           ["좋은 방향", ["100을 벌 기회가 생겼다면 200으로 베팅하기보다 50을 확실히 남기는 것"]]] },
-  { id: "2026-12", from: "2026-12", to: "2026-12", when: "2026.12", gz: "庚子", kw: "욕심 조절", r: { 커리어: [3, 3], 재물: [4, 4], 리스크: [5, 5] },
-    lead: "아이디어 + 돈 · 벌 수 있는 달이면서 크게 잃을 수도 있는 달",
-    cols: [["강해질 수 있는 것", ["상사와 충돌", "조직에 대한 불만", "“내가 직접 하는 게 낫겠다”는 생각", "사업·독립 욕구", "충동적인 퇴사"]],
-           ["가장 조심할 것", ["성과가 잘 나온다고 갑자기 독립하는 것"]],
-           ["공격적으로 움직이고 싶어질 수 있음", ["주식", "부동산", "사업", "레버리지", "→ 수익률보다 리스크 관리가 중요"]]] },
-  { id: "2027", from: "2027-01", to: "2027-12", when: "2027", gz: "丁未", kw: "자리 잡고 직책·보상 확대", r: { 커리어: [4, 5], 재물: [4, 4] },
-    lead: "2026년의 변화를 내 것으로 만드는 해 · 부족했던 화·토가 동시에 들어옴",
-    cols: [["커리어: 직책과 책임", ["중요한 업무 담당", "리더 역할", "의사결정 권한 증가", "후배 관리", "전문성 인정", "회사에서 핵심 인력으로 자리 잡음", "→ 새로운 걸 계속 찾아다니기보다 한 자리에서 경력을 쌓아 올리기"]],
-           ["숨은 포인트: 지금 하는 일 + 새로운 전문성", ["금융 + 데이터", "영업 + 기술", "기획 + AI", "엔지니어링 + 관리", "기존 업무 + 자격증"]],
-           ["재물: 2026 → 2027", ["2026: 돈의 기회 ↑ · 변화 ↑ · 변동성 ↑", "2027: 소득 안정 ↑ · 관리능력 ↑ · 축적 가능성 ↑"]],
-           ["좋은 돈의 형태: 본업 기반 자산 형성", ["연봉 상승", "성과급", "승진에 따른 급여 상승", "장기 적립", "대출 상환", "주택 구입 준비", "우량자산 장기 보유", "→ 한방을 노리는 투기성 재물은 항상 주의"]],
-           ["사업: 좋은 형태", ["본업 유지 → 전문성 기반 부업 → 고정 고객 확보 → 매출 검증 → 독립"]],
-           ["사업: 좋지 않은 형태", ["회사 불만 → 퇴사 → 사업 아이템 찾음 → 대출 → 매출 확보"]]] },
-];
+// ===== 월별 운세: 올린 원문에서 기간·간지·별점을 읽어 타임라인을 만든다 =====
+// 신살(원국) 해석은 고정, 월별 운세는 새로 받을 때마다 파일/붙여넣기로 교체한다.
+const SAJU_MARK = "응. 남편분은 화면상 원국이";
+const splitSaju = (raw) => { const i = raw.indexOf(SAJU_MARK); return i < 0 ? { monthly: raw.trim(), shinsal: "" } : { monthly: raw.slice(0, i).trim(), shinsal: raw.slice(i).trim() }; };
+const DEFAULT_SHINSAL = splitSaju(SAJU_RAW).shinsal;
+const DEFAULT_MONTHLY = { date: "2026-09-03", title: "채주엽 사주_260903", text: splitSaju(SAJU_RAW).monthly };
+
+const GZ_RE = /([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])/;
+const RATE_RE = /^(커리어|재물|리스크|종합|건강|관계|연애|학업)\s*(★[★☆]*)(?:\s*~\s*(★[★☆]*))?/;
+const stars = (s) => (s.match(/★/g) || []).length;
+const isSep = (l) => /^(⸻|---+|—+)$/.test(l.trim());
+
+function parseSajuSections(text) {
+  const out = [];
+  let cur = null;
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    const num = line.match(/^(\d+)\.\s+(.+)$/);
+    if (num || line === "핵심 요약") { cur = { title: num ? num[2] : line, lines: [] }; out.push(cur); continue; }
+    if (cur) cur.lines.push(raw);
+  }
+  return out;
+}
+
+function parsePeriods(text) {
+  const map = {};
+  const kw = {};
+  for (const sec of parseSajuSections(text || "")) {
+    // 흐름 정리 섹션: "2026년 9월" 다음 줄을 그 달의 한 줄 요약으로
+    const ls = sec.lines.map((l) => l.trim()).filter((l) => l && l !== "↓" && !isSep(l));
+    ls.forEach((l, i) => {
+      const m = l.match(/^(\d{4})년(?:\s*(\d{1,2})월)?$/);
+      const key = m && (m[2] ? `${m[1]}-${pad(+m[2])}` : m[1]);
+      if (m && ls[i + 1] && !/^\d{4}년/.test(ls[i + 1]) && !kw[key]) kw[key] = ls[i + 1]; // 처음 나온 요약을 쓴다
+    });
+    const mm = sec.title.match(/(\d{4})년\s*(\d{1,2})월/);
+    const yy = !mm && sec.title.match(/^(\d{4})년/);
+    if (!mm && !yy) continue;
+    const id = mm ? `${mm[1]}-${pad(+mm[2])}` : yy[1];
+    const p = map[id] || (map[id] = {
+      id, from: mm ? id : `${id}-01`, to: mm ? id : `${id}-12`,
+      when: mm ? `${mm[1]}.${+mm[2]}` : id, gz: "", r: {}, lead: "", secs: [],
+    });
+    const g = sec.title.match(GZ_RE);
+    if (g && !p.gz) p.gz = g[1];
+    for (const l of ls) {
+      const r = l.match(RATE_RE);
+      if (r) {
+        let k = r[1];
+        if (k === "종합") k = /커리어/.test(sec.title) ? "커리어" : /재물/.test(sec.title) ? "재물" : "종합";
+        p.r[k] = [stars(r[2]), r[3] ? stars(r[3]) : stars(r[2])];
+        continue;
+      }
+      if (!p.lead && !/^\* /.test(l) && l.length > 4) p.lead = l; // 별점 다음 첫 문장
+    }
+    p.secs.push(sec);
+  }
+  const periods = Object.values(map).sort((a, b) => (a.from < b.from ? -1 : 1));
+  periods.forEach((p) => { p.kw = kw[p.id] || p.lead.slice(0, 24); });
+  return periods;
+}
+
+// 원문 섹션을 읽기 좋게: "* " 는 목록, [추정] 은 표시, 구분선은 생략
+function renderSecText(lines) {
+  const out = [];
+  let list = [];
+  const flush = () => { if (list.length) { out.push(`<ul class="plain">${list.join("")}</ul>`); list = []; } };
+  for (const raw of lines) {
+    const l = raw.trim();
+    if (!l || isSep(l)) { flush(); continue; }
+    if (/^\* /.test(l)) { list.push(`<li>${fmtItem(l.slice(2))}</li>`); continue; }
+    flush();
+    out.push(`<p>${fmtItem(l)}</p>`);
+  }
+  flush();
+  return out.join("");
+}
+
+const curMonthly = () => {
+  const list = S.sajuMonthly && S.sajuMonthly.length ? S.sajuMonthly : [DEFAULT_MONTHLY];
+  return list.reduce((a, b) => (b.date >= a.date ? b : a));
+};
+let PERIODS = [];
+let PERIODS_SRC = null;
+function periods() {
+  const m = curMonthly();
+  if (PERIODS_SRC !== m.text) { PERIODS = parsePeriods(m.text); PERIODS_SRC = m.text; }
+  return PERIODS;
+}
 const ym = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-const nowPeriod = () => PERIODS.find((p) => ym(TODAY) >= p.from && ym(TODAY) <= p.to);
+const nowPeriod = () => periods().find((p) => ym(TODAY) >= p.from && ym(TODAY) <= p.to);
 
 function segs([lo, hi], risk) {
   return `<div class="segs ${risk ? "risk" : ""}">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= lo ? "on" : i <= hi ? "maybe" : ""}"></i>`).join("")}</div>`;
@@ -1145,7 +1212,7 @@ const rates = (r) => Object.entries(r).map(([k, v]) => `<div class="rate"><span>
 const fmtItem = (t) => esc(t).replace(/^\[추정\]\s*/, '<span class="est">추정</span>');
 
 let subTab = "sum";
-let selPeriod = (nowPeriod() || PERIODS[0]).id;
+let selPeriod = null;
 let selShinsal = null;
 let selRel = null;
 
@@ -1210,44 +1277,114 @@ function renderSaju() {
       ${selShinsal === i ? `<div class="ss-body">${s.sec.map(([h, items]) => `<div><h4>${h}</h4><ul class="plain">${items.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>`).join("")}</div>` : ""}
     </div>`).join("");
 
+  renderMonthly();
+}
+
+function renderMonthly() {
+  const m = curMonthly();
+  const list = periods();
   const cur = nowPeriod();
-  $("#timeline").innerHTML = PERIODS.map((p) => {
+  if (!list.find((p) => p.id === selPeriod)) selPeriod = (cur || list[0] || {}).id || null;
+  $("#monthly-src").textContent = `${m.title} · 올린 날 ${m.date.replaceAll("-", ".")}`;
+  $("#timeline").innerHTML = list.length ? list.map((p) => {
     const past = ym(TODAY) > p.to, now = p === cur;
     return `<button type="button" class="period ${past ? "past" : ""} ${now ? "now" : ""}" data-period="${p.id}" aria-pressed="${p.id === selPeriod}">
       <span class="when"><span>${p.when}</span>${now ? '<span class="pill iron">지금</span>' : p.r.리스크 ? '<span class="pill warn">주의</span>' : ""}</span>
-      <span class="gz">${p.gz}</span><span class="kw">${p.kw}</span>${rates(p.r)}</button>`;
-  }).join("");
-  const P = PERIODS.find((p) => p.id === selPeriod);
-  $("#period-detail").innerHTML = `
-    <h2>${P.when} · ${P.gz}</h2>
-    <p class="lead">${esc(P.lead)}</p>
-    <div class="cols">${P.cols.map(([h, items]) => `<div><h3>${h}</h3><ul class="plain">${items.map((t) => `<li>${fmtItem(t)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+      <span class="gz">${p.gz || "–"}</span><span class="kw">${esc(p.kw)}</span>${rates(p.r)}</button>`;
+  }).join("") : `<p class="muted">이 자료에서 "2026년 9월 — 丁酉" 같은 기간 제목을 찾지 못했어요. 원문 보기로 내용을 확인해 주세요.</p>`;
+  const P = list.find((p) => p.id === selPeriod);
+  $("#period-detail").hidden = !P;
+  if (P) $("#period-detail").innerHTML = `<h2>${P.when}${P.gz ? ` · ${P.gz}` : ""}</h2>` +
+    P.secs.map((s) => `<div class="sec"><h3>${esc(s.title)}</h3>${renderSecText(s.lines)}</div>`).join("");
+
+  // 요약 탭: 이번 달 운세 + 자료의 핵심 요약 (원문 그대로)
+  $("#sum-month").innerHTML = cur
+    ? `<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px"><span style="font-family:var(--display);font-size:1.8rem">${cur.gz || ""}</span><b>${esc(cur.kw)}</b><span class="muted" style="font-size:.85rem">${cur.when}</span></div>
+       <div style="display:flex;flex-direction:column;gap:5px;max-width:360px">${rates(cur.r)}</div>`
+    : `<p class="muted" style="margin:0">지금 날짜에 해당하는 기간이 이 자료에 없어요. 새 월별 사주를 올려 주세요.</p>`;
+  const secs = parseSajuSections(m.text);
+  const keySecs = secs.filter((s) => s.title === "핵심 요약" || /결론 요약/.test(s.title));
+  $("#sum-key").innerHTML = keySecs.length ? keySecs.map((s) => `<div class="sec"><h3>${esc(s.title)}</h3>${renderSecText(s.lines)}</div>`).join("")
+    : `<p class="muted" style="margin:0">이 자료에는 "핵심 요약"·"결론 요약" 제목이 없어요.</p>`;
+  $("#sum-src").textContent = `출처: ${m.title}`;
+
+  // 올린 자료 이력
+  const hist = [...(S.sajuMonthly && S.sajuMonthly.length ? S.sajuMonthly : [DEFAULT_MONTHLY])].sort((a, b) => (a.date < b.date ? 1 : -1));
+  $("#monthly-hist").innerHTML = hist.map((h) => `<li><span class="num">${h.date.replaceAll("-", ".")}</span> <span>${esc(h.title)}</span>${h === m ? ' <span class="pill iron">사용 중</span>' : ""}
+      <button class="linkbtn" type="button" data-raw-monthly="${esc(h.date + "|" + h.title)}">원문</button>
+      ${hist.length > 1 ? `<button class="linkbtn danger" type="button" data-del-monthly="${esc(h.date + "|" + h.title)}">삭제</button>` : ""}</li>`).join("");
 }
+
 $("#v-saju").addEventListener("click", (e) => {
   const ss = e.target.closest("[data-ss]");
   if (ss) { selShinsal = selShinsal === +ss.dataset.ss ? null : +ss.dataset.ss; renderSaju(); return; }
   const pr = e.target.closest("[data-period]");
-  if (pr) { selPeriod = pr.dataset.period; renderSaju(); return; }
+  if (pr) { selPeriod = pr.dataset.period; renderMonthly(); return; }
   const rl = e.target.closest("[data-rel]");
-  if (rl) { selRel = selRel === rl.dataset.rel ? null : rl.dataset.rel; renderSaju(); }
+  if (rl) { selRel = selRel === rl.dataset.rel ? null : rl.dataset.rel; renderSaju(); return; }
+  const rm = e.target.closest("[data-raw-monthly]");
+  if (rm) { const h = findMonthly(rm.dataset.rawMonthly); if (h) openRaw(h.text, `월별 운세 · ${h.title}`); return; }
+  const dm = e.target.closest("[data-del-monthly]");
+  if (dm) {
+    if (dm.dataset.armed !== "1") { dm.dataset.armed = "1"; dm.textContent = "한 번 더 누르면 삭제"; setTimeout(() => { dm.dataset.armed = ""; dm.textContent = "삭제"; }, 3000); return; }
+    const h = findMonthly(dm.dataset.delMonthly);
+    S.sajuMonthly = (S.sajuMonthly || []).filter((x) => x !== h);
+    save(); renderSaju(); renderHome(); toast("자료를 삭제했어요");
+  }
 });
+const findMonthly = (key) => (S.sajuMonthly && S.sajuMonthly.length ? S.sajuMonthly : [DEFAULT_MONTHLY]).find((h) => `${h.date}|${h.title}` === key);
+
+/* --- 새 월별 사주 올리기: 파일(.txt/.md) 또는 붙여넣기 → 미리 확인 → 저장 --- */
+let pendingMonthly = null;
+function previewMonthly(text, title) {
+  const list = parsePeriods(text);
+  pendingMonthly = { date: ymd(TODAY), title: title || (text.trim().split("\n")[0] || "월별 사주").slice(0, 40), text: text.trim() };
+  $("#up-preview").hidden = false;
+  $("#up-title").value = pendingMonthly.title;
+  $("#up-found").innerHTML = list.length
+    ? `기간 ${list.length}개를 찾았어요: ${list.map((p) => `<b>${p.when}${p.gz ? " " + p.gz : ""}</b>`).join(" · ")}`
+    : `<span style="color:var(--warn)">기간 제목("2026년 9월 — 丁酉" 형식)을 찾지 못했어요.</span> 그래도 저장하면 원문 보기로는 볼 수 있어요.`;
+}
+$("#up-file").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => previewMonthly(String(rd.result || ""), f.name.replace(/\.[^.]+$/, ""));
+  rd.onerror = () => toast("파일을 읽지 못했어요");
+  rd.readAsText(f, "utf-8");
+  e.target.value = "";
+});
+$("#up-paste-btn").addEventListener("click", () => { $("#up-paste").hidden = !$("#up-paste").hidden; });
+$("#up-paste-ok").addEventListener("click", () => { const t = $("#up-paste-text").value; if (t.trim()) previewMonthly(t, ""); });
+$("#up-save").addEventListener("click", () => {
+  if (!pendingMonthly) return;
+  pendingMonthly.title = $("#up-title").value.trim() || pendingMonthly.title;
+  const base = S.sajuMonthly && S.sajuMonthly.length ? S.sajuMonthly : [DEFAULT_MONTHLY];
+  S.sajuMonthly = base.filter((h) => !(h.date === pendingMonthly.date && h.title === pendingMonthly.title)).concat(pendingMonthly);
+  pendingMonthly = null; selPeriod = null;
+  $("#up-preview").hidden = true; $("#up-paste").hidden = true; $("#up-paste-text").value = "";
+  save(); renderSaju(); renderHome(); toast("새 월별 사주를 저장했어요");
+});
+$("#up-cancel").addEventListener("click", () => { pendingMonthly = null; $("#up-preview").hidden = true; });
 
 function renderHomeSaju() {
   const p = nowPeriod();
   $("#h-saju-card").hidden = !p;
   if (!p) return;
-  const top = p.cols[0];
+  const bullets = p.secs.flatMap((s) => s.lines.map((l) => l.trim()).filter((l) => /^\* /.test(l)).map((l) => l.slice(2))).slice(0, 6);
   $("#h-saju").innerHTML = `
-    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px"><span style="font-family:var(--display);font-size:1.8rem">${p.gz}</span><b>${p.kw}</b></div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px"><span style="font-family:var(--display);font-size:1.8rem">${p.gz || ""}</span><b>${esc(p.kw)}</b></div>
     <p class="muted" style="margin:0 0 10px;font-size:.88rem">${esc(p.lead)}</p>
     <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">${rates(p.r)}</div>
-    <div class="chips">${top[1].slice(0, 6).map((t) => `<span>${esc(t)}</span>`).join("")}</div>`;
+    <div class="chips">${bullets.map((t) => `<span>${esc(t)}</span>`).join("")}</div>`;
 }
 
-/* ---------- 원문 보기 ---------- */
+/* ---------- 원문 보기 (신살 / 월별 각각) ---------- */
 const HEAD_RE = /^(\d+\.\s.+|핵심 요약|이직한다면\?|\d순위:.+|금여성|월덕귀인|황은대살|실제 영향 순서로 다시 정리하면|그런데 남편분도 .+|네 사주와 남편 사주의 .+|한 문장으로 정리하면)$/;
-function openRaw(find) {
-  const lines = SAJU_RAW.split("\n");
+let rawDoc = { text: "", title: "" };
+function openRaw(text, title, find) {
+  if (text != null) rawDoc = { text, title };
+  const lines = rawDoc.text.split("\n");
   const toc = [];
   const q = (find ?? $("#raw-q")?.value ?? "").trim();
   const mark = (s) => { const e = esc(s); return q ? e.split(esc(q)).join(`<mark>${esc(q)}</mark>`) : e; };
@@ -1259,7 +1396,7 @@ function openRaw(find) {
   if (!el) {
     el = document.createElement("div");
     el.id = "reader"; el.className = "reader";
-    el.innerHTML = `<div class="reader-bar"><b>원문 · 채주엽 사주_260903</b><input type="text" id="raw-q" placeholder="원문에서 찾기" /><span class="muted num" id="raw-n" style="font-size:.8rem"></span><button class="btn" type="button" id="raw-close">닫기</button></div>
+    el.innerHTML = `<div class="reader-bar"><b id="raw-title"></b><input type="text" id="raw-q" placeholder="원문에서 찾기" /><span class="muted num" id="raw-n" style="font-size:.8rem"></span><button class="btn" type="button" id="raw-close">닫기</button></div>
       <div class="reader-main"><nav class="toc" id="raw-toc"></nav><div class="raw" id="raw-scroll"><div class="raw-inner" id="raw-body"></div></div></div>`;
     document.body.append(el);
     $("#raw-close").addEventListener("click", () => el.remove());
@@ -1267,6 +1404,7 @@ function openRaw(find) {
     $("#raw-toc").addEventListener("click", (e) => { const b = e.target.closest("[data-line]"); if (b) $("#raw-" + b.dataset.line).scrollIntoView({ block: "start" }); });
     document.addEventListener("keydown", function onKey(e) { if (e.key === "Escape" && $("#reader")) { $("#reader").remove(); document.removeEventListener("keydown", onKey); } });
   }
+  $("#raw-title").textContent = "원문 · " + rawDoc.title;
   if (find != null) $("#raw-q").value = find;
   $("#raw-toc").innerHTML = toc.map(([i, t]) => `<button type="button" data-line="${i}">${esc(t)}</button>`).join("");
   $("#raw-body").innerHTML = html;
@@ -1274,8 +1412,10 @@ function openRaw(find) {
   $("#raw-n").textContent = q ? `${n}건` : "";
   if (n) $("#raw-body mark").scrollIntoView({ block: "center" });
 }
-$("#open-raw").addEventListener("click", () => openRaw(""));
-document.addEventListener("click", (e) => { const b = e.target.closest("[data-raw-find]"); if (b) openRaw(b.dataset.rawFind); });
+const shinsalText = () => S.sajuShinsal || DEFAULT_SHINSAL;
+$("#open-raw-shinsal").addEventListener("click", () => openRaw(shinsalText(), "원국 · 신살 해석", ""));
+$("#open-raw-monthly").addEventListener("click", () => { const m = curMonthly(); openRaw(m.text, `월별 운세 · ${m.title}`, ""); });
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-raw-find]"); if (b) openRaw(shinsalText(), "원국 · 신살 해석", b.dataset.rawFind); });
 
 /* ---------- 몸 ---------- */
 let calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
@@ -1644,6 +1784,7 @@ const WEB_API = (() => {
     principles: ["순서", "원칙"],
     settings: ["항목", "값"],
     saju: ["원문"],
+    saju_monthly: ["올린 날", "제목", "원문"],
     rm: ["날짜", "부위", "1RM(kg)"],
     cardio: ["날짜", "종목", "시간(분)"],
   };
@@ -1725,7 +1866,8 @@ const WEB_API = (() => {
       await gfetch(sheetsUrl(":batchUpdate"), { method: "POST", body: JSON.stringify({ requests: missing.map((title) => ({ addSheet: { properties: { title } } })) }) });
       const data = missing.map((n) => ({ range: `${n}!A1`, values: [TABS[n]] }));
       if (missing.includes("settings")) data.push({ range: "settings!A2", values: [["목표 체중", 68], ["목표 체지방률", 12], ["누적 기준 월", "2026-09"], ["누적 기준 횟수", 100], ["지향 묘사", DEFAULT_VISION], ["정체성 문장", ""], ["키워드", DEFAULT_KEYWORDS.join(", ")]] });
-      if (missing.includes("saju")) data.push({ range: "saju!A2", values: [[SAJU_RAW]] });
+      if (missing.includes("saju")) data.push({ range: "saju!A2", values: [[DEFAULT_SHINSAL]] });
+      if (missing.includes("saju_monthly")) data.push({ range: "saju_monthly!A2", values: [[DEFAULT_MONTHLY.date, DEFAULT_MONTHLY.title, DEFAULT_MONTHLY.text]] });
       await gfetch(sheetsUrl("/values:batchUpdate"), { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
     }
     tabsReady = true;
@@ -1771,6 +1913,7 @@ const WEB_API = (() => {
       done, plans, checks,
       principles: rowsOf(tab.principles).sort((a, b) => num(a[0], 0) - num(b[0], 0)).map((r) => str(r[1])).filter(Boolean),
       saju: str((tab.saju[1] || [])[0]),
+      sajuMonthly: rowsOf(tab.saju_monthly).filter((r) => str(r[2]).trim()).map((r) => ({ date: day(r[0]), title: str(r[1]), text: str(r[2]) })),
       cardio: rowsOf(tab.cardio).map((r) => ({ date: day(r[0]), part: PART_BY_NAME[str(r[1]).trim()], min: num(r[2]) })).filter((c) => (c.part === "walking" || c.part === "running") && c.min > 0),
       rm: rowsOf(tab.rm).map((r) => ({ date: day(r[0]), part: PART_BY_NAME[str(r[1]).trim()], kg: num(r[2]) })).filter((r) => r.part && r.kg > 0),
     };
@@ -1786,6 +1929,8 @@ const WEB_API = (() => {
       plans: Object.keys(s.plans || {}).sort().map((d) => [d, partsToText(s.plans[d])]),
       checks: (s.checks || []).slice().sort(byDate).map((c) => [c.date, ...CHECK_KEYS.map((k) => (c.s[k] == null ? "" : c.s[k])), c.note || ""]),
       principles: (s.principles || []).map((p, i) => [i + 1, p]),
+      saju: [[s.sajuShinsal || DEFAULT_SHINSAL]],
+      saju_monthly: (s.sajuMonthly || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).map((m) => [m.date, m.title, m.text]),
       cardio: (s.cardio || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((c) => [c.date, PARTS.find((p) => p.k === c.part).n, c.min]),
       rm: (s.rm || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((r) => [r.date, PARTS.find((p) => p.k === r.part).n, r.kg]),
       settings: [
@@ -1912,7 +2057,13 @@ function loadFromSheet() {
       S.checks = normChecks(S.checks);
       if (!S.vision) S.vision = DEFAULT_VISION;
       if (!S.yearBase || !S.yearBase.month) S.yearBase = { ...DEFAULT_YEAR_BASE };
-      if (d.saju) SAJU_RAW = d.saju;
+      // 시트의 saju 칸이 예전처럼 원문 전체면 신살/월별로 나눠 옮긴다 (다음 저장 때 시트도 바뀐다)
+      if (d.saju) {
+        const sp = splitSaju(d.saju);
+        S.sajuShinsal = sp.shinsal || d.saju;
+        if (!S.sajuMonthly.length && sp.shinsal && sp.monthly) S.sajuMonthly = [{ ...DEFAULT_MONTHLY, text: sp.monthly }];
+      }
+      if (!S.sajuMonthly.length) S.sajuMonthly = [DEFAULT_MONTHLY];
       renderAll();
       setSync("시트와 동기화됨");
     })

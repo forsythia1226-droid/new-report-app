@@ -66,7 +66,9 @@ function load() {
   const d = ctx.getData();
   eq(d.goal, { weight: 68, fat: 12 });
   eq(d.yearBase, { month: "2026-09", count: 100 });
-  assert.ok(d.saju.startsWith("채주엽 사주_260903"));
+  assert.ok(d.saju.startsWith("응. 남편분은"), "saju 탭 = 신살 원문");
+  assert.strictEqual(d.sajuMonthly.length, 1);
+  assert.ok(d.sajuMonthly[0].text.startsWith("채주엽 사주_260903") && d.sajuMonthly[0].date === "2026-09-03", "saju_monthly 첫 행");
   assert.ok(d.vision.startsWith("그를 처음 보았을 때"));
 }
 
@@ -80,6 +82,7 @@ function load() {
   d.inbody = [{ date: "2026-10-06", w: 62.5, m: 28, f: 18.2, bmr: null }];
   d.checks = [{ date: "2026-10-06", s: { solid: 4, confidence: 4, ease: 5, principle: null }, note: "메모" }];
   d.principles = ["원칙1"];
+  d.sajuMonthly = d.sajuMonthly.concat({ date: "2026-11-01", title: "11월 자료", text: "1. 2026년 11월 — 己亥" });
   d.cardio = [{ date: "2026-10-06", part: "running", min: 30 }];
   d.rm = [{ date: "2026-10-06", part: "chest", kg: 60 }, { date: "2026-09-01", part: "triceps", kg: 27.5 }];
   ctx.saveAll(d);
@@ -89,6 +92,7 @@ function load() {
   eq(e.inbody, d.inbody);
   eq(e.checks, d.checks);
   eq(e.principles, d.principles);
+  eq(e.sajuMonthly.map((m) => m.title), ["채주엽 사주_260903", "11월 자료"]);
   eq(e.cardio, [{ date: "2026-10-06", part: "running", min: 30 }]);
   eq(e.rm, [{ date: "2026-09-01", part: "triceps", kg: 27.5 }, { date: "2026-10-06", part: "chest", kg: 60 }]);
 }

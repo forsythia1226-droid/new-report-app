@@ -74,8 +74,9 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   p.$("#gate-start").click();
   await wait(150);
   assert.ok(p.$("#gate").hidden, "로그인 후 시작 화면 닫힘");
-  assert.deepStrictEqual(Object.keys(store).sort(), ["cardio", "checks", "inbody", "plans", "principles", "rm", "saju", "settings", "workouts"]);
-  assert.ok(String(store.saju[1][0]).startsWith("채주엽 사주_260903"), "사주 원문 저장");
+  assert.deepStrictEqual(Object.keys(store).sort(), ["cardio", "checks", "inbody", "plans", "principles", "rm", "saju", "saju_monthly", "settings", "workouts"]);
+  assert.ok(String(store.saju[1][0]).startsWith("응. 남편분은"), "신살 원문은 saju 탭");
+  assert.ok(store.saju_monthly[1][1] === "채주엽 사주_260903" && String(store.saju_monthly[1][2]).startsWith("채주엽 사주_260903"), "월별 원문은 saju_monthly 탭");
   assert.match(p.text("#sync"), /동기화/);
   assert.ok(p.calls.includes("GET events"), "공휴일 조회");
 

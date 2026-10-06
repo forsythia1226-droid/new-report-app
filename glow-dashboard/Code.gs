@@ -9,6 +9,7 @@ var TABS = {
   principles: ["순서", "원칙"],
   settings: ["항목", "값"],
   saju: ["원문"],
+  saju_monthly: ["올린 날", "제목", "원문"],
   rm: ["날짜", "부위", "1RM(kg)"],
   cardio: ["날짜", "종목", "시간(분)"],
 };
@@ -19,6 +20,12 @@ var PART_NAMES = { chest: "가슴", shoulder: "어깨", back: "등", legs: "하�
 // 이 대시보드를 쓸 수 있는 유일한 구글 계정. 웹 앱 접근 권한("나만")에 더해 서버에서 한 번 더 확인한다.
 var OWNER_EMAIL = "forsythia1226@gmail.com";
 var KR_HOLIDAY_CALENDAR ="ko.south_korea#holiday@group.v.calendar.google.com";
+// Saju.gs 의 원문(SAJU_RAW)은 월별 운세 + 신살 해석이 이어져 있다. 이 문장부터가 신살(고정) 부분.
+var SAJU_MARK = "응. 남편분은 화면상 원국이";
+function splitSaju_(raw) {
+  var i = String(raw).indexOf(SAJU_MARK);
+  return i < 0 ? { monthly: String(raw).trim(), shinsal: "" } : { monthly: String(raw).slice(0, i).trim(), shinsal: String(raw).slice(i).trim() };
+}
 var CHECK_KEYS = ["solid", "confidence", "ease", "principle"];
 // checks 탭 머리글 → 점검 키. 예전 시트의 "부드러운 태도"는 여유로, "에너지"는 버린다.
 var CHECK_BY_HEADER = { 단단함: "solid", 자신감: "confidence", 여유: "ease", "부드러운 태도": "ease", "원칙 지킴": "principle" };
@@ -64,7 +71,12 @@ function setup() {
   set.setColumnWidth(2, 480);
 
   var sj = sheet_("saju");
-  if (!sj.getRange("A2").getValue()) sj.getRange("A2").setValue(SAJU_RAW);
+  var parts = splitSaju_(SAJU_RAW);
+  if (!sj.getRange("A2").getValue()) sj.getRange("A2").setValue(parts.shinsal);
+  var sm = sheet_("saju_monthly");
+  if (sm.getLastRow() < 2) sm.getRange(2, 1, 1, 3).setValues([["2026-09-03", "채주엽 사주_260903", parts.monthly]]);
+  sm.getRange("C2:C").setWrap(true);
+  sm.setColumnWidth(3, 700);
   sj.getRange("A2").setWrap(true).setVerticalAlignment("top");
   sj.setColumnWidth(1, 900);
 
@@ -127,6 +139,9 @@ function getData() {
       .map(function (r) { return str_(r[1]); })
       .filter(String),
     saju: str_(sheet_("saju").getRange("A2").getValue()),
+    sajuMonthly: rows_("saju_monthly")
+      .filter(function (r) { return str_(r[2]).trim(); })
+      .map(function (r) { return { date: day_(r[0]), title: str_(r[1]), text: str_(r[2]) }; }),
     cardio: rows_("cardio")
       .map(function (r) { return { date: day_(r[0]), part: PART_BY_NAME[str_(r[1]).trim()], min: num_(r[2]) }; })
       .filter(function (c) { return (c.part === "walking" || c.part === "running") && c.min > 0; }),
@@ -187,6 +202,10 @@ function saveAll(s) {
     write_("checks", (s.checks || []).slice().sort(byDate).map(function (c) {
       return [c.date].concat(CHECK_KEYS.map(function (k) { return c.s[k] == null ? "" : c.s[k]; }), [c.note || ""]);
     }));
+    if (s.sajuShinsal) write_("saju", [[s.sajuShinsal]]);
+    write_("saju_monthly", (s.sajuMonthly || []).slice()
+      .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; })
+      .map(function (m) { return [m.date, m.title, m.text]; }));
     write_("cardio", (s.cardio || []).slice()
       .sort(function (a, b) { var x = a.date + a.part, y = b.date + b.part; return x < y ? -1 : x > y ? 1 : 0; })
       .map(function (r) { return [r.date, PART_NAMES[r.part], r.min]; }));
