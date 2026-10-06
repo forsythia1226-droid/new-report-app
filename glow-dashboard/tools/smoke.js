@@ -28,6 +28,7 @@ setTimeout(() => {
     check("월별 운세: 원문에서 기간 5개", w.document.querySelectorAll("#timeline .period").length === 5, [...w.document.querySelectorAll("#timeline .period .when span:first-child")].map((e) => e.textContent).join(" "));
     w.document.querySelector("[data-period=\"2026-12\"]").click();
     check("기간 누르면 원문 해당 부분", text("#period-detail").includes("주의해서 볼 달입니다"));
+    check("원문 정리: 별점은 막대, 목록은 칩, 소제목", $("#period-detail .sx .sx-rates .rate") && $("#period-detail .sx-chips span") && $("#period-detail .sx-sub") && !text("#period-detail").includes("★"));
     // 새 자료 붙여넣기 → 미리보기 → 저장
     $("#up-paste-btn").click();
     $("#up-paste-text").value = ["새 자료", "", "1. 2026년 10월 — 戊戌", "", "커리어 ★★★☆☆", "", "새 10월 해석입니다.", "", "2. 2026년 11월 — 己亥", "", "재물 ★★★★★", "", "새 11월."].join("\n");
