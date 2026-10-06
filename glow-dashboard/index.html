@@ -358,11 +358,11 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .pgroup h4 { display: flex; justify-content: space-between; align-items: center; }
 .part .pn-btn { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; width: 100%; padding: 2px 0; border-radius: 6px; cursor: pointer; }
 /* 값 알약: 가운데 정렬, 알약 전체가 드롭다운 */
-.part .val { position: relative; display: inline-flex; align-items: baseline; justify-content: center; gap: 2px; max-width: 100%; padding: 1px 8px; border-radius: 6px; background: transparent; color: var(--muted); font: 500 .72rem var(--body); white-space: nowrap; font-variant-numeric: tabular-nums; transition: background .15s; }
+.part .val { position: relative; display: inline-flex; align-items: baseline; justify-content: center; gap: 2px; max-width: 100%; padding: 1px 12px 1px 18px; border-radius: 6px; background: transparent; color: var(--muted); font: 500 .72rem var(--body); white-space: nowrap; font-variant-numeric: tabular-nums; transition: background .15s; }
 .part .val b { font: 600 .82rem var(--body); color: var(--ink); }
 .part .val.filled { color: var(--iron); }
 .part .val.filled b { color: var(--iron); }
-.part .val .caret { font-size: .55rem; opacity: .45; margin-left: 1px; }
+.part .val .caret { position: absolute; right: 3px; top: 50%; transform: translateY(-45%); font-size: .55rem; opacity: .45; } /* ▾는 가운데 맞춤 계산에서 빼서 숫자가 가운데로 보이게 */
 .part .val select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; appearance: none; -webkit-appearance: none; font-size: 16px; }
 .part .val:focus-within { outline: 1.5px solid var(--warn); outline-offset: 1px; }
 .part .val:hover, .part .val:focus-within { background: var(--surface-2); }
