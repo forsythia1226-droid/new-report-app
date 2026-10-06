@@ -12,7 +12,7 @@ var TABS = {
   saju_monthly: ["올린 날", "제목", "원문"],
   career: ["항목", "상태", "날짜", "값"],
   career_log: ["날짜", "구분", "내용"],
-  rm: ["날짜", "부위", "1RM(kg)"],
+  rm: ["날짜", "부위", "기록(kg·복근은 회)"],
   cardio: ["날짜", "종목", "시간(분)"],
 };
 var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm", "abs", "walking", "running"];

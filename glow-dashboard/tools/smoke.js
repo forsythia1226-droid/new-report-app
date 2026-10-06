@@ -69,7 +69,8 @@ setTimeout(() => {
     check("부위마다 드롭다운 (kg 8 + 분 2)", w.document.querySelectorAll("#parts select[data-rm]").length === 8 && w.document.querySelectorAll("#parts select[data-cardio]").length === 2);
     check("최근 1RM이 드롭다운에 흐리게", $("select[data-rm=chest]").options[0].text === "60" && $("select[data-rm=abs]").options[0].text === "–", $("select[data-rm=chest]").options[0].text);
     const chip = (q) => $(q).closest(".val").querySelector(".vt").textContent.replace(/\s+/g, " ").trim(); // 알약에 보이는 글자
-    check("값 알약 표시 (최근 1RM / 빈 칸)", chip("select[data-rm=chest]").includes("최근 60kg") && chip("select[data-rm=abs]").includes("+ kg"), chip("select[data-rm=chest]") + " / " + chip("select[data-rm=abs]"));
+    check("값 알약 표시 (최근 1RM / 빈 칸)", chip("select[data-rm=chest]").includes("최근 60kg") && chip("select[data-rm=abs]").includes("+ 회"), chip("select[data-rm=chest]") + " / " + chip("select[data-rm=abs]"));
+    check("복근은 횟수 단위", chip("select[data-rm=abs]").includes("회") && [...$("select[data-rm=abs]").options].some((o) => o.value === "30"), chip("select[data-rm=abs]"));
     const rmIn = $("select[data-rm=triceps]");
     rmIn.value = "32.5"; rmIn.dispatchEvent(new w.Event("change", { bubbles: true }));
     check("1RM 입력 후 다음 표시에 반영", $("select[data-rm=triceps]").value === "32.5" && chip("select[data-rm=triceps]").startsWith("32.5 kg"), chip("select[data-rm=triceps]"));
