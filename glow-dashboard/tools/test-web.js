@@ -74,7 +74,7 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   p.$("#gate-start").click();
   await wait(150);
   assert.ok(p.$("#gate").hidden, "로그인 후 시작 화면 닫힘");
-  assert.deepStrictEqual(Object.keys(store).sort(), ["cardio", "checks", "inbody", "plans", "principles", "rm", "saju", "saju_monthly", "settings", "workouts"]);
+  assert.deepStrictEqual(Object.keys(store).sort(), ["cardio", "career", "checks", "inbody", "plans", "principles", "rm", "saju", "saju_monthly", "settings", "workouts"]);
   assert.ok(String(store.saju[1][0]).startsWith("응. 남편분은"), "신살 원문은 saju 탭");
   assert.ok(store.saju_monthly[1][1] === "채주엽 사주_260903" && String(store.saju_monthly[1][2]).startsWith("채주엽 사주_260903"), "월별 원문은 saju_monthly 탭");
   assert.match(p.text("#sync"), /동기화/);
@@ -95,6 +95,12 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   wIn.value = "45"; wIn.dispatchEvent(new p.w.Event("change", { bubbles: true }));
   await wait(800);
   assert.ok(store.rm.some((r) => r[0] === todayKey && r[1] === "가슴" && r[2] === 62.5), "1RM 저장");
+  p.$("[data-tab=career]").click();
+  const st = p.$("select[data-stage=adsp][data-field=status]");
+  st.value = "합격"; st.dispatchEvent(new p.w.Event("change", { bubbles: true }));
+  await wait(800);
+  assert.ok(store.career.some((r) => r[0] === "ADsP" && r[1] === "합격"), "커리어 저장");
+  p.$("[data-tab=body]").click();
   assert.ok(store.cardio.some((r) => r[0] === todayKey && r[1] === "워킹" && r[2] === 45), "워킹 시간 저장");
   assert.deepStrictEqual(p.errors, []);
   p.w.close();
@@ -108,6 +114,10 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   assert.match(p.text("#today-card .done-btn"), /완료/);
   assert.strictEqual(p.$("select[data-rm=chest]").value, "62.5", "다시 열어도 1RM 표시");
   assert.strictEqual(p.$("select[data-cardio=walking]").value, "45", "다시 열어도 워킹 시간 표시");
+  p.$("[data-tab=career]").click();
+  assert.strictEqual(p.$("select[data-stage=adsp][data-field=status]").value, "합격", "다시 열어도 자격증 상태");
+  assert.match(p.text("#cert-summary"), /1 \/ 3/);
+  p.$("[data-tab=body]").click();
   p.$("#today-card .done-btn").click(); // 취소 → 시트에서 행이 지워져야 한다
   await wait(800);
   assert.ok(!store.workouts.some((r) => r[0] === todayKey && r[1] === true), "취소하면 시트에서도 지워짐");

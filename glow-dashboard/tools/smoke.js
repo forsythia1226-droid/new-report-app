@@ -37,6 +37,13 @@ setTimeout(() => {
     $("#up-save").click();
     check("새 자료로 교체", w.document.querySelectorAll("#timeline .period").length === 2 && text("#monthly-hist").includes("사용 중"), text("#monthly-src"));
     check("신살 화면은 그대로", w.document.querySelectorAll("#shinsal .ss-row").length === 10);
+    $("[data-tab=career]").click();
+    check("커리어 경로 6단계 + 자격증 3종", w.document.querySelectorAll("#career-path .cp-step").length === 6 && w.document.querySelectorAll("#certs .cert").length === 3 && w.document.querySelectorAll("#certs select[data-field=status]").length === 4);
+    const sq = $("select[data-stage=sqld][data-field=status]"); sq.value = "합격"; sq.dispatchEvent(new w.Event("change", { bubbles: true }));
+    const jw = $("input[data-stage=jcb_w][data-field=date]"); jw.value = "2027-03-01"; jw.dispatchEvent(new w.Event("change", { bubbles: true }));
+    check("자격증 합격·시험일 D-day 반영", text("#cert-summary") === "1 / 3 합격" && /D-\d+/.test(text("#certs")), text("#cert-summary"));
+    const de = $("input[data-degree=earned]"); de.value = "35"; de.dispatchEvent(new w.Event("change", { bubbles: true }));
+    check("학위 진행률", text("#degree").includes("25%"), text("#degree").slice(0, 30));
     $("[data-tab=home]").click();
     check("카테고리 6개", w.document.querySelectorAll(".tab").length === 6, [...w.document.querySelectorAll(".tab")].map((t) => t.textContent.trim()).join(" "));
     check("사주 하위 탭은 하나만 보임", [...w.document.querySelectorAll("[data-subview]")].filter(shown).length === 1);

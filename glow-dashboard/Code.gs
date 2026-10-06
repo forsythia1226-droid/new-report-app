@@ -10,6 +10,7 @@ var TABS = {
   settings: ["항목", "값"],
   saju: ["원문"],
   saju_monthly: ["올린 날", "제목", "원문"],
+  career: ["항목", "상태", "날짜", "값"],
   rm: ["날짜", "부위", "1RM(kg)"],
   cardio: ["날짜", "종목", "시간(분)"],
 };
@@ -139,6 +140,8 @@ function getData() {
       .map(function (r) { return str_(r[1]); })
       .filter(String),
     saju: str_(sheet_("saju").getRange("A2").getValue()),
+    // 커리어: [항목, 상태, 날짜, 값] 행을 그대로 넘기고 화면(careerFromRows)이 해석한다
+    career: rows_("career").length ? rows_("career").map(function (r) { return [str_(r[0]).trim(), str_(r[1]).trim(), r[2] === "" || r[2] == null ? "" : day_(r[2]), r[3]]; }) : null,
     sajuMonthly: rows_("saju_monthly")
       .filter(function (r) { return str_(r[2]).trim(); })
       .map(function (r) { return { date: day_(r[0]), title: str_(r[1]), text: str_(r[2]) }; }),
@@ -203,6 +206,7 @@ function saveAll(s) {
       return [c.date].concat(CHECK_KEYS.map(function (k) { return c.s[k] == null ? "" : c.s[k]; }), [c.note || ""]);
     }));
     if (s.sajuShinsal) write_("saju", [[s.sajuShinsal]]);
+    if (s.careerRows) write_("career", s.careerRows);
     write_("saju_monthly", (s.sajuMonthly || []).slice()
       .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; })
       .map(function (m) { return [m.date, m.title, m.text]; }));

@@ -275,6 +275,38 @@ ul.plain li { margin-bottom: 3px; }
 .hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: .88rem; }
 .hist li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .linkbtn.danger { color: var(--warn); }
+/* 커리어 */
+.career-path { display: flex; align-items: stretch; gap: 6px; flex-wrap: wrap; }
+.cp-step { flex: 1 1 120px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cp-step b { font-size: .95rem; }
+.cp-step span { font-size: .78rem; color: var(--muted); }
+.cp-step.done { background: var(--surface-2); border-color: transparent; }
+.cp-step.done b::after { content: " ✓"; color: var(--sage); }
+.cp-step.now { border-color: var(--iron); box-shadow: 0 0 0 1px var(--iron); }
+.cp-step.goal { background: var(--iron); border-color: transparent; color: var(--surface); }
+.cp-step.goal span { color: inherit; opacity: .8; }
+.cp-arrow { align-self: center; font-style: normal; color: var(--muted); }
+.career-lead { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; max-width: 640px; }
+.cl-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.certs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .certs { grid-template-columns: minmax(0, 1fr); } }
+.cert { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cert.passed { background: var(--sage-soft); border-color: transparent; }
+.cert-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cert-head b { font-size: 1.1rem; }
+.cert-head .muted { font-size: .8rem; }
+.cert-stage { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cs-n { font-size: .78rem; font-weight: 600; color: var(--muted); width: 28px; }
+.cert-stage select { border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; background: var(--surface); font-size: .85rem; }
+.cert-stage select.st-1 { border-color: var(--iron); color: var(--iron); }
+.cert-stage select.st-2 { border-color: var(--warn); color: var(--warn); }
+.cert-stage select.st-3 { background: var(--sage); border-color: var(--sage); color: var(--surface); }
+.cs-date { display: flex; align-items: center; gap: 4px; font-size: .78rem; }
+.cs-date input { width: auto; padding: 3px 6px; font-size: .82rem; }
+.cs-dday { font-size: .8rem; font-weight: 600; color: var(--iron); margin-left: auto; }
+.cert-info { margin: 0; font-size: .8rem; color: var(--muted); line-height: 1.6; }
+.deg-in { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.deg-in label.f { flex: 1 1 110px; }
 .placeholder { text-align: center; padding: 56px 16px; }
 .placeholder .glyph { font-family: var(--display); font-size: 3rem; color: var(--iron); }
 
@@ -659,8 +691,31 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 
     <!-- 커리어 -->
     <section id="v-career" data-view="career" hidden>
-      <div class="view-head"><div><div class="tagline">“총명한 눈빛”</div><h1>職 커리어</h1><p>대한전선 IT혁신팀</p></div></div>
-      <div class="card placeholder"><div class="glyph">職</div><h3>준비 중</h3><p class="muted">어떤 내용을 담을지 정한 뒤 채웁니다.</p></div>
+      <div class="view-head"><div><div class="tagline">“총명한 눈빛”</div><h1>職 커리어</h1><p>경영기획 12년 · 대한전선 IT혁신팀 · CISO 취임 대비</p></div></div>
+      <div class="grid">
+        <div class="card c12">
+          <h2>커리어 경로</h2>
+          <div class="career-path" id="career-path"></div>
+          <div class="career-lead" id="career-lead"></div>
+        </div>
+        <div class="card c12">
+          <h2>IT 자격증 <span class="pill iron" id="cert-summary"></span><span class="muted" style="font-weight:400;letter-spacing:0">권장 순서: ADsP → SQLD (각 3~4주) → 정보처리기사 (2~3개월)</span></h2>
+          <div class="certs" id="certs"></div>
+        </div>
+        <div class="card c4">
+          <h2>학점은행제 · 컴퓨터공학 학위</h2>
+          <div id="degree"></div>
+        </div>
+        <div class="card c4">
+          <h2>이번 달 커리어운 <button class="linkbtn" type="button" data-goto-saju="flow" style="font-size:.8rem;letter-spacing:0">사주 보기</button></h2>
+          <div id="career-saju"></div>
+        </div>
+        <div class="card c4">
+          <h2>기준일</h2>
+          <div class="deg-in" id="career-dates"></div>
+          <p class="muted" style="font-size:.78rem;margin:8px 0 0">팀장 목표일 = 이동 후 3년. 바꾸면 경로·D-day가 다시 계산돼요.</p>
+        </div>
+      </div>
     </section>
 
     <!-- 투자 -->
@@ -872,7 +927,7 @@ const EXAMPLE = () => ({
 const DEFAULT_VISION = "그를 처음 보았을 때, 나는 그가 다른 이들과 다르다는 것을 느꼈다. 다부진 체구에서는 단단함을, 총명한 눈빛에서는 미래를 아는 듯한 자신감을 부드러운 말투에서는 여유와 편안함이 느껴졌다. 그 사람에게서 나오는 아우라가 그와 함께 있는 공간을 가득채웠다.";
 const DEFAULT_YEAR_BASE = { month: "2026-09", count: 100 };
 const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
-const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, rm: [], cardio: [], sajuShinsal: "", sajuMonthly: [], identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
+const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, rm: [], cardio: [], sajuShinsal: "", sajuMonthly: [], career: null, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
 
 /* ---------- 저장소 ----------
    APPS: Apps Script 웹 앱(script.google.com)에서 열림 → google.script.run 으로 시트에 저장
@@ -889,7 +944,7 @@ const WEB = !APPS && !!GLOW_WEB.clientId && /(\.github\.io|^localhost|^127\.0\.0
 const RUN = APPS || WEB;
 const callApps = (fn, ...args) => new Promise((ok, fail) => google.script.run.withSuccessHandler(ok).withFailureHandler(fail)[fn](...args));
 const api = () => (APPS
-  ? { whoAmI: () => callApps("whoAmI"), getData: () => callApps("getData"), saveAll: (s) => callApps("saveAll", s), getHolidays: (y) => callApps("getHolidays", y) }
+  ? { whoAmI: () => callApps("whoAmI"), getData: () => callApps("getData"), saveAll: (s) => callApps("saveAll", { ...s, careerRows: careerToRows(s.career) }), getHolidays: (y) => callApps("getHolidays", y) }
   : WEB_API);
 let SIGNED_IN = false; // 시작 화면에서 계정 확인이 끝나야 서버를 부른다
 let S = RUN ? EMPTY() : (() => { try { return JSON.parse(localStorage.getItem(KEY)) || EXAMPLE(); } catch { return EXAMPLE(); } })();
@@ -1816,7 +1871,126 @@ $("#clear-examples").addEventListener("click", () => {
   save(); renderAll(); toast("예시 데이터를 지웠어요");
 });
 
-function renderAll() { renderExampleBar(); renderHome(); renderSaju(); renderBody(); renderMind(); }
+/* ---------- 커리어 ---------- */
+// 경영기획 12년 → IT혁신팀(2026.10) → IT 자격증 3종 → 학점은행제 컴퓨터공학 학위 → AX혁신팀 팀장(3년 내) → CISO
+const CERTS = [
+  { k: "adsp", n: "ADsP", full: "데이터분석 준전문가", prep: "3~4주",
+    info: "ADsP (연 4회 시행): 객관식 전형. 난이도가 상대적으로 낮아 3~4주 단기 집중으로 합격 가능.",
+    stages: [{ k: "adsp", n: "시험", sheet: "ADsP" }] },
+  { k: "sqld", n: "SQLD", full: "SQL 개발자", prep: "3~4주",
+    info: "SQLD (연 4회 시행): 객관식 및 단답형. SQL 기본 문법 및 모델링 중심, 3~4주 대비 적합.",
+    stages: [{ k: "sqld", n: "시험", sheet: "SQLD" }] },
+  { k: "jcb", n: "정보처리기사", full: "필기 + 실기", prep: "2~3개월 이상",
+    info: "정보처리기사 (연 3회 시행): 필기 + 실기로 구성. 실기는 프로그래밍 언어(C, Java, Python) 및 SQL 약술·단답형 문제 위주로 출제되어 2~3개월 이상의 꾸준한 대비가 필수.",
+    stages: [{ k: "jcb_w", n: "필기", sheet: "정보처리기사 필기" }, { k: "jcb_s", n: "실기", sheet: "정보처리기사 실기" }] },
+];
+const CERT_STATUS = ["준비 전", "공부 중", "접수 완료", "합격"];
+// 시트 career 탭 ↔ 상태: [항목, 상태, 날짜, 값]
+function careerFromRows(rows) {
+  if (!rows.length) return null;
+  const by = Object.fromEntries(rows.map((r) => [r[0], r]));
+  const c = { stages: {}, degree: {} };
+  for (const cert of CERTS) for (const st of cert.stages) { const r = by[st.sheet]; if (r) c.stages[st.k] = { status: r[1], date: r[2] }; }
+  if (by["IT혁신팀 이동일"]) c.move = by["IT혁신팀 이동일"][2];
+  if (by["AX혁신팀 팀장 목표일"]) c.lead = by["AX혁신팀 팀장 목표일"][2];
+  if (by["학위 이수학점"]) c.degree.earned = Number(by["학위 이수학점"][3]) || 0;
+  if (by["학위 목표학점"]) c.degree.target = Number(by["학위 목표학점"][3]) || 0;
+  return c;
+}
+function careerToRows(c) {
+  c = normCareer(c);
+  const rows = [];
+  for (const cert of CERTS) for (const st of cert.stages) rows.push([st.sheet, c.stages[st.k].status, c.stages[st.k].date, ""]);
+  rows.push(["IT혁신팀 이동일", "", c.move, ""], ["AX혁신팀 팀장 목표일", "", c.lead, ""], ["학위 이수학점", "", "", c.degree.earned], ["학위 목표학점", "", "", c.degree.target]);
+  return rows;
+}
+const DEFAULT_CAREER = () => ({ move: "2026-10-01", lead: "2029-10-01", stages: {}, degree: { earned: 0, target: 140 } });
+function normCareer(c) {
+  const d = DEFAULT_CAREER();
+  c = c || {};
+  const stages = {};
+  for (const cert of CERTS) for (const st of cert.stages) {
+    const v = (c.stages || {})[st.k] || {};
+    stages[st.k] = { status: CERT_STATUS.includes(v.status) ? v.status : "준비 전", date: v.date || "" };
+  }
+  return { move: c.move || d.move, lead: c.lead || d.lead, stages, degree: { earned: Number((c.degree || {}).earned) || 0, target: Number((c.degree || {}).target) || d.degree.target } };
+}
+const certPassed = (cert) => S.career.stages[cert.stages[cert.stages.length - 1].k].status === "합격";
+const daysUntil = (date) => Math.ceil((new Date(date + "T00:00") - new Date(ymd(TODAY) + "T00:00")) / 864e5);
+const dday = (date) => { if (!date) return ""; const n = daysUntil(date); return n > 0 ? `D-${n}` : n === 0 ? "D-day" : `D+${-n}`; };
+
+function renderCareer() {
+  S.career = normCareer(S.career); // 저장소에서 읽은 값을 여기서 정리한다 (상수 선언 순서 문제를 피하려고 렌더 때 정규화)
+  const c = S.career;
+  const passed = CERTS.filter(certPassed).length;
+  const deg = c.degree;
+  const degPct = deg.target ? Math.min(1, deg.earned / deg.target) : 0;
+  const moved = ymd(TODAY) >= c.move;
+  const leadLeft = daysUntil(c.lead);
+  const span = Math.max(1, (new Date(c.lead) - new Date(c.move)) / 864e5);
+  const timePct = Math.max(0, Math.min(1, (new Date(ymd(TODAY)) - new Date(c.move)) / 864e5 / span));
+  const fmtYm = (d) => d.slice(0, 7).replace("-", ".");
+
+  const steps = [
+    { t: "경영기획", s: "12년", st: "done" },
+    { t: "IT혁신팀", s: `${fmtYm(c.move)} 이동`, st: moved ? "done" : "next" },
+    { t: "IT 자격증", s: `${passed} / ${CERTS.length} 합격`, st: passed === CERTS.length ? "done" : moved ? "now" : "next" },
+    { t: "컴퓨터공학 학위", s: `학점은행제 · ${deg.earned}/${deg.target}학점`, st: degPct >= 1 ? "done" : passed ? "now" : "next" },
+    { t: "AX혁신팀 팀장", s: `${fmtYm(c.lead)}까지`, st: "goal" },
+    { t: "CISO", s: "취임 대비", st: "goal" },
+  ];
+  $("#career-path").innerHTML = steps.map((p, i) => `${i ? '<i class="cp-arrow">→</i>' : ""}<div class="cp-step ${p.st}"><b>${p.t}</b><span>${esc(p.s)}</span></div>`).join("");
+  $("#career-lead").innerHTML = `
+    <div class="cl-row"><span class="muted">AX혁신팀 팀장 목표까지</span><b class="num">${leadLeft > 0 ? `${leadLeft.toLocaleString()}일` : "목표일 도달"}</b></div>
+    <div class="bar"><div style="width:${timePct * 100}%"></div></div>
+    <div class="cl-row muted" style="font-size:.78rem"><span>${c.move.replaceAll("-", ".")} IT혁신팀</span><span>${Math.round(timePct * 100)}% 경과</span><span>${c.lead.replaceAll("-", ".")} 목표</span></div>`;
+
+  $("#cert-summary").textContent = `${passed} / ${CERTS.length} 합격`;
+  $("#certs").innerHTML = CERTS.map((cert) => {
+    const done = certPassed(cert);
+    return `<div class="cert ${done ? "passed" : ""}">
+      <div class="cert-head"><div><b>${cert.n}</b><span class="muted"> · ${cert.full}</span></div><span class="pill ${done ? "ok" : ""}">${done ? "합격 ★" : `준비 ${cert.prep}`}</span></div>
+      ${cert.stages.map((st) => {
+        const v = c.stages[st.k];
+        return `<div class="cert-stage">
+          ${cert.stages.length > 1 ? `<span class="cs-n">${st.n}</span>` : ""}
+          <select data-stage="${st.k}" data-field="status" aria-label="${cert.n} ${st.n} 상태" class="st-${CERT_STATUS.indexOf(v.status)}">${CERT_STATUS.map((s) => `<option${s === v.status ? " selected" : ""}>${s}</option>`).join("")}</select>
+          <label class="cs-date"><span class="muted">시험일</span><input type="date" data-stage="${st.k}" data-field="date" value="${v.date}" aria-label="${cert.n} ${st.n} 시험일"/></label>
+          <span class="cs-dday num">${v.status === "합격" ? "" : dday(v.date)}</span>
+        </div>`;
+      }).join("")}
+      <p class="cert-info">${esc(cert.info)}</p>
+    </div>`;
+  }).join("");
+
+  $("#degree").innerHTML = `
+    <div class="cl-row"><span><b class="num" style="font-size:1.6rem">${deg.earned}</b> <span class="muted">/ ${deg.target}학점</span></span><span class="pill ${degPct >= 1 ? "ok" : "iron"}">${Math.round(degPct * 100)}%</span></div>
+    <div class="bar"><div style="width:${degPct * 100}%"></div></div>
+    <div class="deg-in"><label class="f">이수 학점<input type="number" min="0" step="1" data-degree="earned" value="${deg.earned}"/></label><label class="f">목표 학점<input type="number" min="1" step="1" data-degree="target" value="${deg.target}"/></label></div>
+    <p class="muted" style="font-size:.78rem;margin:8px 0 0">목표 학점은 학점은행제 학습계획서 기준으로 바꿔 주세요.</p>`;
+
+  const p = nowPeriod();
+  const cr = p && p.r.커리어;
+  $("#career-saju").innerHTML = cr
+    ? `<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px"><span style="font-family:var(--display);font-size:1.6rem">${p.gz || ""}</span><b>${esc(p.kw)}</b></div>${rates({ 커리어: cr })}<p class="muted" style="font-size:.85rem;margin:8px 0 0">${esc(p.lead)}</p>`
+    : `<p class="muted" style="margin:0">이번 달 커리어 별점이 월별 사주 자료에 없어요.</p>`;
+  $("#career-dates").innerHTML = `<label class="f">IT혁신팀 이동일<input type="date" data-career="move" value="${c.move}"/></label><label class="f">AX혁신팀 팀장 목표일<input type="date" data-career="lead" value="${c.lead}"/></label>`;
+}
+$("#v-career").addEventListener("change", (e) => {
+  const t = e.target, ds = t.dataset;
+  if (ds.stage) {
+    S.career.stages[ds.stage][ds.field] = t.value;
+    if (ds.field === "status" && t.value === "합격") toast("합격 축하해요 ★");
+  } else if (ds.degree) {
+    S.career.degree[ds.degree] = Math.max(0, Math.round(Number(t.value) || 0));
+  } else if (ds.career) {
+    if (!t.value) return;
+    S.career[ds.career] = t.value;
+  } else return;
+  save(); renderCareer();
+});
+
+function renderAll() { renderExampleBar(); renderHome(); renderSaju(); renderBody(); renderMind(); renderCareer(); }
 renderAll();
 go(tab);
 
@@ -1834,6 +2008,7 @@ const WEB_API = (() => {
     settings: ["항목", "값"],
     saju: ["원문"],
     saju_monthly: ["올린 날", "제목", "원문"],
+    career: ["항목", "상태", "날짜", "값"],
     rm: ["날짜", "부위", "1RM(kg)"],
     cardio: ["날짜", "종목", "시간(분)"],
   };
@@ -1962,6 +2137,7 @@ const WEB_API = (() => {
       done, plans, checks,
       principles: rowsOf(tab.principles).sort((a, b) => num(a[0], 0) - num(b[0], 0)).map((r) => str(r[1])).filter(Boolean),
       saju: str((tab.saju[1] || [])[0]),
+      career: careerFromRows(rowsOf(tab.career).map((r) => [str(r[0]).trim(), str(r[1]).trim(), r[2] === "" || r[2] == null ? "" : day(r[2]), r[3]])),
       sajuMonthly: rowsOf(tab.saju_monthly).filter((r) => str(r[2]).trim()).map((r) => ({ date: day(r[0]), title: str(r[1]), text: str(r[2]) })),
       cardio: rowsOf(tab.cardio).map((r) => ({ date: day(r[0]), part: PART_BY_NAME[str(r[1]).trim()], min: num(r[2]) })).filter((c) => (c.part === "walking" || c.part === "running") && c.min > 0),
       rm: rowsOf(tab.rm).map((r) => ({ date: day(r[0]), part: PART_BY_NAME[str(r[1]).trim()], kg: num(r[2]) })).filter((r) => r.part && r.kg > 0),
@@ -1979,6 +2155,7 @@ const WEB_API = (() => {
       checks: (s.checks || []).slice().sort(byDate).map((c) => [c.date, ...CHECK_KEYS.map((k) => (c.s[k] == null ? "" : c.s[k])), c.note || ""]),
       principles: (s.principles || []).map((p, i) => [i + 1, p]),
       saju: [[s.sajuShinsal || DEFAULT_SHINSAL]],
+      career: careerToRows(s.career),
       saju_monthly: (s.sajuMonthly || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).map((m) => [m.date, m.title, m.text]),
       cardio: (s.cardio || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((c) => [c.date, PARTS.find((p) => p.k === c.part).n, c.min]),
       rm: (s.rm || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((r) => [r.date, PARTS.find((p) => p.k === r.part).n, r.kg]),
@@ -2113,6 +2290,7 @@ function loadFromSheet() {
         if (!S.sajuMonthly.length && sp.shinsal && sp.monthly) S.sajuMonthly = [{ ...DEFAULT_MONTHLY, text: sp.monthly }];
       }
       if (!S.sajuMonthly.length) S.sajuMonthly = [DEFAULT_MONTHLY];
+      if (Array.isArray(d.career)) S.career = careerFromRows(d.career); // Apps Script 는 시트 행 그대로 준다
       renderAll();
       setSync("시트와 동기화됨");
     })
