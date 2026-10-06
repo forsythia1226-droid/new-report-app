@@ -351,26 +351,27 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .parts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .part { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 8px; display: flex; gap: 6px; align-items: center; justify-content: center; min-width: 0; font-size: .9rem; }
 .part .pn { font-weight: 600; min-width: 0; white-space: nowrap; }
-.sel-card .part { flex-direction: column; gap: 6px; padding: 8px 6px; line-height: 1.25; }
+.sel-card .part { flex-direction: column; gap: 3px; padding: 8px 6px; line-height: 1.25; }
 .part .pk { font: 500 .78rem var(--mono); color: var(--muted); }
 .part .pk.none { opacity: .6; }
 .part[aria-pressed="true"] .pk { color: inherit; opacity: .8; }
 .pgroup h4 { display: flex; justify-content: space-between; align-items: center; }
 .part .pn-btn { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; width: 100%; padding: 2px 0; border-radius: 6px; cursor: pointer; }
 /* 값 알약: 가운데 정렬, 알약 전체가 드롭다운 */
-.part .val { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 64px; max-width: 100%; padding: 2px 10px; border-radius: 99px; background: var(--surface-2); color: var(--muted); font: 500 .72rem var(--body); white-space: nowrap; }
-.part .val b { font: 700 .9rem var(--mono); color: var(--ink); }
-.part .val.filled { background: var(--iron-soft); color: var(--iron); }
+.part .val { position: relative; display: inline-flex; align-items: baseline; justify-content: center; gap: 2px; max-width: 100%; padding: 1px 8px; border-radius: 6px; background: transparent; color: var(--muted); font: 500 .72rem var(--body); white-space: nowrap; font-variant-numeric: tabular-nums; transition: background .15s; }
+.part .val b { font: 600 .82rem var(--body); color: var(--ink); }
+.part .val.filled { color: var(--iron); }
 .part .val.filled b { color: var(--iron); }
-.part .val .caret { font-size: .6rem; opacity: .7; }
+.part .val .caret { font-size: .55rem; opacity: .45; margin-left: 1px; }
 .part .val select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; appearance: none; -webkit-appearance: none; font-size: 16px; }
-.part .val:focus-within { outline: 2px solid var(--warn); outline-offset: 1px; }
-.part .val:hover { filter: brightness(.97); }
+.part .val:focus-within { outline: 1.5px solid var(--warn); outline-offset: 1px; }
+.part .val:hover, .part .val:focus-within { background: var(--surface-2); }
 .part.on { background: var(--iron); color: var(--surface); border-color: transparent; }
-.part.on .val { background: color-mix(in srgb, var(--surface) 16%, transparent); color: color-mix(in srgb, var(--surface) 80%, transparent); }
+.part.on .val:hover, .part.on .val:focus-within { background: color-mix(in srgb, var(--surface) 14%, transparent); }
+.part.on .val { background: transparent; color: color-mix(in srgb, var(--surface) 65%, transparent); }
 .part.on .val b { color: var(--surface); }
-.part.on .val.filled { background: var(--surface); color: var(--iron); }
-.part.on .val.filled b { color: var(--iron); }
+.part.on .val.filled { background: transparent; color: color-mix(in srgb, var(--surface) 85%, transparent); }
+.part.on .val.filled b { color: var(--surface); }
 .rm-note { font-size: .75rem; color: var(--muted); margin: -4px 0 8px; }
 .part .pc { font: 500 .78rem var(--mono); color: var(--muted); white-space: nowrap; }
 .part[aria-pressed="true"] { color: var(--surface); border-color: transparent; }
