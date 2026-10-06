@@ -37,6 +37,7 @@ setTimeout(() => {
     const after = text("#tiles").match(/\d+월 운동(\d+)회/)[1];
     check("오늘 완료 토글로 이번 달 횟수 변화", before !== after, `${before} → ${after}`);
 
+    check("부위 버튼마다 아이콘", w.document.querySelectorAll("#parts .part svg.pi").length === w.document.querySelectorAll("#parts .part").length && w.document.querySelectorAll("#parts .part").length === 10);
     const free = [...w.document.querySelectorAll(".cal .day[data-date]")].find((b) => !b.classList.contains("other") && !b.querySelector(".plan"));
     free.click();
     $("[data-part=legs]").click();
