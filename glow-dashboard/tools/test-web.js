@@ -6,7 +6,7 @@ const assert = require("assert");
 const { JSDOM, VirtualConsole } = require("jsdom");
 
 const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8")
-  .replace('clientId: "",', 'clientId: "test-client.apps.googleusercontent.com",');
+  .replace(/clientId: "[^"]*",/, 'clientId: "test-client.apps.googleusercontent.com",');
 const SHEET_ID = "1IaNAAiPgWUDcVrO2GOd4oCgnGwNsgXjraln5P6rRTeg";
 
 // 가짜 스프레드시트: 탭 이름 → 2차원 배열
