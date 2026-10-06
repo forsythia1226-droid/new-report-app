@@ -83,6 +83,7 @@ function load() {
   d.checks = [{ date: "2026-10-06", s: { solid: 4, confidence: 4, ease: 5, principle: null }, note: "메모" }];
   d.principles = ["원칙1"];
   d.sajuMonthly = d.sajuMonthly.concat({ date: "2026-11-01", title: "11월 자료", text: "1. 2026년 11월 — 己亥" });
+  d.careerLog = [{ date: "2026-10-20", kind: "보안 감사", text: "내부 감사 대응" }];
   d.careerRows = [["ADsP", "합격", "2026-12-05", ""], ["학위 이수학점", "", "", 35]];
   d.cardio = [{ date: "2026-10-06", part: "running", min: 30 }];
   d.rm = [{ date: "2026-10-06", part: "chest", kg: 60 }, { date: "2026-09-01", part: "triceps", kg: 27.5 }];
@@ -94,6 +95,7 @@ function load() {
   eq(e.checks, d.checks);
   eq(e.principles, d.principles);
   eq(e.sajuMonthly.map((m) => m.title), ["채주엽 사주_260903", "11월 자료"]);
+  eq(e.careerLog, [{ date: "2026-10-20", kind: "보안 감사", text: "내부 감사 대응" }]);
   eq(e.career, [["ADsP", "합격", "2026-12-05", ""], ["학위 이수학점", "", "", 35]]);
   eq(e.cardio, [{ date: "2026-10-06", part: "running", min: 30 }]);
   eq(e.rm, [{ date: "2026-09-01", part: "triceps", kg: 27.5 }, { date: "2026-10-06", part: "chest", kg: 60 }]);

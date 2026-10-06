@@ -74,7 +74,7 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   p.$("#gate-start").click();
   await wait(150);
   assert.ok(p.$("#gate").hidden, "로그인 후 시작 화면 닫힘");
-  assert.deepStrictEqual(Object.keys(store).sort(), ["cardio", "career", "checks", "inbody", "plans", "principles", "rm", "saju", "saju_monthly", "settings", "workouts"]);
+  assert.deepStrictEqual(Object.keys(store).sort(), ["cardio", "career", "career_log", "checks", "inbody", "plans", "principles", "rm", "saju", "saju_monthly", "settings", "workouts"]);
   assert.ok(String(store.saju[1][0]).startsWith("응. 남편분은"), "신살 원문은 saju 탭");
   assert.ok(store.saju_monthly[1][1] === "채주엽 사주_260903" && String(store.saju_monthly[1][2]).startsWith("채주엽 사주_260903"), "월별 원문은 saju_monthly 탭");
   assert.match(p.text("#sync"), /동기화/);
@@ -116,7 +116,7 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   assert.strictEqual(p.$("select[data-cardio=walking]").value, "45", "다시 열어도 워킹 시간 표시");
   p.$("[data-tab=career]").click();
   assert.strictEqual(p.$("select[data-stage=adsp][data-field=status]").value, "합격", "다시 열어도 자격증 상태");
-  assert.match(p.text("#cert-summary"), /1 \/ 3/);
+  assert.match(p.text("#cert-summary"), /1 \/ 3 합격 · 6\/32학점/);
   p.$("[data-tab=body]").click();
   p.$("#today-card .done-btn").click(); // 취소 → 시트에서 행이 지워져야 한다
   await wait(800);
