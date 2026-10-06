@@ -18,6 +18,9 @@ const check = (name, ok, detail = "") => { if (!ok) errors.push(`${name} ${detai
 
 setTimeout(() => {
   try {
+    check("시작 화면 표시", !$("#gate").hidden && text("#gate-status").includes("미리보기"), text("#gate-status"));
+    $("#gate-start").click();
+    check("시작하기 누르면 닫힘", $("#gate").hidden);
     check("카테고리 6개", w.document.querySelectorAll(".tab").length === 6, [...w.document.querySelectorAll(".tab")].map((t) => t.textContent.trim()).join(" "));
     check("홈 지향 묘사", text("#home-vision").startsWith("그를 처음 보았을 때"));
 

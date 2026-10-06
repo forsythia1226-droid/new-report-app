@@ -399,6 +399,20 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 }
 .quick-menu button { border: 0; background: transparent; text-align: left; padding: 9px 10px; border-radius: 8px; }
 .quick-menu button:hover { background: var(--surface-2); }
+/* 시작 화면 (구글 계정 확인) */
+.gate { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--bg); padding: 16px; }
+.gate-card { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 36px 24px 28px; text-align: center; display: flex; flex-direction: column; gap: 14px; }
+.gate-logo { font-family: var(--display); font-size: 2.8rem; font-weight: 700; line-height: 1; }
+.gate-glyphs { font-family: var(--display); color: var(--iron); letter-spacing: .4em; padding-left: .4em; }
+.gate-quote { font-family: var(--display); color: var(--muted); font-size: .92rem; line-height: 1.6; margin: 0; }
+.gate-status { font-size: .9rem; color: var(--muted); min-height: 2.8em; margin: 6px 0 0; }
+.gate-status b { color: var(--ink); font-weight: 600; }
+.gate-status.bad { color: var(--warn); }
+.gate .btn.primary { padding: 12px; font-size: 1rem; }
+.gate .btn.primary:disabled { opacity: .45; cursor: wait; }
+.gate a { color: var(--iron); font-size: .85rem; }
+.side .me .acct { margin-top: 2px; font-size: .7rem; }
+.side .me .acct a { color: var(--muted); }
 .toast {
   position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
   background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 99px; font-size: .88rem; z-index: 30;
@@ -422,9 +436,19 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 </style>
 </head>
 <body>
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">Glow</div>
+    <div class="gate-glyphs">身 命 心</div>
+    <p class="gate-quote">단단함 · 자신감 · 여유</p>
+    <p class="gate-status" id="gate-status">구글 계정 확인 중…</p>
+    <button class="btn primary" id="gate-start" type="button" disabled>시작하기</button>
+    <a id="gate-switch" href="https://accounts.google.com/AccountChooser" target="_top" hidden>다른 구글 계정으로 로그인</a>
+  </div>
+</div>
 <div class="app">
   <nav class="side" aria-label="카테고리">
-    <div class="me"><b>Glow</b><span id="me-sub"></span><span id="sync" class="sync"></span></div>
+    <div class="me"><b>Glow</b><span id="me-sub"></span><span id="sync" class="sync"></span><span class="acct" id="acct"></span></div>
     <button class="tab" data-tab="home" aria-selected="true"><span class="glyph">◎</span>홈</button>
     <button class="tab" data-tab="saju" aria-selected="false"><span class="glyph">命</span>사주</button>
     <button class="tab" data-tab="body" aria-selected="false"><span class="glyph">身</span>신체</button>
@@ -815,6 +839,7 @@ const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal:
 // Apps Script 웹 앱으로 열리면 구글시트에, 파일로 그냥 열면 이 브라우저에 저장한다(미리보기).
 const KEY = "glow-dashboard:v1";
 const RUN = typeof google !== "undefined" && google.script && google.script.run;
+let SIGNED_IN = false; // 시작 화면에서 계정 확인이 끝나야 서버를 부른다
 let S = RUN ? EMPTY() : (() => { try { return JSON.parse(localStorage.getItem(KEY)) || EXAMPLE(); } catch { return EXAMPLE(); } })();
 normBody(S);
 S.checks = normChecks(S.checks);
@@ -1324,7 +1349,7 @@ function holidayOf(key) {
   return KR_HOLIDAYS[key] ? { name: KR_HOLIDAYS[key], off: true } : null;
 }
 function ensureHolidays(year) {
-  if (!RUN || holidayCache[year] || ensureHolidays.pending[year]) return;
+  if (!RUN || !SIGNED_IN || holidayCache[year] || ensureHolidays.pending[year]) return;
   ensureHolidays.pending[year] = true;
   google.script.run
     .withSuccessHandler((map) => { if (map && Object.keys(map).length) { holidayCache[year] = map; renderCalendar(); } })
@@ -1496,7 +1521,39 @@ $("#clear-examples").addEventListener("click", () => {
 function renderAll() { renderExampleBar(); renderHome(); renderSaju(); renderBody(); renderMind(); }
 renderAll();
 go(tab);
-if (RUN) {
+
+/* ---------- 시작 화면: 구글 계정 확인 → 시작하기 ---------- */
+function gate(state, html, { start = false, switchUrl = null, startLabel = "시작하기" } = {}) {
+  $("#gate-status").innerHTML = html;
+  $("#gate-status").classList.toggle("bad", state === "bad");
+  $("#gate-start").disabled = !start;
+  $("#gate-start").textContent = startLabel;
+  $("#gate-switch").hidden = !switchUrl;
+  if (switchUrl) $("#gate-switch").href = switchUrl;
+}
+$("#gate-start").addEventListener("click", () => { $("#gate").hidden = true; });
+const chooser = (url) => `https://accounts.google.com/AccountChooser?continue=${encodeURIComponent(url || location.href)}`;
+
+if (!RUN) {
+  gate("ok", "미리보기 모드 · 예시 데이터로 보여요<br/>(실제 기록은 웹 앱 주소에서)", { start: true, startLabel: "미리보기 시작" });
+} else {
+  google.script.run
+    .withSuccessHandler((me) => {
+      if (!me.ok) {
+        gate("bad", `이 대시보드는 <b>${esc(me.owner)}</b> 전용이에요.<br/>지금은 ${esc(me.email)} 계정으로 로그인돼 있어요.`, { switchUrl: chooser(me.url) });
+        return;
+      }
+      const who = me.email || me.owner;
+      gate("ok", `<b>${esc(who)}</b><br/>구글 계정으로 로그인됨`, { start: true, switchUrl: chooser(me.url) });
+      $("#acct").innerHTML = `${esc(who)} · <a href="${chooser(me.url)}" target="_top">계정 바꾸기</a>`;
+      SIGNED_IN = true;
+      loadFromSheet();
+    })
+    .withFailureHandler((e) => gate("bad", "계정을 확인하지 못했어요: " + esc((e && e.message) || e), { switchUrl: chooser() }))
+    .whoAmI();
+}
+
+function loadFromSheet() {
   setSync("시트에서 불러오는 중…");
   google.script.run
     .withSuccessHandler((d) => {

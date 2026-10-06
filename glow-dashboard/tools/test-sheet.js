@@ -33,6 +33,7 @@ function mkSheet(name) {
   };
 }
 
+load.email = "forsythia1226@gmail.com";
 function load() {
   const sheets = [];
   const ss = {
@@ -50,6 +51,8 @@ function load() {
     Utilities: { formatDate: fmt },
     HtmlService: {},
     CalendarApp: null,
+    Session: { getActiveUser: () => ({ getEmail: () => load.email }) },
+    ScriptApp: { getService: () => ({ getUrl: () => "https://script.google.com/macros/s/TEST/exec" }) },
   };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(root, "Saju.gs"), "utf8") + "\n" + fs.readFileSync(path.join(root, "Code.gs"), "utf8"), ctx);
@@ -106,6 +109,16 @@ function load() {
   const d = ctx.getData();
   eq(d.plans["2026-10-09"], ["shoulder", "abs"]);
   eq(d.done, { "2026-10-05": true });
+}
+
+// 5. 소유자가 아닌 계정은 막는다
+{
+  const { ctx } = load();
+  eq(ctx.whoAmI(), { email: "forsythia1226@gmail.com", owner: "forsythia1226@gmail.com", ok: true, url: "https://script.google.com/macros/s/TEST/exec" });
+  load.email = "someone@else.com";
+  assert.strictEqual(ctx.whoAmI().ok, false);
+  assert.throws(() => ctx.getData(), /forsythia1226@gmail.com 계정만/);
+  load.email = "forsythia1226@gmail.com";
 }
 
 console.log("test-sheet: all passed");

@@ -14,7 +14,9 @@ var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm"
 // 부위 이름 → 키. 예전 workouts 탭의 부위별 열과 plans 탭의 "계획 부위" 글자를 읽을 때 쓴다.
 var PART_BY_NAME = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs" };
 var PART_NAMES = { chest: "가슴", shoulder: "어깨", back: "등", legs: "하체", biceps: "이두", triceps: "삼두", forearm: "전완근", abs: "복근" };
-var KR_HOLIDAY_CALENDAR = "ko.south_korea#holiday@group.v.calendar.google.com";
+// 이 대시보드를 쓸 수 있는 유일한 구글 계정. 웹 앱 접근 권한("나만")에 더해 서버에서 한 번 더 확인한다.
+var OWNER_EMAIL = "forsythia1226@gmail.com";
+var KR_HOLIDAY_CALENDAR ="ko.south_korea#holiday@group.v.calendar.google.com";
 var CHECK_KEYS = ["solid", "confidence", "ease", "principle"];
 // checks 탭 머리글 → 점검 키. 예전 시트의 "부드러운 태도"는 여유로, "에너지"는 버린다.
 var CHECK_BY_HEADER = { 단단함: "solid", 자신감: "confidence", 여유: "ease", "부드러운 태도": "ease", "원칙 지킴": "principle" };
@@ -71,7 +73,14 @@ function setup() {
 }
 
 /** 화면이 처음 열릴 때 전체 데이터를 읽어 간다. */
+/** 시작 화면용: 지금 로그인한 구글 계정과 허용 여부, 계정 바꾸기용 웹 앱 주소. */
+function whoAmI() {
+  var email = activeEmail_();
+  return { email: email, owner: OWNER_EMAIL, ok: isOwner_(email), url: ScriptApp.getService().getUrl() };
+}
+
 function getData() {
+  assertOwner_();
   // 처음 열 때(탭이 아직 없을 때) 자동으로 설정한다. 이후에는 탭이 있으니 건너뛴다.
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   if (Object.keys(TABS).some(function (n) { return !ss.getSheetByName(n); })) setup();
@@ -125,6 +134,7 @@ function getData() {
  * 처음 쓸 때 캘린더 읽기 권한을 한 번 더 묻는다.
  */
 function getHolidays(year) {
+  assertOwner_();
   var cal;
   try {
     cal = CalendarApp.getCalendarById(KR_HOLIDAY_CALENDAR) || CalendarApp.subscribeToCalendar(KR_HOLIDAY_CALENDAR, { hidden: true });
@@ -150,6 +160,7 @@ function getHolidays(year) {
 
 /** 화면에서 바뀐 내용을 통째로 다시 쓴다 (탭마다 수백 행 수준이라 충분히 빠르다). */
 function saveAll(s) {
+  assertOwner_();
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -185,6 +196,15 @@ function saveAll(s) {
 }
 
 /* ---------- helpers ---------- */
+function activeEmail_() {
+  try { return String(Session.getActiveUser().getEmail() || "").toLowerCase(); } catch (e) { return ""; }
+}
+// "나만" 배포에서는 구글이 이미 소유자만 들여보내므로, 이메일을 못 읽는 경우(빈 값)는 통과시킨다.
+function isOwner_(email) { return !email || email === OWNER_EMAIL; }
+function assertOwner_() {
+  if (!isOwner_(activeEmail_())) throw new Error("이 대시보드는 " + OWNER_EMAIL + " 계정만 사용할 수 있습니다.");
+}
+
 // "가슴, 삼두" ↔ ["chest", "triceps"]
 function partsFromText_(v) {
   var keys = [];
