@@ -74,7 +74,7 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   p.$("#gate-start").click();
   await wait(150);
   assert.ok(p.$("#gate").hidden, "로그인 후 시작 화면 닫힘");
-  assert.deepStrictEqual(Object.keys(store).sort(), ["checks", "inbody", "plans", "principles", "rm", "saju", "settings", "workouts"]);
+  assert.deepStrictEqual(Object.keys(store).sort(), ["cardio", "checks", "inbody", "plans", "principles", "rm", "saju", "settings", "workouts"]);
   assert.ok(String(store.saju[1][0]).startsWith("채주엽 사주_260903"), "사주 원문 저장");
   assert.match(p.text("#sync"), /동기화/);
   assert.ok(p.calls.includes("GET events"), "공휴일 조회");
@@ -88,11 +88,14 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   await wait(800);
   assert.deepStrictEqual(store.workouts.filter((r) => r[0]).map((r) => r.slice(0, 2)), [["날짜", "운동함"], [todayKey, true]]);
   assert.ok(store.plans.some((r) => r[0] === todayKey && /워킹/.test(r[1])), "계획 저장");
-  p.$("#rm-toggle").click();
+  p.$("[data-mode=log]").click();
   const rmIn = p.$("input[data-rm=chest]");
   rmIn.value = "62.5"; rmIn.dispatchEvent(new p.w.Event("change", { bubbles: true }));
+  const wIn = p.$("input[data-cardio=walking]");
+  wIn.value = "45"; wIn.dispatchEvent(new p.w.Event("change", { bubbles: true }));
   await wait(800);
   assert.ok(store.rm.some((r) => r[0] === todayKey && r[1] === "가슴" && r[2] === 62.5), "1RM 저장");
+  assert.ok(store.cardio.some((r) => r[0] === todayKey && r[1] === "워킹" && r[2] === 45), "워킹 시간 저장");
   assert.deepStrictEqual(p.errors, []);
   p.w.close();
 

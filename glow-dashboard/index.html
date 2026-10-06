@@ -356,7 +356,9 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .part .pk.none { opacity: .6; }
 .part[aria-pressed="true"] .pk { color: inherit; opacity: .8; }
 .pgroup h4 { display: flex; justify-content: space-between; align-items: center; }
-.rm-toggle { border: 0; background: transparent; color: var(--iron); font-size: .78rem; font-weight: 600; padding: 0; }
+.mode-bar { display: flex; gap: 4px; background: var(--surface-2); padding: 3px; border-radius: 10px; margin-bottom: 10px; }
+.mode-bar button { flex: 1; border: 0; background: transparent; border-radius: 8px; padding: 6px 8px; color: var(--muted); font-weight: 600; font-size: .85rem; }
+.mode-bar button[aria-selected="true"] { background: var(--surface); color: var(--iron); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
 .part.rm { cursor: default; padding: 4px 6px; gap: 2px; }
 .part.rm .rm-in { display: flex; align-items: baseline; gap: 2px; width: 100%; justify-content: center; }
 .part.rm input { width: 100%; max-width: 64px; border: 0; border-bottom: 1.5px solid var(--iron); border-radius: 0; background: transparent; padding: 0 2px; text-align: right; font: 600 1rem var(--mono); color: var(--ink); }
@@ -809,6 +811,7 @@ function normBody(s) {
   const plans = {};
   for (const [d, ps] of Object.entries(s.plans || {})) { const k = sortParts(ps); if (k.length) plans[d] = k; }
   s.done = done; s.plans = plans;
+  s.cardio = (s.cardio || []).filter((c) => c && c.date && (c.part === "walking" || c.part === "running") && Number(c.min) > 0).map((c) => ({ date: c.date, part: c.part, min: Math.round(Number(c.min)) }));
   s.rm = (s.rm || []).filter((r) => r && r.date && PARTS.some((p) => p.k === r.part && p.g !== "cardio") && Number(r.kg) > 0).map((r) => ({ date: r.date, part: r.part, kg: Number(r.kg) }));
   delete s.workouts; delete s.routine;
   return s;
@@ -831,7 +834,8 @@ function exampleBody() {
     { date: "2026-09-10", part: "back", kg: 70 }, { date: "2026-09-12", part: "legs", kg: 90 },
     { date: "2026-09-20", part: "shoulder", kg: 35 }, { date: "2026-09-22", part: "biceps", kg: 20 },
   ];
-  return { done, plans, rm };
+  const cardio = [{ date: ymd(new Date(TODAY.getFullYear(), TODAY.getMonth(), 1)), part: "walking", min: 40 }, { date: ymd(new Date(TODAY.getFullYear(), TODAY.getMonth(), 2)), part: "running", min: 25 }];
+  return { done, plans, rm, cardio };
 }
 const EXAMPLE = () => ({
   example: true,
@@ -864,7 +868,7 @@ const EXAMPLE = () => ({
 const DEFAULT_VISION = "그를 처음 보았을 때, 나는 그가 다른 이들과 다르다는 것을 느꼈다. 다부진 체구에서는 단단함을, 총명한 눈빛에서는 미래를 아는 듯한 자신감을 부드러운 말투에서는 여유와 편안함이 느껴졌다. 그 사람에게서 나오는 아우라가 그와 함께 있는 공간을 가득채웠다.";
 const DEFAULT_YEAR_BASE = { month: "2026-09", count: 100 };
 const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
-const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, rm: [], identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
+const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, rm: [], cardio: [], identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
 
 /* ---------- 저장소 ----------
    APPS: Apps Script 웹 앱(script.google.com)에서 열림 → google.script.run 으로 시트에 저장
@@ -1467,24 +1471,39 @@ function renderCalendar() {
   $("#sel-done").dataset.toggleDone = selDate;
   $("#sel-done").textContent = did ? "★ 운동함" : "운동 완료 체크";
   $("#sel-done").title = did ? "누르면 운동 체크를 취소합니다" : selDate > todayKey ? "미래 날짜예요" : "이 날 운동했으면 누르세요";
-  // 계획 모드: 부위를 눌러 계획 / 1RM 모드: 근력 부위마다 kg 입력 (선택한 날짜로 기록)
-  const groups = rmMode ? GROUPS.filter((g) => g.g !== "cardio") : GROUPS;
-  $("#parts").innerHTML = (rmMode ? `<p class="rm-note">${dayLabel(selDate)} 기록으로 저장돼요 · 비우면 그날 기록 삭제</p>` : "") + groups.map((g, gi) => `
-    <div class="pgroup"><h4>${g.n}${gi === 0 ? `<button class="rm-toggle" type="button" id="rm-toggle">${rmMode ? "1RM 기록 끝내기" : "1RM 기록하기"}</button>` : ""}</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
-      const last = latestRM(p.k);
-      if (rmMode) {
+  // [계획] 부위를 눌러 그날 계획 / [기록] 근력은 1RM(kg), 유산소는 시간(분)을 선택한 날짜로 입력
+  const modeBar = `<div class="mode-bar" role="tablist">
+      <button type="button" data-mode="plan" aria-selected="${!logMode}">계획</button>
+      <button type="button" data-mode="log" aria-selected="${logMode}">기록 (1RM · 분)</button>
+    </div>${logMode ? `<p class="rm-note">${dayLabel(selDate)} 기록으로 저장돼요 · 비우면 그날 기록 삭제</p>` : ""}`;
+  $("#parts").innerHTML = modeBar + GROUPS.map((g) => `
+    <div class="pgroup"><h4>${g.n}</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
+      const cardio = g.g === "cardio";
+      const last = cardio ? null : latestRM(p.k);
+      const dayMin = cardio ? cardioMin(p.k, selDate) : null;
+      if (logMode) {
+        if (cardio) {
+          return `<div class="part rm"><span class="pn">${p.n}</span><span class="rm-in"><input type="number" inputmode="numeric" min="0" step="1" data-cardio="${p.k}" value="${dayMin ?? ""}" placeholder="–" aria-label="${p.n} 시간(분)"/><span class="u">분</span></span></div>`;
+        }
         const today = (S.rm || []).find((r) => r.part === p.k && r.date === selDate);
         return `<div class="part rm"><span class="pn">${p.n}</span><span class="rm-in"><input type="number" inputmode="decimal" min="0" step="0.5" data-rm="${p.k}" value="${today ? today.kg : ""}" placeholder="${last ? last.kg : "–"}" aria-label="${p.n} 1RM kg"/><span class="u">kg</span></span></div>`;
       }
       const on = plan.includes(p.k);
-      const kg = g.g === "cardio" ? "" : last ? `<span class="pk">${fmtKg(last.kg)}kg</span>` : `<span class="pk none">1RM –</span>`;
-      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}" title="${last ? `1RM ${fmtKg(last.kg)}kg · ${last.date.replaceAll("-", ".")} 기록` : "1RM 기록 없음"}"><span class="pn">${p.n}</span>${kg}</button>`;
+      const sub = cardio
+        ? (dayMin ? `<span class="pk">${dayMin}분</span>` : `<span class="pk none">– 분</span>`)
+        : (last ? `<span class="pk">${fmtKg(last.kg)}kg</span>` : `<span class="pk none">1RM –</span>`);
+      const title = cardio ? (dayMin ? `${dayLabel(selDate)} ${dayMin}분` : "이 날 기록 없음") : (last ? `1RM ${fmtKg(last.kg)}kg · ${last.date.replaceAll("-", ".")} 기록` : "1RM 기록 없음");
+      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}" title="${title}"><span class="pn">${p.n}</span>${sub}</button>`;
     }).join("")}</div></div>`).join("");
 
 }
 
-// 1RM: 부위별로 가장 최근 날짜의 기록
-let rmMode = false;
+// 기록: 1RM은 부위별 가장 최근 값, 유산소는 날짜별 시간(분)
+let logMode = false;
+function cardioMin(part, date) {
+  const r = (S.cardio || []).find((c) => c.part === part && c.date === date);
+  return r ? r.min : null;
+}
 const fmtKg = (v) => (Math.round(v * 10) / 10).toString();
 function latestRM(part) {
   let best = null;
@@ -1505,7 +1524,8 @@ $("#cal").addEventListener("click", (e) => {
   renderCalendar();
 });
 $("#parts").addEventListener("click", (e) => {
-  if (e.target.closest("#rm-toggle")) { rmMode = !rmMode; renderCalendar(); if (rmMode) { const f = $("#parts input[data-rm]"); f && f.focus(); } return; }
+  const m = e.target.closest("[data-mode]");
+  if (m) { logMode = m.dataset.mode === "log"; renderCalendar(); if (logMode) { const f = $("#parts input"); f && f.focus(); } return; }
   const b = e.target.closest("[data-part]");
   if (!b) return;
   const cur = new Set(S.plans[selDate] || []);
@@ -1515,7 +1535,16 @@ $("#parts").addEventListener("click", (e) => {
   save(); renderCalendar(); renderHome();
 });
 $("#parts").addEventListener("change", (e) => {
-  const part = e.target.dataset && e.target.dataset.rm;
+  const ds = e.target.dataset || {};
+  if (ds.cardio) {
+    const part = ds.cardio, v = e.target.value.trim(), name = PARTS.find((p) => p.k === part).n;
+    S.cardio = (S.cardio || []).filter((c) => !(c.part === part && c.date === selDate));
+    if (v !== "" && Number(v) > 0) { S.cardio.push({ date: selDate, part, min: Math.round(Number(v)) }); toast(`${name} ${Math.round(Number(v))}분 기록`); }
+    else toast(`${name} 기록을 지웠어요`);
+    save();
+    return;
+  }
+  const part = ds.rm;
   if (!part) return;
   const v = e.target.value.trim();
   S.rm = (S.rm || []).filter((r) => !(r.part === part && r.date === selDate));
@@ -1607,6 +1636,7 @@ const WEB_API = (() => {
     settings: ["항목", "값"],
     saju: ["원문"],
     rm: ["날짜", "부위", "1RM(kg)"],
+    cardio: ["날짜", "종목", "시간(분)"],
   };
   const PART_BY_NAME = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs", 워킹: "walking", 러닝: "running" };
   const CHECK_KEYS = ["solid", "confidence", "ease", "principle"];
@@ -1732,6 +1762,7 @@ const WEB_API = (() => {
       done, plans, checks,
       principles: rowsOf(tab.principles).sort((a, b) => num(a[0], 0) - num(b[0], 0)).map((r) => str(r[1])).filter(Boolean),
       saju: str((tab.saju[1] || [])[0]),
+      cardio: rowsOf(tab.cardio).map((r) => ({ date: day(r[0]), part: PART_BY_NAME[str(r[1]).trim()], min: num(r[2]) })).filter((c) => (c.part === "walking" || c.part === "running") && c.min > 0),
       rm: rowsOf(tab.rm).map((r) => ({ date: day(r[0]), part: PART_BY_NAME[str(r[1]).trim()], kg: num(r[2]) })).filter((r) => r.part && r.kg > 0),
     };
   }
@@ -1746,6 +1777,7 @@ const WEB_API = (() => {
       plans: Object.keys(s.plans || {}).sort().map((d) => [d, partsToText(s.plans[d])]),
       checks: (s.checks || []).slice().sort(byDate).map((c) => [c.date, ...CHECK_KEYS.map((k) => (c.s[k] == null ? "" : c.s[k])), c.note || ""]),
       principles: (s.principles || []).map((p, i) => [i + 1, p]),
+      cardio: (s.cardio || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((c) => [c.date, PARTS.find((p) => p.k === c.part).n, c.min]),
       rm: (s.rm || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((r) => [r.date, PARTS.find((p) => p.k === r.part).n, r.kg]),
       settings: [
         ["목표 체중", s.goal.weight], ["목표 체지방률", s.goal.fat],

@@ -10,6 +10,7 @@ var TABS = {
   settings: ["항목", "값"],
   saju: ["원문"],
   rm: ["날짜", "부위", "1RM(kg)"],
+  cardio: ["날짜", "종목", "시간(분)"],
 };
 var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm", "abs", "walking", "running"];
 // 부위 이름 → 키. 예전 workouts 탭의 부위별 열과 plans 탭의 "계획 부위" 글자를 읽을 때 쓴다.
@@ -40,7 +41,7 @@ function setup() {
     if (sh.getLastRow() === 0) sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight("bold");
     sh.setFrozenRows(1);
   });
-  ["inbody", "workouts", "plans", "checks", "rm"].forEach(function (name) {
+  ["inbody", "workouts", "plans", "checks", "rm", "cardio"].forEach(function (name) {
     sheet_(name).getRange("A2:A").setNumberFormat("yyyy-mm-dd");
   });
 
@@ -126,6 +127,9 @@ function getData() {
       .map(function (r) { return str_(r[1]); })
       .filter(String),
     saju: str_(sheet_("saju").getRange("A2").getValue()),
+    cardio: rows_("cardio")
+      .map(function (r) { return { date: day_(r[0]), part: PART_BY_NAME[str_(r[1]).trim()], min: num_(r[2]) }; })
+      .filter(function (c) { return (c.part === "walking" || c.part === "running") && c.min > 0; }),
     rm: rows_("rm")
       .map(function (r) { return { date: day_(r[0]), part: PART_BY_NAME[str_(r[1]).trim()], kg: num_(r[2]) }; })
       .filter(function (r) { return r.part && r.kg > 0; }),
@@ -183,6 +187,9 @@ function saveAll(s) {
     write_("checks", (s.checks || []).slice().sort(byDate).map(function (c) {
       return [c.date].concat(CHECK_KEYS.map(function (k) { return c.s[k] == null ? "" : c.s[k]; }), [c.note || ""]);
     }));
+    write_("cardio", (s.cardio || []).slice()
+      .sort(function (a, b) { var x = a.date + a.part, y = b.date + b.part; return x < y ? -1 : x > y ? 1 : 0; })
+      .map(function (r) { return [r.date, PART_NAMES[r.part], r.min]; }));
     write_("rm", (s.rm || []).slice()
       .sort(function (a, b) { var x = a.date + a.part, y = b.date + b.part; return x < y ? -1 : x > y ? 1 : 0; })
       .map(function (r) { return [r.date, PART_NAMES[r.part], r.kg]; }));

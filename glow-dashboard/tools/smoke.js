@@ -38,12 +38,15 @@ setTimeout(() => {
     check("오늘 완료 토글로 이번 달 횟수 변화", before !== after, `${before} → ${after}`);
 
     check("부위 버튼에 최근 1RM 표시", /60kg/.test(text("[data-part=chest]")) && /1RM –/.test(text("[data-part=abs]")), text("[data-part=chest]") + " / " + text("[data-part=abs]"));
-    $("#rm-toggle").click();
+    $("[data-mode=log]").click();
     const rmIn = $("input[data-rm=triceps]");
-    check("1RM 입력 모드", !!rmIn && w.document.querySelectorAll("#parts input[data-rm]").length === 8);
+    check("기록 모드: kg 8칸 + 분 2칸", !!rmIn && w.document.querySelectorAll("#parts input[data-rm]").length === 8 && w.document.querySelectorAll("#parts input[data-cardio]").length === 2);
     rmIn.value = "32.5"; rmIn.dispatchEvent(new w.Event("change", { bubbles: true }));
-    $("#rm-toggle").click();
+    const runIn = $("input[data-cardio=running]");
+    runIn.value = "30"; runIn.dispatchEvent(new w.Event("change", { bubbles: true }));
+    $("[data-mode=plan]").click();
     check("1RM 저장 후 버튼에 표시", /32.5kg/.test(text("[data-part=triceps]")), text("[data-part=triceps]"));
+    check("러닝 시간 표시", /30분/.test(text("[data-part=running]")), text("[data-part=running]"));
     const free = [...w.document.querySelectorAll(".cal .day[data-date]")].find((b) => !b.classList.contains("other") && !b.querySelector(".plan"));
     free.click();
     $("[data-part=legs]").click();
