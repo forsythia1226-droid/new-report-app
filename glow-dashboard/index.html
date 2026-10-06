@@ -345,19 +345,22 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .tile .s { font-size: .75rem; color: var(--muted); }
 .tile.hero { background: var(--iron); color: var(--surface); }
 .tile.hero .k, .tile.hero .s, .tile.hero .v small { color: inherit; opacity: .85; }
-.pgroup { margin-bottom: 14px; }
+.pgroup { margin-bottom: 12px; }
+.pgroup:last-child { margin-bottom: 0; }
 .pgroup h4 { margin: 0 0 6px; font-size: .75rem; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
-.parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.part { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; text-align: left; min-width: 0; }
-.part .pn { font-weight: 600; flex: 1; min-width: 0; }
+.parts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.part { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 8px; display: flex; gap: 6px; align-items: center; justify-content: center; min-width: 0; font-size: .9rem; }
+.part .pn { font-weight: 600; min-width: 0; white-space: nowrap; }
 .part .pc { font: 500 .78rem var(--mono); color: var(--muted); white-space: nowrap; }
-.part .ck { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--line); display: grid; place-items: center; font-size: .7rem; flex: none; }
+.part .ck { width: 15px; height: 15px; border-radius: 5px; border: 2px solid var(--line); display: grid; place-items: center; font-size: .7rem; flex: none; }
 .part[aria-pressed="true"] { color: var(--surface); border-color: transparent; }
 .part[aria-pressed="true"] .pc { color: inherit; opacity: .85; }
 .part[aria-pressed="true"] .ck { border-color: currentColor; }
 .part[aria-pressed="true"] .ck::after { content: "✓"; }
-.sel-date { font-family: var(--display); font-size: 1.25rem; margin: 0 0 2px; }
-.sel-sub { font-size: .82rem; color: var(--muted); margin: 0 0 14px; }
+.sel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sel-date { font-family: var(--display); font-size: 1.25rem; margin: 0; }
+.sel-sub { font-size: .82rem; color: var(--muted); margin: 4px 0 12px; }
+.done-btn.small { padding: 7px 14px; font-size: .9rem; border-radius: 99px; white-space: nowrap; }
 .count-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 @media (max-width: 860px) { .count-groups { grid-template-columns: minmax(0, 1fr); } }
 .count-groups h4 { margin: 0 0 8px; font-size: .75rem; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
@@ -683,9 +686,11 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
           <div class="legend"><span><span class="star">★</span> 운동한 날</span><span>글자 = 계획한 부위</span><span style="color:var(--warn)">테두리 = 계획했는데 못 한 날</span></div>
         </div>
         <div class="card c5">
-          <p class="sel-date" id="sel-date"></p>
+          <div class="sel-head">
+            <p class="sel-date" id="sel-date"></p>
+            <button class="done-btn small" id="sel-done" type="button" aria-pressed="false"></button>
+          </div>
           <p class="sel-sub" id="sel-sub"></p>
-          <button class="done-btn" id="sel-done" type="button" aria-pressed="false" style="width:100%;margin-bottom:16px"></button>
           <div id="parts"></div>
         </div>
         <div class="card c12">
@@ -1425,7 +1430,8 @@ function renderCalendar() {
   $("#sel-sub").textContent = plan.length ? `계획: ${planText(plan)}` : "이 날 할 부위를 아래에서 골라 계획하세요";
   $("#sel-done").setAttribute("aria-pressed", did);
   $("#sel-done").dataset.toggleDone = selDate;
-  $("#sel-done").textContent = did ? "★ 운동함 (누르면 취소)" : selDate > todayKey ? "운동 완료 체크 (미래 날짜)" : "운동 완료 체크";
+  $("#sel-done").textContent = did ? "★ 운동함" : "운동 완료 체크";
+  $("#sel-done").title = did ? "누르면 운동 체크를 취소합니다" : selDate > todayKey ? "미래 날짜예요" : "이 날 운동했으면 누르세요";
   $("#parts").innerHTML = GROUPS.map((g) => `
     <div class="pgroup"><h4>${g.n} 계획</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
       const on = plan.includes(p.k);
