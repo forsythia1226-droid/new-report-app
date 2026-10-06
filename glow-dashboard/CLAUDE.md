@@ -65,7 +65,7 @@
 1. `index.html` / `Code.gs` 수정
 2. `npm install`(처음 한 번) → **`npm test`** (시트 왕복 + 화면 스모크). 기능을 바꾸면 테스트도 같이 고친다.
 3. 미리보기: `npm run preview` → `preview.html`을 claude.ai 아티팩트로 올린다.
-   기존 미리보기 주소: https://claude.ai/artifact/KoJZ1hEAQP7P2tEwJeHwYR (비공개. 다른 세션에서는 Artifact 도구에 이 URL을 `url`로 넘겨 read 후 publish)
+   미리보기 주소: https://claude.ai/artifact/7N8qxQfUxTb1FVxhcvsWXx (aitaihanit 계정, 비공개. 다른 세션에서는 Artifact 도구에 이 URL을 `url`로 넘겨 read 후 publish. 예전 개인 계정 주소 KoJZ1hEAQP7P2tEwJeHwYR 는 더 이상 쓰지 않음)
 4. 기능 단위로 커밋 (브랜치 `glow-dashboard`)
 5. 사용자가 Apps Script 편집기에 바뀐 파일을 붙여넣고 **배포 → 배포 관리 → 새 버전**. `Code.gs`의 탭·설정이 바뀌었으면 `setup` 한 번 실행.
    - clasp로 자동 배포하는 방안은 제안만 했고 아직 설정 안 함.
