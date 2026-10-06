@@ -351,20 +351,26 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .parts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .part { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 8px; display: flex; gap: 6px; align-items: center; justify-content: center; min-width: 0; font-size: .9rem; }
 .part .pn { font-weight: 600; min-width: 0; white-space: nowrap; }
-.sel-card .part { flex-direction: column; gap: 2px; padding: 4px 6px 6px; line-height: 1.25; }
+.sel-card .part { flex-direction: column; gap: 6px; padding: 8px 6px; line-height: 1.25; }
 .part .pk { font: 500 .78rem var(--mono); color: var(--muted); }
 .part .pk.none { opacity: .6; }
 .part[aria-pressed="true"] .pk { color: inherit; opacity: .8; }
 .pgroup h4 { display: flex; justify-content: space-between; align-items: center; }
 .part .pn-btn { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; width: 100%; padding: 2px 0; border-radius: 6px; cursor: pointer; }
-.part .rm-in { display: flex; align-items: baseline; gap: 2px; width: 100%; justify-content: center; }
-.part select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; padding: 0 2px; text-align: right; text-align-last: right; font: 600 .57rem var(--mono); color: inherit; cursor: pointer; max-width: 60px; }
-.part select.empty { color: var(--muted); font-weight: 500; }
-.part select:focus-visible { outline: 2px solid var(--warn); outline-offset: 1px; border-radius: 4px; }
-.part select option { color: var(--ink); background: var(--surface); font-size: .9rem; }
-.part .u { font-size: .6rem; color: var(--muted); }
+/* 값 알약: 가운데 정렬, 알약 전체가 드롭다운 */
+.part .val { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 64px; max-width: 100%; padding: 2px 10px; border-radius: 99px; background: var(--surface-2); color: var(--muted); font: 500 .72rem var(--body); white-space: nowrap; }
+.part .val b { font: 700 .9rem var(--mono); color: var(--ink); }
+.part .val.filled { background: var(--iron-soft); color: var(--iron); }
+.part .val.filled b { color: var(--iron); }
+.part .val .caret { font-size: .6rem; opacity: .7; }
+.part .val select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; appearance: none; -webkit-appearance: none; font-size: 16px; }
+.part .val:focus-within { outline: 2px solid var(--warn); outline-offset: 1px; }
+.part .val:hover { filter: brightness(.97); }
 .part.on { background: var(--iron); color: var(--surface); border-color: transparent; }
-.part.on select.empty, .part.on .u { color: inherit; opacity: .7; }
+.part.on .val { background: color-mix(in srgb, var(--surface) 16%, transparent); color: color-mix(in srgb, var(--surface) 80%, transparent); }
+.part.on .val b { color: var(--surface); }
+.part.on .val.filled { background: var(--surface); color: var(--iron); }
+.part.on .val.filled b { color: var(--iron); }
 .rm-note { font-size: .75rem; color: var(--muted); margin: -4px 0 8px; }
 .part .pc { font: 500 .78rem var(--mono); color: var(--muted); white-space: nowrap; }
 .part[aria-pressed="true"] { color: var(--surface); border-color: transparent; }
@@ -1477,13 +1483,15 @@ function renderCalendar() {
       let input;
       if (cardio) {
         const min = cardioMin(p.k, selDate);
-        input = `<select data-cardio="${p.k}" class="${min ? "" : "empty"}" aria-label="${p.n} 시간(분)" title="${dayLabel(selDate)} 시간(분)">${pickOptions(MIN_OPTS, min, "–")}</select><span class="u">분</span>`;
+        const sel = `<select data-cardio="${p.k}" aria-label="${p.n} 시간(분)" title="${dayLabel(selDate)} 시간(분)">${pickOptions(MIN_OPTS, min, "–")}</select>`;
+        input = valChip(sel, min ? `<b>${min}</b> 분` : "+ 분", !!min);
       } else {
         const last = latestRM(p.k);
         const day = (S.rm || []).find((r) => r.part === p.k && r.date === selDate);
-        input = `<select data-rm="${p.k}" class="${day ? "" : "empty"}" aria-label="${p.n} 1RM kg" title="${last ? `최근 1RM ${fmtKg(last.kg)}kg (${last.date.replaceAll("-", ".")})` : "1RM 기록 없음"} · 고르면 ${dayLabel(selDate)} 기록">${pickOptions(KG_OPTS, day ? day.kg : null, last ? fmtKg(last.kg) : "–")}</select><span class="u">kg</span>`;
+        const sel = `<select data-rm="${p.k}" aria-label="${p.n} 1RM kg" title="${last ? `최근 1RM ${fmtKg(last.kg)}kg (${last.date.replaceAll("-", ".")})` : "1RM 기록 없음"} · 고르면 ${dayLabel(selDate)} 기록">${pickOptions(KG_OPTS, day ? day.kg : null, last ? fmtKg(last.kg) : "–")}</select>`;
+        input = valChip(sel, day ? `<b>${fmtKg(day.kg)}</b> kg` : last ? `최근 ${fmtKg(last.kg)}kg` : "+ kg", !!day);
       }
-      return `<div class="part ${on ? "on" : ""}"><button class="pn-btn" type="button" data-part="${p.k}" aria-pressed="${on}">${p.n}</button><span class="rm-in">${input}</span></div>`;
+      return `<div class="part ${on ? "on" : ""}"><button class="pn-btn" type="button" data-part="${p.k}" aria-pressed="${on}">${p.n}</button>${input}</div>`;
     }).join("")}</div></div>`).join("");
 }
 
@@ -1497,6 +1505,9 @@ const fmtKg = (v) => (Math.round(v * 10) / 10).toString();
 const KG_OPTS = (() => { const a = []; for (let v = 1; v < 50; v += 0.5) a.push(v); for (let v = 50; v <= 300; v += 2.5) a.push(v); return a; })();
 const MIN_OPTS = Array.from({ length: 36 }, (_, i) => (i + 1) * 5);
 // 빈 값 선택지의 글자는 힌트(최근 1RM 등). 목록에 없는 기존 값도 넣어 둔다.
+function valChip(select, text, filled) {
+  return `<span class="val ${filled ? "filled" : ""}"><span class="vt">${text}</span><span class="caret" aria-hidden="true">▾</span>${select}</span>`;
+}
 function pickOptions(list, cur, hint) {
   const vals = cur != null && !list.includes(cur) ? [...list, cur].sort((a, b) => a - b) : list;
   return `<option value="">${hint}</option>` + (cur != null ? '<option value="">– (지우기)</option>' : "") +
