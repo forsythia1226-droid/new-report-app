@@ -65,6 +65,18 @@
 `checks`(날짜·단단함·자신감·여유·원칙 지킴·메모) · `principles` · `settings`(목표, 누적 기준, 지향 묘사, 정체성 문장, 키워드) · `saju`(원문).
 저장은 탭을 통째로 다시 쓴다. 공휴일은 구글 캘린더 "대한민국의 휴일"(`getHolidays`), 실패 시 index.html의 내장 2026~2027 표.
 
+## 실행 위치 (같은 index.html 이 세 가지로 동작)
+
+| 주소 | 모드 | 저장 |
+|---|---|---|
+| https://forsythia1226-droid.github.io/new-report-app/ | **WEB** (주 사용처) | 구글 로그인(OAuth, GIS 토큰) + Sheets API로 같은 시트 |
+| script.google.com/…/exec | **APPS** | google.script.run → Code.gs |
+| claude.ai 미리보기, 파일 | 미리보기 | 예시 데이터 + localStorage |
+
+- WEB 모드는 `index.html`의 `GLOW_WEB.clientId`가 있어야 켜진다(구글 클라우드 OAuth 클라이언트 ID, 승인된 JS 원본 `https://forsythia1226-droid.github.io`). 시트 ID·소유자도 `GLOW_WEB`에 있다.
+- 브라우저 쪽 저장 로직(`WEB_API`)은 Code.gs와 **같은 시트 형식**을 쓴다. 한쪽을 바꾸면 다른 쪽도 같이 바꾸고 `npm test`(test-sheet + smoke + test-web).
+- 구글이 Apps Script 웹 앱 위에 붙이는 "Google Apps Script 사용자가 만들었습니다" 띠를 없애려고 GitHub Pages로 옮겼다.
+
 ## 작업 흐름
 
 1. `index.html` / `Code.gs` 수정
@@ -72,6 +84,7 @@
 3. 미리보기: `npm run preview` → `preview.html`을 claude.ai 아티팩트로 올린다.
    미리보기 주소: https://claude.ai/artifact/7N8qxQfUxTb1FVxhcvsWXx (aitaihanit 계정, 비공개. 다른 세션에서는 Artifact 도구에 이 URL을 `url`로 넘겨 read 후 publish. 예전 개인 계정 주소 KoJZ1hEAQP7P2tEwJeHwYR 는 더 이상 쓰지 않음)
 4. 기능 단위로 커밋 (브랜치 `glow-dashboard`)
+4-1. **`npm run pages`** — gh-pages 브랜치로 강제 푸시 → GitHub Pages 반영(1~2분)
 5. **`npm run deploy`** — clasp로 Apps Script에 올리고 같은 웹 앱 주소에 새 버전을 배포한다. 사용자는 웹 앱을 새로고침만 하면 된다.
    - 구글 계정: forsythia1226@gmail.com (clasp 로그인 정보는 이 PC의 `~/.clasprc.json`. 다른 PC에서는 `npx @google/clasp login`부터)
    - 시트: https://drive.google.com/open?id=1IaNAAiPgWUDcVrO2GOd4oCgnGwNsgXjraln5P6rRTeg

@@ -14,6 +14,7 @@
 
 ## 지금 배포된 곳
 
+- **GitHub Pages(주 사용):** https://forsythia1226-droid.github.io/new-report-app/ — `npm run pages`로 반영. 구글 클라우드 OAuth 클라이언트 ID가 `index.html`의 `GLOW_WEB.clientId`에 있어야 로그인된다.
 - 웹 앱: https://script.google.com/macros/s/AKfycbwFw9riOo-EUVtWNvV3iyrbcEZGrztC2EXTgIsL26tPrjQZPHe4qESjnMU68E-yjZ00/exec
 - 시트: https://drive.google.com/open?id=1IaNAAiPgWUDcVrO2GOd4oCgnGwNsgXjraln5P6rRTeg
 - 코드를 고친 뒤 `npm run deploy` (clasp 로그인 필요: `npx @google/clasp login`)

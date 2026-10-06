@@ -848,10 +848,23 @@ const DEFAULT_YEAR_BASE = { month: "2026-09", count: 100 };
 const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
 const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
 
-/* ---------- 저장 (이 브라우저에만) ---------- */
-// Apps Script 웹 앱으로 열리면 구글시트에, 파일로 그냥 열면 이 브라우저에 저장한다(미리보기).
+/* ---------- 저장소 ----------
+   APPS: Apps Script 웹 앱(script.google.com)에서 열림 → google.script.run 으로 시트에 저장
+   WEB : GitHub Pages(github.io) 또는 localhost 에서 열림 → 구글 로그인 + Sheets API 로 같은 시트에 저장
+   그 밖(claude.ai 미리보기, 파일로 열기) → 예시 데이터 + 이 브라우저에만 저장 */
+const GLOW_WEB = {
+  clientId: "", // 구글 클라우드 OAuth 클라이언트 ID (…apps.googleusercontent.com). 비어 있으면 WEB 모드를 쓰지 않는다.
+  spreadsheetId: "1IaNAAiPgWUDcVrO2GOd4oCgnGwNsgXjraln5P6rRTeg",
+  owner: "forsythia1226@gmail.com",
+};
 const KEY = "glow-dashboard:v1";
-const RUN = typeof google !== "undefined" && google.script && google.script.run;
+const APPS = typeof google !== "undefined" && google.script && google.script.run;
+const WEB = !APPS && !!GLOW_WEB.clientId && /(\.github\.io|^localhost|^127\.0\.0\.1)$/.test(location.hostname);
+const RUN = APPS || WEB;
+const callApps = (fn, ...args) => new Promise((ok, fail) => google.script.run.withSuccessHandler(ok).withFailureHandler(fail)[fn](...args));
+const api = () => (APPS
+  ? { whoAmI: () => callApps("whoAmI"), getData: () => callApps("getData"), saveAll: (s) => callApps("saveAll", s), getHolidays: (y) => callApps("getHolidays", y) }
+  : WEB_API);
 let SIGNED_IN = false; // 시작 화면에서 계정 확인이 끝나야 서버를 부른다
 let S = RUN ? EMPTY() : (() => { try { return JSON.parse(localStorage.getItem(KEY)) || EXAMPLE(); } catch { return EXAMPLE(); } })();
 normBody(S);
@@ -870,10 +883,9 @@ const save = () => {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     setSync("저장 중…");
-    google.script.run
-      .withSuccessHandler(() => setSync("시트에 저장됨"))
-      .withFailureHandler((e) => setSync("저장 실패: " + ((e && e.message) || e), true))
-      .saveAll(JSON.parse(JSON.stringify(S)));
+    api().saveAll(JSON.parse(JSON.stringify(S)))
+      .then(() => setSync("시트에 저장됨"))
+      .catch((e) => setSync("저장 실패: " + ((e && e.message) || e), true));
   }, 600);
 };
 
@@ -1364,10 +1376,9 @@ function holidayOf(key) {
 function ensureHolidays(year) {
   if (!RUN || !SIGNED_IN || holidayCache[year] || ensureHolidays.pending[year]) return;
   ensureHolidays.pending[year] = true;
-  google.script.run
-    .withSuccessHandler((map) => { if (map && Object.keys(map).length) { holidayCache[year] = map; renderCalendar(); } })
-    .withFailureHandler(() => {}) // 권한·네트워크 문제면 내장 표를 그대로 쓴다
-    .getHolidays(year);
+  api().getHolidays(year)
+    .then((map) => { if (map && Object.keys(map).length) { holidayCache[year] = map; renderCalendar(); } })
+    .catch(() => {}); // 권한·네트워크 문제면 내장 표를 그대로 쓴다
 }
 ensureHolidays.pending = {};
 
@@ -1537,41 +1548,276 @@ function renderAll() { renderExampleBar(); renderHome(); renderSaju(); renderBod
 renderAll();
 go(tab);
 
+/* ---------- GitHub Pages 저장소: 구글 로그인(OAuth) + Sheets API ----------
+   Code.gs 의 getData/saveAll/getHolidays 와 같은 시트 형식을 브라우저에서 직접 읽고 쓴다.
+   (Apps Script 주소와 github.io 주소 어느 쪽에서 기록해도 같은 시트에 쌓인다) */
+const WEB_API = (() => {
+  const SCOPES = "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/calendar.readonly openid email";
+  const TABS = {
+    inbody: ["측정일", "체중", "골격근량", "체지방률", "기초대사량"],
+    workouts: ["날짜", "운동함"],
+    plans: ["날짜", "계획 부위"],
+    checks: ["날짜", "단단함", "자신감", "여유", "원칙 지킴", "메모"],
+    principles: ["순서", "원칙"],
+    settings: ["항목", "값"],
+    saju: ["원문"],
+  };
+  const PART_BY_NAME = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs", 워킹: "walking", 러닝: "running" };
+  const CHECK_KEYS = ["solid", "confidence", "ease", "principle"];
+  const CHECK_BY_HEADER = { 단단함: "solid", 자신감: "confidence", 여유: "ease", "부드러운 태도": "ease", "원칙 지킴": "principle" };
+  const HOLIDAY_CAL = "ko.south_korea#holiday@group.v.calendar.google.com";
+  const TOKEN_KEY = "glow:token";
+
+  let token = null, expires = 0, client = null, tabsReady = false;
+  const prevSize = {}; // 탭별로 마지막에 쓴 [행, 열] — 줄어든 만큼 빈칸으로 덮어 지운다
+  try { const t = JSON.parse(sessionStorage.getItem(TOKEN_KEY)); if (t && t.expires > Date.now() + 60000) ({ token, expires } = t); } catch {}
+
+  /* --- 로그인 --- */
+  const hasToken = () => !!token && Date.now() < expires;
+  function loadGis() {
+    return new Promise((ok, fail) => {
+      if (window.google && google.accounts && google.accounts.oauth2) return ok();
+      const s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.onload = () => ok();
+      s.onerror = () => fail(new Error("구글 로그인 스크립트를 불러오지 못했어요"));
+      document.head.append(s);
+    });
+  }
+  // 버튼 클릭 안에서 불러야 팝업이 막히지 않는다
+  async function signIn(selectAccount = false) {
+    await loadGis();
+    return new Promise((ok, fail) => {
+      client = client || google.accounts.oauth2.initTokenClient({ client_id: GLOW_WEB.clientId, scope: SCOPES, callback: () => {} });
+      client.callback = (r) => {
+        if (r.error) return fail(new Error(r.error_description || r.error));
+        token = r.access_token;
+        expires = Date.now() + (Number(r.expires_in || 3600) - 60) * 1000;
+        try { sessionStorage.setItem(TOKEN_KEY, JSON.stringify({ token, expires })); } catch {}
+        ok();
+      };
+      client.error_callback = (e) => fail(new Error(e && e.type === "popup_closed" ? "로그인 창이 닫혔어요" : (e && (e.message || e.type)) || "로그인 실패"));
+      client.requestAccessToken({ prompt: selectAccount ? "select_account" : "", login_hint: GLOW_WEB.owner });
+    });
+  }
+  function signOut() {
+    if (token && window.google && google.accounts && google.accounts.oauth2) google.accounts.oauth2.revoke(token, () => {});
+    token = null; expires = 0;
+    try { sessionStorage.removeItem(TOKEN_KEY); } catch {}
+  }
+
+  /* --- HTTP --- */
+  let needLogin = null; // 토큰이 만료되면 화면이 다시 로그인시켜 주는 함수 (시작 화면에서 연결)
+  async function gfetch(url, opt = {}, retried = false) {
+    if (!hasToken()) { if (!needLogin) throw new Error("로그인이 필요해요"); await needLogin(); }
+    const r = await fetch(url, { ...opt, headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+    if (r.status === 401 && !retried) { token = null; return gfetch(url, opt, true); }
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error((e.error && e.error.message) || `HTTP ${r.status}`);
+    }
+    return r.status === 204 ? null : r.json();
+  }
+  const sheetsUrl = (path) => `https://sheets.googleapis.com/v4/spreadsheets/${GLOW_WEB.spreadsheetId}${path}`;
+
+  /* --- 값 변환 (Code.gs 와 같은 규칙) --- */
+  const str = (v) => (v == null ? "" : String(v));
+  const num = (v, fb = null) => (v === "" || v == null || isNaN(Number(v)) ? fb : Number(v));
+  const isOn = (v) => v === true || v === 1 || /^(o|y|v|✓|true|1)$/i.test(String(v).trim());
+  const day = (v) => { const m = String(v).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/); return m ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : String(v); };
+  const month = (v) => { const m = String(v == null ? "" : v).match(/(\d{4})\D+(\d{1,2})/); return m ? `${m[1]}-${m[2].padStart(2, "0")}` : ""; };
+  const partsFromText = (v) => { const set = new Set(str(v).split(/[,·/\s]+/).map((n) => PART_BY_NAME[n.trim()]).filter(Boolean)); return PARTS.map((p) => p.k).filter((k) => set.has(k)); };
+  const partsToText = (ks) => PARTS.filter((p) => (ks || []).includes(p.k)).map((p) => p.n).join(", ");
+  const rowsOf = (values) => values.slice(1).filter((r) => r[0] !== "" && r[0] != null);
+
+  /* --- 탭 준비 (없으면 만들고 기본값을 넣는다) --- */
+  async function ensureTabs() {
+    if (tabsReady) return;
+    const meta = await gfetch(sheetsUrl("?fields=sheets.properties.title"));
+    const have = new Set(meta.sheets.map((s) => s.properties.title));
+    const missing = Object.keys(TABS).filter((n) => !have.has(n));
+    if (missing.length) {
+      await gfetch(sheetsUrl(":batchUpdate"), { method: "POST", body: JSON.stringify({ requests: missing.map((title) => ({ addSheet: { properties: { title } } })) }) });
+      const data = missing.map((n) => ({ range: `${n}!A1`, values: [TABS[n]] }));
+      if (missing.includes("settings")) data.push({ range: "settings!A2", values: [["목표 체중", 68], ["목표 체지방률", 12], ["누적 기준 월", "2026-09"], ["누적 기준 횟수", 100], ["지향 묘사", DEFAULT_VISION], ["정체성 문장", ""], ["키워드", DEFAULT_KEYWORDS.join(", ")]] });
+      if (missing.includes("saju")) data.push({ range: "saju!A2", values: [[SAJU_RAW]] });
+      await gfetch(sheetsUrl("/values:batchUpdate"), { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+    }
+    tabsReady = true;
+  }
+
+  async function getData() {
+    await ensureTabs();
+    const names = Object.keys(TABS);
+    const q = names.map((n) => "ranges=" + encodeURIComponent(`${n}!A1:Z`)).join("&");
+    const res = await gfetch(sheetsUrl(`/values:batchGet?${q}&valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING`));
+    const tab = {};
+    res.valueRanges.forEach((vr, i) => {
+      tab[names[i]] = vr.values || [];
+      prevSize[names[i]] = [tab[names[i]].length, Math.max(TABS[names[i]].length, ...tab[names[i]].map((r) => r.length))];
+    });
+
+    const settings = {};
+    rowsOf(tab.settings).forEach((r) => { settings[str(r[0]).trim()] = r[1]; });
+
+    // 운동한 날: 머리글 이름으로 읽는다 (예전 부위별 열 형식도 운동한 날로)
+    const done = {};
+    const wHead = (tab.workouts[0] || []).map((h) => str(h).trim());
+    rowsOf(tab.workouts).forEach((r) => { if (wHead.some((h, i) => i > 0 && (h === "운동함" || PART_BY_NAME[h]) && isOn(r[i]))) done[day(r[0])] = true; });
+
+    const plans = {};
+    rowsOf(tab.plans).forEach((r) => { const p = partsFromText(r[1]); if (p.length) plans[day(r[0])] = p; });
+
+    const cHead = (tab.checks[0] || []).map((h) => str(h).trim());
+    const noteCol = cHead.indexOf("메모");
+    const checks = rowsOf(tab.checks).map((r) => {
+      const s = Object.fromEntries(CHECK_KEYS.map((k) => [k, null]));
+      cHead.forEach((h, i) => { if (CHECK_BY_HEADER[h]) s[CHECK_BY_HEADER[h]] = num(r[i]); });
+      return { date: day(r[0]), s, note: noteCol >= 0 ? str(r[noteCol]) : "" };
+    });
+
+    return {
+      goal: { weight: num(settings["목표 체중"], 68), fat: num(settings["목표 체지방률"], 12) },
+      yearBase: { month: month(settings["누적 기준 월"]), count: num(settings["누적 기준 횟수"], 0) },
+      vision: str(settings["지향 묘사"]),
+      identity: str(settings["정체성 문장"]),
+      keywords: str(settings["키워드"]).split(",").map((s) => s.trim()).filter(Boolean),
+      inbody: rowsOf(tab.inbody).filter((r) => r[1] !== "" && r[1] != null).map((r) => ({ date: day(r[0]), w: num(r[1]), m: num(r[2]), f: num(r[3]), bmr: num(r[4]) })),
+      done, plans, checks,
+      principles: rowsOf(tab.principles).sort((a, b) => num(a[0], 0) - num(b[0], 0)).map((r) => str(r[1])).filter(Boolean),
+      saju: str((tab.saju[1] || [])[0]),
+    };
+  }
+
+  // 한 번의 요청으로 모든 탭을 다시 쓴다. 예전보다 줄어든 행·열은 빈칸으로 덮어 지운다.
+  async function saveAll(s) {
+    await ensureTabs();
+    const byDate = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+    const tables = {
+      inbody: (s.inbody || []).slice().sort(byDate).map((r) => [r.date, r.w, r.m, r.f, r.bmr == null ? "" : r.bmr]),
+      workouts: Object.keys(s.done || {}).filter((d) => s.done[d]).sort().map((d) => [d, true]),
+      plans: Object.keys(s.plans || {}).sort().map((d) => [d, partsToText(s.plans[d])]),
+      checks: (s.checks || []).slice().sort(byDate).map((c) => [c.date, ...CHECK_KEYS.map((k) => (c.s[k] == null ? "" : c.s[k])), c.note || ""]),
+      principles: (s.principles || []).map((p, i) => [i + 1, p]),
+      settings: [
+        ["목표 체중", s.goal.weight], ["목표 체지방률", s.goal.fat],
+        ["누적 기준 월", (s.yearBase && s.yearBase.month) || ""], ["누적 기준 횟수", s.yearBase ? s.yearBase.count : ""],
+        ["지향 묘사", s.vision || DEFAULT_VISION], ["정체성 문장", s.identity || ""], ["키워드", (s.keywords || []).join(", ")],
+      ],
+    };
+    const data = Object.entries(tables).map(([name, rows]) => {
+      const all = [TABS[name], ...rows];
+      const [prevRows, prevCols] = prevSize[name] || [0, 0];
+      const width = Math.max(TABS[name].length, prevCols);
+      const height = Math.max(all.length, prevRows);
+      const values = Array.from({ length: height }, (_, i) => Array.from({ length: width }, (_, j) => (all[i] && all[i][j] !== undefined ? all[i][j] : "")));
+      prevSize[name] = [all.length, TABS[name].length];
+      return { range: `${name}!A1`, values };
+    });
+    await gfetch(sheetsUrl("/values:batchUpdate"), { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+    return true;
+  }
+
+  async function getHolidays(year) {
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(HOLIDAY_CAL)}/events?singleEvents=true&maxResults=250&timeMin=${year}-01-01T00:00:00Z&timeMax=${year + 1}-01-01T00:00:00Z`;
+    const res = await gfetch(url);
+    const out = {};
+    for (const ev of res.items || []) {
+      const off = !/기념일|observance/i.test(ev.description || "");
+      const start = new Date((ev.start.date || ev.start.dateTime.slice(0, 10)) + "T00:00");
+      const end = new Date((ev.end.date || ev.end.dateTime.slice(0, 10)) + "T00:00");
+      const days = [];
+      for (let t = new Date(start); t < end; t.setDate(t.getDate() + 1)) days.push(ymd(t)); // 종일 일정의 끝 날짜는 포함하지 않는다
+      if (!days.length) days.push(ymd(start));
+      for (const k of days) if (!(out[k] && out[k].off && !off)) out[k] = { name: ev.summary, off }; // 공휴일 이름 우선
+    }
+    return out;
+  }
+
+  async function whoAmI() {
+    const me = await gfetch("https://openidconnect.googleapis.com/v1/userinfo");
+    const email = str(me.email).toLowerCase();
+    return { email, owner: GLOW_WEB.owner, ok: email === GLOW_WEB.owner, url: location.href };
+  }
+
+  return { hasToken, signIn, signOut, whoAmI, getData, saveAll, getHolidays, setNeedLogin: (f) => { needLogin = f; } };
+})();
+
 /* ---------- 시작 화면: 구글 계정 확인 → 시작하기 ---------- */
-function gate(state, html, { start = false, switchUrl = null, startLabel = "시작하기" } = {}) {
+let gateAction = () => { $("#gate").hidden = true; };
+let switchAction = null;
+function gate(state, html, { start = false, switchUrl = null, onSwitch = null, startLabel = "시작하기" } = {}) {
   $("#gate-status").innerHTML = html;
   $("#gate-status").classList.toggle("bad", state === "bad");
   $("#gate-start").disabled = !start;
   $("#gate-start").textContent = startLabel;
-  $("#gate-switch").hidden = !switchUrl;
-  if (switchUrl) $("#gate-switch").href = switchUrl;
+  $("#gate-switch").hidden = !switchUrl && !onSwitch;
+  $("#gate-switch").href = switchUrl || "#";
+  switchAction = onSwitch;
 }
-$("#gate-start").addEventListener("click", () => { $("#gate").hidden = true; });
+$("#gate-start").addEventListener("click", () => gateAction());
+$("#gate-switch").addEventListener("click", (e) => { if (switchAction) { e.preventDefault(); switchAction(); } });
 const chooser = (url) => `https://accounts.google.com/AccountChooser?continue=${encodeURIComponent(url || location.href)}`;
+
+// WEB: 로그인 버튼을 눌러 구글 로그인 창을 띄운다 (팝업은 클릭 안에서만 열린다)
+function webLogin(selectAccount = false) {
+  gate("ok", "구글 로그인 창에서 계정을 선택해 주세요…", { startLabel: "로그인 중…" });
+  return WEB_API.signIn(selectAccount)
+    .then(() => afterLogin(true))
+    .catch((e) => gate("bad", "로그인하지 못했어요: " + esc(e.message || e), { start: true, startLabel: "Google 계정으로 로그인" }));
+}
+function askWebLogin(msg = "Google 계정으로 로그인해 주세요") {
+  gate("ok", msg, { start: true, startLabel: "Google 계정으로 로그인" });
+  gateAction = () => webLogin();
+}
+if (WEB) {
+  // 사용 중 로그인(1시간)이 끝나면 시작 화면을 다시 띄우고, 로그인하면 하던 저장·불러오기를 이어서 한다
+  WEB_API.setNeedLogin(() => new Promise((resolve) => {
+    $("#gate").hidden = false;
+    gate("bad", "로그인 시간이 지났어요. 다시 로그인하면 이어서 저장돼요.", { start: true, startLabel: "다시 로그인" });
+    gateAction = () => WEB_API.signIn().then(() => { $("#gate").hidden = true; gateAction = () => { $("#gate").hidden = true; }; resolve(); })
+      .catch((e) => gate("bad", "로그인하지 못했어요: " + esc(e.message || e), { start: true, startLabel: "다시 로그인" }));
+  }));
+}
+
+function afterLogin(autoClose) {
+  return api().whoAmI().then((me) => {
+    if (!me.ok) {
+      const msg = `이 대시보드는 <b>${esc(me.owner)}</b> 전용이에요.<br/>지금은 ${esc(me.email)} 계정으로 로그인돼 있어요.`;
+      if (WEB) { WEB_API.signOut(); gate("bad", msg, { start: true, startLabel: "다른 계정으로 로그인" }); gateAction = () => webLogin(true); }
+      else gate("bad", msg, { switchUrl: chooser(me.url) });
+      return;
+    }
+    const who = me.email || me.owner;
+    SIGNED_IN = true;
+    gateAction = () => { $("#gate").hidden = true; };
+    if (WEB) {
+      $("#acct").innerHTML = `${esc(who)} · <a href="#" id="acct-switch">계정 바꾸기</a>`;
+      $("#acct-switch").addEventListener("click", (e) => { e.preventDefault(); $("#gate").hidden = false; webLogin(true); });
+    } else {
+      $("#acct").innerHTML = `${esc(who)} · <a href="${chooser(me.url)}" target="_top">계정 바꾸기</a>`;
+    }
+    gate("ok", `<b>${esc(who)}</b><br/>구글 계정으로 로그인됨`, { start: true, switchUrl: WEB ? null : chooser(me.url), onSwitch: WEB ? () => webLogin(true) : null });
+    loadFromSheet();
+    if (autoClose) $("#gate").hidden = true;
+  }).catch((e) => {
+    if (WEB) askWebLogin("계정을 확인하지 못했어요. 다시 로그인해 주세요.<br/>(" + esc(e.message || e) + ")");
+    else gate("bad", "계정을 확인하지 못했어요: " + esc((e && e.message) || e), { switchUrl: chooser() });
+  });
+}
 
 if (!RUN) {
   gate("ok", "미리보기 모드 · 예시 데이터로 보여요<br/>(실제 기록은 웹 앱 주소에서)", { start: true, startLabel: "미리보기 시작" });
+} else if (WEB && !WEB_API.hasToken()) {
+  askWebLogin();
 } else {
-  google.script.run
-    .withSuccessHandler((me) => {
-      if (!me.ok) {
-        gate("bad", `이 대시보드는 <b>${esc(me.owner)}</b> 전용이에요.<br/>지금은 ${esc(me.email)} 계정으로 로그인돼 있어요.`, { switchUrl: chooser(me.url) });
-        return;
-      }
-      const who = me.email || me.owner;
-      gate("ok", `<b>${esc(who)}</b><br/>구글 계정으로 로그인됨`, { start: true, switchUrl: chooser(me.url) });
-      $("#acct").innerHTML = `${esc(who)} · <a href="${chooser(me.url)}" target="_top">계정 바꾸기</a>`;
-      SIGNED_IN = true;
-      loadFromSheet();
-    })
-    .withFailureHandler((e) => gate("bad", "계정을 확인하지 못했어요: " + esc((e && e.message) || e), { switchUrl: chooser() }))
-    .whoAmI();
+  afterLogin(false);
 }
 
 function loadFromSheet() {
   setSync("시트에서 불러오는 중…");
-  google.script.run
-    .withSuccessHandler((d) => {
+  api().getData()
+    .then((d) => {
       S = { ...EMPTY(), ...d, example: false };
       normBody(S);
       S.checks = normChecks(S.checks);
@@ -1581,8 +1827,7 @@ function loadFromSheet() {
       renderAll();
       setSync("시트와 동기화됨");
     })
-    .withFailureHandler((e) => setSync("불러오기 실패: " + ((e && e.message) || e), true))
-    .getData();
+    .catch((e) => setSync("불러오기 실패: " + ((e && e.message) || e), true));
 }
 </script>
 </body>
