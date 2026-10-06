@@ -249,7 +249,6 @@ ul.plain li { margin-bottom: 3px; }
 .sec p { margin: 0 0 6px; font-size: .9rem; line-height: 1.7; }
 .sec ul.plain { margin: 0 0 8px; font-size: .9rem; }
 .detail .sec { max-width: 72ch; }
-.sum-key .sec h3 { color: var(--muted); }
 .up-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .up-file { cursor: pointer; }
 .up-preview { margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
@@ -584,64 +583,12 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
         <div><div class="tagline">“미래를 아는 듯한 자신감”</div><h1>命 사주</h1><p id="saju-sub"></p></div>
       </div>
       <div class="subtabs" role="tablist" style="margin-bottom:16px">
-        <button type="button" data-sub="sum" aria-selected="true">요약</button>
+        <button type="button" data-sub="flow" aria-selected="true">월별 운세</button>
         <button type="button" data-sub="chart" aria-selected="false">원국 · 신살</button>
-        <button type="button" data-sub="flow" aria-selected="false">월별 운세</button>
-      </div>
-
-      <!-- 요약 -->
-      <div class="grid" data-subview="sum">
-        <div class="card c12">
-          <h2>신살 조합 한 문장</h2>
-          <p class="oneliner">“사람을 통해 기회를 만들고, 정보를 빠르게 구조화하며, 외부 변화에 적응해 성과로 연결하는 타입”</p>
-          <div class="two">
-            <div><b>가장 큰 장점</b>사람·정보·성과를 연결하는 능력</div>
-            <div><b>가장 큰 약점</b>돈·일·관계를 너무 많이 동시에 생각하면서 스스로 피로해지는 것</div>
-          </div>
-        </div>
-        <div class="card c6">
-          <h2>원국의 핵심 구조</h2>
-          <p class="quote" style="margin:0 0 10px">己土 일간인데 원국에서 수(水)가 매우 강합니다. 즉 재성, 다시 말해 <b>돈·성과·시장·현실적인 책임</b>이 강한 구조입니다.</p>
-          <p style="margin:0 0 6px;font-size:.88rem">기회가 많아질수록 같이 올 수 있는 것</p>
-          <div class="chips"><span>책임 증가</span><span>업무량 증가</span><span>투자 고민 증가</span><span>가족 경제 부담 증가</span></div>
-          <div class="src">핵심 현실 주제: ‘사람과 능력을 돈과 성과로 연결하는 것’</div>
-        </div>
-        <div class="card c6">
-          <h2>지금의 대운 <span class="pill iron">戊申</span></h2>
-          <p class="quote" style="margin:0 0 10px">戊土가 일간을 도와주므로 예전보다 훨씬 적극적으로 움직일 수 있는 시기. 다만 申이 원국의 수를 다시 강화하므로 활동 범위와 돈의 흐름도 동시에 커집니다.</p>
-          <div class="src">30대 후반~40대 초반 = “돈을 크게 움직이기 시작하는 시기”</div>
-        </div>
-        <div class="card c5">
-          <h2>이번 달 운세 <button class="linkbtn" type="button" data-goto-saju="flow" style="font-size:.8rem;letter-spacing:0">월별 운세 보기</button></h2>
-          <div id="sum-month"></div>
-        </div>
-        <div class="card c7">
-          <h2>월별 운세 핵심 <span class="muted" style="font-weight:400;letter-spacing:0" id="sum-src"></span></h2>
-          <div class="sum-key" id="sum-key"></div>
-        </div>
-      </div>
-
-      <!-- 원국 · 신살 -->
-      <div class="grid" data-subview="chart" hidden>
-        <div class="card c7">
-          <h2>원국 <span class="muted" style="font-weight:400;letter-spacing:0">글자 아래 = 신살 · 선 = 지지 관계</span><button class="linkbtn" type="button" id="open-raw-shinsal" style="font-size:.8rem;letter-spacing:0">신살 원문 보기</button></h2>
-          <div class="pillars" id="pillars"></div>
-          <div id="rel"></div>
-          <div class="rel-note" id="rel-note" hidden></div>
-        </div>
-        <div class="card c5">
-          <h2>오행 분포</h2>
-          <div class="ohaeng" id="ohaeng"></div>
-          <p class="src" style="font-size:.85rem">壬이 두 개 · 월지 子 · 시지 申과 子가 반합 → 수(水)가 매우 강함</p>
-        </div>
-        <div class="card c12">
-          <h2>신살 중요도 <span class="muted" style="font-weight:400;letter-spacing:0">반복 여부 + 일주·월주와의 가까움 + 원국의 합충 기준 · 눌러서 자세히</span></h2>
-          <div class="ss" id="shinsal"></div>
-        </div>
       </div>
 
       <!-- 월별 운세 (새로 받을 때마다 교체) -->
-      <div data-subview="flow" hidden>
+      <div data-subview="flow">
         <div class="card" style="margin-bottom:16px">
           <h2>운 흐름 <span class="muted" style="font-weight:400;letter-spacing:0" id="monthly-src"></span><button class="linkbtn" type="button" id="open-raw-monthly" style="font-size:.8rem;letter-spacing:0">월별 원문 보기</button></h2>
           <div class="timeline" id="timeline"></div>
@@ -668,6 +615,26 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
           <ul class="hist" id="monthly-hist"></ul>
         </div>
       </div>
+
+      <!-- 원국 · 신살 -->
+      <div class="grid" data-subview="chart" hidden>
+        <div class="card c7">
+          <h2>원국 <span class="muted" style="font-weight:400;letter-spacing:0">글자 아래 = 신살 · 선 = 지지 관계</span><button class="linkbtn" type="button" id="open-raw-shinsal" style="font-size:.8rem;letter-spacing:0">신살 원문 보기</button></h2>
+          <div class="pillars" id="pillars"></div>
+          <div id="rel"></div>
+          <div class="rel-note" id="rel-note" hidden></div>
+        </div>
+        <div class="card c5">
+          <h2>오행 분포</h2>
+          <div class="ohaeng" id="ohaeng"></div>
+          <p class="src" style="font-size:.85rem">壬이 두 개 · 월지 子 · 시지 申과 子가 반합 → 수(水)가 매우 강함</p>
+        </div>
+        <div class="card c12">
+          <h2>신살 중요도 <span class="muted" style="font-weight:400;letter-spacing:0">반복 여부 + 일주·월주와의 가까움 + 원국의 합충 기준 · 눌러서 자세히</span></h2>
+          <div class="ss" id="shinsal"></div>
+        </div>
+      </div>
+
     </section>
 
     <!-- 커리어 -->
@@ -1211,7 +1178,7 @@ function segs([lo, hi], risk) {
 const rates = (r) => Object.entries(r).map(([k, v]) => `<div class="rate"><span>${k}</span>${segs(v, k === "리스크")}</div>`).join("");
 const fmtItem = (t) => esc(t).replace(/^\[추정\]\s*/, '<span class="est">추정</span>');
 
-let subTab = "sum";
+let subTab = "flow";
 let selPeriod = null;
 let selShinsal = null;
 let selRel = null;
@@ -1297,16 +1264,6 @@ function renderMonthly() {
   if (P) $("#period-detail").innerHTML = `<h2>${P.when}${P.gz ? ` · ${P.gz}` : ""}</h2>` +
     P.secs.map((s) => `<div class="sec"><h3>${esc(s.title)}</h3>${renderSecText(s.lines)}</div>`).join("");
 
-  // 요약 탭: 이번 달 운세 + 자료의 핵심 요약 (원문 그대로)
-  $("#sum-month").innerHTML = cur
-    ? `<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px"><span style="font-family:var(--display);font-size:1.8rem">${cur.gz || ""}</span><b>${esc(cur.kw)}</b><span class="muted" style="font-size:.85rem">${cur.when}</span></div>
-       <div style="display:flex;flex-direction:column;gap:5px;max-width:360px">${rates(cur.r)}</div>`
-    : `<p class="muted" style="margin:0">지금 날짜에 해당하는 기간이 이 자료에 없어요. 새 월별 사주를 올려 주세요.</p>`;
-  const secs = parseSajuSections(m.text);
-  const keySecs = secs.filter((s) => s.title === "핵심 요약" || /결론 요약/.test(s.title));
-  $("#sum-key").innerHTML = keySecs.length ? keySecs.map((s) => `<div class="sec"><h3>${esc(s.title)}</h3>${renderSecText(s.lines)}</div>`).join("")
-    : `<p class="muted" style="margin:0">이 자료에는 "핵심 요약"·"결론 요약" 제목이 없어요.</p>`;
-  $("#sum-src").textContent = `출처: ${m.title}`;
 
   // 올린 자료 이력
   const hist = [...(S.sajuMonthly && S.sajuMonthly.length ? S.sajuMonthly : [DEFAULT_MONTHLY])].sort((a, b) => (a.date < b.date ? 1 : -1));

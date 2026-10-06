@@ -22,7 +22,9 @@ setTimeout(() => {
     check("시작 화면 표시", !$("#gate").hidden && text("#gate-status").includes("미리보기"), text("#gate-status"));
     $("#gate-start").click();
     check("시작하기 누르면 화면에서 사라짐", !shown($("#gate")));
-    $("[data-tab=saju]").click(); $("[data-sub=flow]").click();
+    $("[data-tab=saju]").click();
+    check("사주 하위 탭: 월별 운세 → 원국·신살 (요약 없음)", [...w.document.querySelectorAll("[data-sub]")].map((b) => b.textContent.trim()).join(",") === "월별 운세,원국 · 신살" && shown($("[data-subview=flow]")) && !shown($("[data-subview=chart]")));
+    $("[data-sub=flow]").click();
     check("월별 운세: 원문에서 기간 5개", w.document.querySelectorAll("#timeline .period").length === 5, [...w.document.querySelectorAll("#timeline .period .when span:first-child")].map((e) => e.textContent).join(" "));
     w.document.querySelector("[data-period=\"2026-12\"]").click();
     check("기간 누르면 원문 해당 부분", text("#period-detail").includes("주의해서 볼 달입니다"));
