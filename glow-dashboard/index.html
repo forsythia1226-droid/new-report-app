@@ -351,19 +351,20 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .parts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .part { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 8px; display: flex; gap: 6px; align-items: center; justify-content: center; min-width: 0; font-size: .9rem; }
 .part .pn { font-weight: 600; min-width: 0; white-space: nowrap; }
-.sel-card .part { flex-direction: column; gap: 0; padding: 4px 6px; line-height: 1.25; }
+.sel-card .part { flex-direction: column; gap: 2px; padding: 4px 6px 6px; line-height: 1.25; }
 .part .pk { font: 500 .78rem var(--mono); color: var(--muted); }
 .part .pk.none { opacity: .6; }
 .part[aria-pressed="true"] .pk { color: inherit; opacity: .8; }
 .pgroup h4 { display: flex; justify-content: space-between; align-items: center; }
-.mode-bar { display: flex; gap: 4px; background: var(--surface-2); padding: 3px; border-radius: 10px; margin-bottom: 10px; }
-.mode-bar button { flex: 1; border: 0; background: transparent; border-radius: 8px; padding: 6px 8px; color: var(--muted); font-weight: 600; font-size: .85rem; }
-.mode-bar button[aria-selected="true"] { background: var(--surface); color: var(--iron); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
-.part.rm { cursor: default; padding: 4px 6px; gap: 2px; }
-.part.rm .rm-in { display: flex; align-items: baseline; gap: 2px; width: 100%; justify-content: center; }
-.part.rm input { width: 100%; max-width: 64px; border: 0; border-bottom: 1.5px solid var(--iron); border-radius: 0; background: transparent; padding: 0 2px; text-align: right; font: 600 1rem var(--mono); color: var(--ink); }
-.part.rm input:focus { outline: none; border-bottom-color: var(--warn); }
-.part.rm .u { font-size: .75rem; color: var(--muted); }
+.part .pn-btn { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; width: 100%; padding: 2px 0; border-radius: 6px; cursor: pointer; }
+.part .rm-in { display: flex; align-items: baseline; gap: 2px; width: 100%; justify-content: center; }
+.part input { width: 100%; max-width: 60px; border: 0; border-bottom: 1.5px solid var(--line); border-radius: 0; background: transparent; padding: 0 2px; text-align: right; font: 600 .95rem var(--mono); color: inherit; }
+.part input::placeholder { color: var(--muted); opacity: .8; font-weight: 500; }
+.part input:focus { outline: none; border-bottom-color: var(--warn); }
+.part .u { font-size: .72rem; color: var(--muted); }
+.part.on { background: var(--iron); color: var(--surface); border-color: transparent; }
+.part.on input { border-bottom-color: color-mix(in srgb, var(--surface) 50%, transparent); }
+.part.on input::placeholder, .part.on .u { color: inherit; opacity: .7; }
 .rm-note { font-size: .75rem; color: var(--muted); margin: -4px 0 8px; }
 .part .pc { font: 500 .78rem var(--mono); color: var(--muted); white-space: nowrap; }
 .part[aria-pressed="true"] { color: var(--surface); border-color: transparent; }
@@ -706,7 +707,6 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
         <div class="card c5 sel-card">
           <div class="sel-head">
             <p class="sel-date" id="sel-date"></p>
-            <button class="done-btn small" id="sel-done" type="button" aria-pressed="false"></button>
           </div>
           <p class="sel-sub" id="sel-sub"></p>
           <div id="parts"></div>
@@ -1465,41 +1465,27 @@ function renderCalendar() {
   // 선택한 날: 운동 완료 + 계획 부위
   const plan = S.plans[selDate] || [];
   const did = !!S.done[selDate];
-  $("#sel-date").textContent = dayLabel(selDate) + (selDate === todayKey ? " · 오늘" : "");
+  $("#sel-date").textContent = dayLabel(selDate) + (selDate === todayKey ? " · 오늘" : "") + (did ? " ★" : "");
   $("#sel-sub").textContent = plan.length ? `계획: ${planText(plan)}` : "이 날 할 부위를 아래에서 골라 계획하세요";
-  $("#sel-done").setAttribute("aria-pressed", did);
-  $("#sel-done").dataset.toggleDone = selDate;
-  $("#sel-done").textContent = did ? "★ 운동함" : "운동 완료 체크";
-  $("#sel-done").title = did ? "누르면 운동 체크를 취소합니다" : selDate > todayKey ? "미래 날짜예요" : "이 날 운동했으면 누르세요";
-  // [계획] 부위를 눌러 그날 계획 / [기록] 근력은 1RM(kg), 유산소는 시간(분)을 선택한 날짜로 입력
-  const modeBar = `<div class="mode-bar" role="tablist">
-      <button type="button" data-mode="plan" aria-selected="${!logMode}">계획</button>
-      <button type="button" data-mode="log" aria-selected="${logMode}">기록 (1RM · 분)</button>
-    </div>${logMode ? `<p class="rm-note">${dayLabel(selDate)} 기록으로 저장돼요 · 비우면 그날 기록 삭제</p>` : ""}`;
-  $("#parts").innerHTML = modeBar + GROUPS.map((g) => `
+  // 부위 카드: 이름을 누르면 그날 계획에 넣고 빼기, 아래 칸에 근력은 1RM(kg) · 유산소는 시간(분)을 바로 입력
+  $("#parts").innerHTML = GROUPS.map((g) => `
     <div class="pgroup"><h4>${g.n}</h4><div class="parts">${PARTS.filter((p) => p.g === g.g).map((p) => {
       const cardio = g.g === "cardio";
-      const last = cardio ? null : latestRM(p.k);
-      const dayMin = cardio ? cardioMin(p.k, selDate) : null;
-      if (logMode) {
-        if (cardio) {
-          return `<div class="part rm"><span class="pn">${p.n}</span><span class="rm-in"><input type="number" inputmode="numeric" min="0" step="1" data-cardio="${p.k}" value="${dayMin ?? ""}" placeholder="–" aria-label="${p.n} 시간(분)"/><span class="u">분</span></span></div>`;
-        }
-        const today = (S.rm || []).find((r) => r.part === p.k && r.date === selDate);
-        return `<div class="part rm"><span class="pn">${p.n}</span><span class="rm-in"><input type="number" inputmode="decimal" min="0" step="0.5" data-rm="${p.k}" value="${today ? today.kg : ""}" placeholder="${last ? last.kg : "–"}" aria-label="${p.n} 1RM kg"/><span class="u">kg</span></span></div>`;
-      }
       const on = plan.includes(p.k);
-      const sub = cardio
-        ? (dayMin ? `<span class="pk">${dayMin}분</span>` : `<span class="pk none">– 분</span>`)
-        : (last ? `<span class="pk">${fmtKg(last.kg)}kg</span>` : `<span class="pk none">1RM –</span>`);
-      const title = cardio ? (dayMin ? `${dayLabel(selDate)} ${dayMin}분` : "이 날 기록 없음") : (last ? `1RM ${fmtKg(last.kg)}kg · ${last.date.replaceAll("-", ".")} 기록` : "1RM 기록 없음");
-      return `<button class="part" type="button" data-part="${p.k}" aria-pressed="${on}" style="${on ? "background:var(--iron)" : ""}" title="${title}"><span class="pn">${p.n}</span>${sub}</button>`;
+      let input;
+      if (cardio) {
+        const min = cardioMin(p.k, selDate);
+        input = `<input type="number" inputmode="numeric" min="0" step="1" data-cardio="${p.k}" value="${min ?? ""}" placeholder="–" aria-label="${p.n} 시간(분)" title="${dayLabel(selDate)} 시간(분) · 비우면 삭제"/><span class="u">분</span>`;
+      } else {
+        const last = latestRM(p.k);
+        const day = (S.rm || []).find((r) => r.part === p.k && r.date === selDate);
+        input = `<input type="number" inputmode="decimal" min="0" step="0.5" data-rm="${p.k}" value="${day ? day.kg : ""}" placeholder="${last ? fmtKg(last.kg) : "–"}" aria-label="${p.n} 1RM kg" title="${last ? `최근 1RM ${fmtKg(last.kg)}kg (${last.date.replaceAll("-", ".")})` : "1RM 기록 없음"} · 입력하면 ${dayLabel(selDate)} 기록"/><span class="u">kg</span>`;
+      }
+      return `<div class="part ${on ? "on" : ""}"><button class="pn-btn" type="button" data-part="${p.k}" aria-pressed="${on}">${p.n}</button><span class="rm-in">${input}</span></div>`;
     }).join("")}</div></div>`).join("");
-
 }
 
 // 기록: 1RM은 부위별 가장 최근 값, 유산소는 날짜별 시간(분)
-let logMode = false;
 function cardioMin(part, date) {
   const r = (S.cardio || []).find((c) => c.part === part && c.date === date);
   return r ? r.min : null;
@@ -1510,6 +1496,8 @@ function latestRM(part) {
   for (const r of S.rm || []) if (r.part === part && (!best || r.date >= best.date)) best = r;
   return best;
 }
+// 기록을 남긴 날은 운동한 날로 본다 (완료 버튼 없이도 ★). 지워도 자동으로 취소하지는 않는다.
+function markDone() { if (selDate <= ymd(TODAY)) S.done[selDate] = true; }
 function toggleDone(k) {
   if (S.done[k]) delete S.done[k]; else S.done[k] = true;
   save(); renderCalendar(); renderHome();
@@ -1524,8 +1512,6 @@ $("#cal").addEventListener("click", (e) => {
   renderCalendar();
 });
 $("#parts").addEventListener("click", (e) => {
-  const m = e.target.closest("[data-mode]");
-  if (m) { logMode = m.dataset.mode === "log"; renderCalendar(); if (logMode) { const f = $("#parts input"); f && f.focus(); } return; }
   const b = e.target.closest("[data-part]");
   if (!b) return;
   const cur = new Set(S.plans[selDate] || []);
@@ -1539,9 +1525,9 @@ $("#parts").addEventListener("change", (e) => {
   if (ds.cardio) {
     const part = ds.cardio, v = e.target.value.trim(), name = PARTS.find((p) => p.k === part).n;
     S.cardio = (S.cardio || []).filter((c) => !(c.part === part && c.date === selDate));
-    if (v !== "" && Number(v) > 0) { S.cardio.push({ date: selDate, part, min: Math.round(Number(v)) }); toast(`${name} ${Math.round(Number(v))}분 기록`); }
+    if (v !== "" && Number(v) > 0) { S.cardio.push({ date: selDate, part, min: Math.round(Number(v)) }); markDone(); toast(`${name} ${Math.round(Number(v))}분 기록`); }
     else toast(`${name} 기록을 지웠어요`);
-    save();
+    save(); renderCalendar(); renderHome();
     return;
   }
   const part = ds.rm;
@@ -1549,9 +1535,9 @@ $("#parts").addEventListener("change", (e) => {
   const v = e.target.value.trim();
   S.rm = (S.rm || []).filter((r) => !(r.part === part && r.date === selDate));
   const name = PARTS.find((p) => p.k === part).n;
-  if (v !== "" && Number(v) > 0) { S.rm.push({ date: selDate, part, kg: Number(v) }); toast(`${name} 1RM ${fmtKg(Number(v))}kg 기록`); }
+  if (v !== "" && Number(v) > 0) { S.rm.push({ date: selDate, part, kg: Number(v) }); markDone(); toast(`${name} 1RM ${fmtKg(Number(v))}kg 기록`); }
   else toast(`${name} 1RM 기록을 지웠어요`);
-  save();
+  save(); renderCalendar(); renderHome();
 });
 $("#cal-prev").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCalendar(); });
 $("#cal-next").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCalendar(); });

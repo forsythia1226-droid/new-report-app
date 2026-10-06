@@ -88,7 +88,6 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   await wait(800);
   assert.deepStrictEqual(store.workouts.filter((r) => r[0]).map((r) => r.slice(0, 2)), [["날짜", "운동함"], [todayKey, true]]);
   assert.ok(store.plans.some((r) => r[0] === todayKey && /워킹/.test(r[1])), "계획 저장");
-  p.$("[data-mode=log]").click();
   const rmIn = p.$("input[data-rm=chest]");
   rmIn.value = "62.5"; rmIn.dispatchEvent(new p.w.Event("change", { bubbles: true }));
   const wIn = p.$("input[data-cardio=walking]");
@@ -106,7 +105,8 @@ const todayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${Str
   await wait(150);
   p.$("[data-tab=body]").click();
   assert.match(p.text("#today-card .done-btn"), /완료/);
-  assert.match(p.text("[data-part=chest]"), /62.5kg/, "다시 열어도 1RM 표시");
+  assert.strictEqual(p.$("input[data-rm=chest]").value, "62.5", "다시 열어도 1RM 표시");
+  assert.strictEqual(p.$("input[data-cardio=walking]").value, "45", "다시 열어도 워킹 시간 표시");
   p.$("#today-card .done-btn").click(); // 취소 → 시트에서 행이 지워져야 한다
   await wait(800);
   assert.ok(!store.workouts.some((r) => r[0] === todayKey && r[1] === true), "취소하면 시트에서도 지워짐");
