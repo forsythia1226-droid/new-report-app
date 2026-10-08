@@ -706,7 +706,7 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
     <!-- 사주 -->
     <section id="v-saju" data-view="saju" hidden>
       <div class="view-head">
-        <div><div class="tagline">“미래를 아는 듯한 자신감”</div><h1>命 사주</h1><p id="saju-sub"></p></div>
+        <div><div class="tagline">“미래를 아는 듯한 자신감”</div><h1>命 사주</h1></div>
       </div>
       <div class="subtabs" role="tablist" style="margin-bottom:16px">
         <button type="button" data-sub="flow" aria-selected="true">월별 운세</button>
@@ -765,7 +765,7 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 
     <!-- 커리어 -->
     <section id="v-career" data-view="career" hidden>
-      <div class="view-head"><div><div class="tagline">“총명한 눈빛”</div><h1>職 커리어</h1><p>경영기획 12년 · 대한전선 IT혁신팀 · CISO 취임 대비</p></div></div>
+      <div class="view-head"><div><div class="tagline">“총명한 눈빛”</div><h1>職 커리어</h1></div></div>
       <div class="grid">
         <div class="card c12">
           <h2>3년 로드맵 <span class="muted" style="font-weight:400;letter-spacing:0">자격증 → 학위 → CISO 요건 · AX혁신팀장</span></h2>
@@ -813,7 +813,7 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 
     <!-- 처세 -->
     <section id="v-cheo" data-view="cheo" hidden>
-      <div class="view-head"><div><div class="tagline">“그 사람에게서 나오는 아우라가”</div><h1>處 처세</h1><p>대상마다 대응 원칙을 정리해 두고 꺼내 보는 곳</p></div></div>
+      <div class="view-head"><div><div class="tagline">“그 사람에게서 나오는 아우라가”</div><h1>處 처세</h1></div></div>
       <div class="subtabs" role="tablist" style="margin-bottom:16px">
         <button type="button" data-csub="lead" aria-selected="true">IT혁신팀장</button>
         <button type="button" data-csub="finance" aria-selected="false">재무관리실장</button>
@@ -824,7 +824,7 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 
     <!-- 투자 -->
     <section id="v-invest" data-view="invest" hidden>
-      <div class="view-head"><div><div class="tagline">“여유와 편안함”</div><h1>財 투자</h1><p>자산과 투자 원칙</p></div></div>
+      <div class="view-head"><div><div class="tagline">“여유와 편안함”</div><h1>財 투자</h1></div></div>
       <div class="card placeholder"><div class="glyph">財</div><h3>준비 중</h3><p class="muted">어떤 내용을 담을지 정한 뒤 채웁니다.</p></div>
     </section>
 
@@ -898,7 +898,7 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 
     <!-- 정신 -->
     <section id="v-mind" data-view="mind" hidden>
-      <div class="view-head"><div><div class="tagline">“부드러운 말투에서는 여유와 편안함이”</div><h1>心 정신</h1><p>남에게 보이기 위한 게 아니라, 내가 어떤 사람으로 살지 정하고 점검하는 곳</p></div></div>
+      <div class="view-head"><div><div class="tagline">“부드러운 말투에서는 여유와 편안함이”</div><h1>心 정신</h1></div></div>
       <div class="grid">
         <div class="card c12">
           <h2>내가 그리는 나 <span class="muted" style="font-weight:400;letter-spacing:0">홈 맨 위에 표시 · 고치면 바로 저장</span></h2>
@@ -1464,7 +1464,6 @@ const RELS = [
 ];
 
 function renderSaju() {
-  $("#saju-sub").textContent = `${PROFILE.birthText} · 남 · 일간 己土 · 대운 戊申`;
   const chars = [...PILLARS];
   const hl = new Set(selShinsal != null ? SHINSAL[selShinsal].pos : []);
   const caps = ["시주", "일주", "월주", "연주"];

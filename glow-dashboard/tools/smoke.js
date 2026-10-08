@@ -50,6 +50,7 @@ setTimeout(() => {
     check("경력 문서화 기록", text("#career-log").includes("ISMS 인증 심사") && text("#log-summary").includes("IT 개선 1"), text("#log-summary"));
     $("[data-tab=home]").click();
     check("사이드바: 만 나이, MBTI 없음", text("#me-sub").startsWith("만 ") && !text("#me-sub").includes("ISTJ") && !text("#today-line").includes("ISTJ"), text("#me-sub"));
+    check("카테고리 제목 아래 설명 없음", [...w.document.querySelectorAll("section[data-view]:not([data-view=home]) .view-head p")].length === 0);
     check("카테고리 7개 (命 다음 處)", [...w.document.querySelectorAll(".tab")].map((t) => t.textContent.trim()).join(" ") === "◎홈 命사주 處처세 身신체 心정신 職커리어 財투자");
 
     // 처세: 대상별 대응 원칙
