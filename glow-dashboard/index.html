@@ -1675,7 +1675,7 @@ function renderPhases() {
   $("#phases").innerHTML = PHASES.map((p, i) => {
     const [w, f] = t[i];
     const lean = p.kind === "린매스업";
-    const guide = lean ? "유지 칼로리 +200~300kcal · 단백질 100~135g · 근육 위주로 천천히" : "유지 칼로리 −300~500kcal · 단백질은 그대로 · 근손실 최소화";
+    const guide = lean ? "유지 칼로리 +200~300kcal" : "유지 칼로리 −300~500kcal · 단백질은 그대로 · 근손실 최소화";
     const left = i === cur && L ? `<span class="ph-left">목표까지 ${w - L.w >= 0 ? "+" : "−"}${fmt1(Math.abs(w - L.w))}kg · 체지방 ${fmt1(L.f)}→${f}%</span>` : "";
     return `<button type="button" class="phase ${lean ? "" : "cut"} ${i === cur ? "on" : ""} ${i < cur ? "done" : ""}" data-phase="${i}" role="listitem" aria-pressed="${i === cur}">
       <span class="ph-n">${i + 1}단계${i === cur ? " · 지금" : ""}</span><b>${p.n} ${p.kind}</b>
