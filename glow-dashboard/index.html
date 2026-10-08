@@ -394,7 +394,9 @@ svg.ring .unit { fill: var(--muted); font-family: var(--body); }
 .phase .ph-n { font-size: .72rem; color: var(--muted); }
 .phase b { font-size: .95rem; }
 .phase .ph-t { font-family: var(--mono); font-weight: 600; color: var(--iron); }
-.phase .ph-g { color: var(--muted); line-height: 1.45; }
+.phase .ph-row { display: flex; gap: 6px; align-items: baseline; }
+.phase .ph-row > span:first-child { color: var(--muted); min-width: 3em; }
+.phase .ph-now { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
 .phase .ph-left { font-weight: 600; color: var(--iron); }
 .phase.cut .ph-t { color: var(--sage); }
 .phase.done { opacity: .55; }
@@ -1677,12 +1679,12 @@ function renderPhases() {
   $("#phases").innerHTML = PHASES.map((p, i) => {
     const [w, f] = t[i];
     const lean = p.kind === "린매스업";
-    const guide = lean ? "유지 칼로리 +200~300kcal" : "유지 칼로리 −300~500kcal";
-    const left = i === cur && L ? `<span class="ph-left">목표까지 ${w - L.w >= 0 ? "+" : "−"}${fmt1(Math.abs(w - L.w))}kg · 체지방 ${fmt1(L.f)}→${f}%</span>` : "";
+    // 지금 단계만: 목표까지 남은 체중 · 체지방 변화
+    const left = i === cur && L ? `<span class="ph-now"><span class="ph-left">목표까지 ${w - L.w >= 0 ? "+" : "−"}${fmt1(Math.abs(w - L.w))}kg</span><span class="ph-left">체지방 ${fmt1(L.f)}→${f}%</span></span>` : "";
     return `<button type="button" class="phase ${lean ? "" : "cut"} ${i === cur ? "on" : ""} ${i < cur ? "done" : ""}" data-phase="${i}" role="listitem" aria-pressed="${i === cur}">
       <span class="ph-n">${i + 1}단계${i === cur ? " · 지금" : ""}</span><b>${p.n} ${p.kind}</b>
-      <span class="ph-t">${fmt1(w)}kg · ${lean ? "체지방 " + f + "% 이하" : "체지방 " + f + "%"}</span>
-      <span class="ph-g">${guide}</span>${left}</button>`;
+      <span class="ph-row"><span>체중</span><span class="ph-t">${fmt1(w)}kg</span></span>
+      <span class="ph-row"><span>체지방</span><span class="ph-t">${f}%${lean ? " 이하" : ""}</span></span>${left}</button>`;
   }).join("");
   $("#phase-in").innerHTML = PHASES.slice(0, SET_PHASES).map((p, i) => `<fieldset><legend>${i + 1}단계 · ${p.n} ${p.kind}</legend>
       <label class="f">체중 kg<input type="number" step="0.1" data-ph="${i}" data-ph-k="0" value="${t[i][0]}"/></label>

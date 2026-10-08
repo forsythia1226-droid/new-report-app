@@ -71,7 +71,7 @@ setTimeout(() => {
     $("[data-tab=body]").click();
     check("신체 맨 위 = 목표 달성", $("#v-body .grid > .card h2").textContent.includes("목표 달성"));
     check("목표 달성 순서: 체중 → 골격근량 → 체지방률", [...w.document.querySelectorAll("#goal-rings .goal-item .k")].map((e) => e.textContent.split(" ·")[0]).join(",") === "체중,골격근량,체지방률" && !text("#goal-rings").includes("제지방"));
-    check("커팅·린매스업 5단계", [...w.document.querySelectorAll("#phases .phase b")].map((e) => e.textContent).join(",") === "1차 커팅,1차 린매스업,2차 커팅,2차 린매스업,3차 커팅" && text("#phases").includes("61.0kg · 체지방 17%") && !text("#phases").includes("단백질") && $("#phases .phase.on .ph-n").textContent.includes("지금"));
+    check("커팅·린매스업 5단계", [...w.document.querySelectorAll("#phases .phase b")].map((e) => e.textContent).join(",") === "1차 커팅,1차 린매스업,2차 커팅,2차 린매스업,3차 커팅" && text("#phases").includes("1차 커팅 체중61.0kg 체지방17%목표까지") && !text("#phases").includes("kcal") && !text("#phases").includes("단백질") && $("#phases .phase.on .ph-n").textContent.includes("지금"));
     w.document.querySelector("[data-phase=\"1\"]").click();
     check("단계 눌러서 지금 단계 변경", $("#phases [data-phase=\"1\"]").classList.contains("on") && $("#phases [data-phase=\"0\"]").classList.contains("done"));
     check("종합 달성률 표시", /\d+%/.test(text("#goal-main")), text("#goal-main"));
