@@ -128,7 +128,7 @@
 ## 남은 일 · 아이디어
 
 - **핀터레스트 비전보드 (진행 중):** 사용자의 *비밀* 보드를 비전보드로 쓰려고 핀터레스트 API 앱을 신청함. 비즈니스 계정 전환 완료, 앱 "GlowGlowGlow" App ID 1621245, **Trial access 검토 대기**(2026-10-08 신청). 개인정보처리방침: https://forsythia1226-droid.github.io/new-report-app/privacy.html (gh-pages에 사용자가 웹 업로드, 원본 `privacy.html`). 계획: Apps Script가 OAuth(redirect = 대시보드 /exec)로 토큰을 Script Properties에 보관 → 매일 트리거로 보드 핀 이미지를 시트 `vision` 탭에 기록 → 대시보드가 표시. App secret은 사용자가 Script Properties에 직접 입력(채팅 금지). 아직 정해지지 않음: 보드 이름, 표시 위치(정신 화면 추천).
-- **git 차단:** 2026-10-08부터 이 PC의 Windows 애플리케이션 제어 정책이 git의 libcurl-4.dll을 막아 `npm run pages`(GitHub Pages 반영)와 push가 안 됨. 우회하지 말 것. Apps Script 배포(`npm run deploy`, clasp=Node)는 됨.
+- (해결됨) 2026-10-08 하루 동안 Windows 애플리케이션 제어가 git의 libcurl-4.dll을 막아 `npm run pages`·push가 안 됐다. 10-09에는 다시 됨. 다시 막히면 우회하지 말고 사용자에게 알릴 것.
 
 - 실제 구글 시트·캘린더에서 동작 확인 (지금까지는 가짜 시트와 jsdom으로만 검증)
 - 커리어 · 투자 카테고리 내용 정하기 (사주 원문의 커리어/재물 원칙을 연결할지 사용자에게 물었고, 당시엔 홈 연결만 선택함)
