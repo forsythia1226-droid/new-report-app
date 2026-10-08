@@ -571,38 +571,6 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 }
 
 /* 처세 */
-.cheo-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
-@media (max-width: 900px) { .cheo-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 480px) { .cheo-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.cheo-stats > div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
-.cheo-stats .k { font-size: .75rem; color: var(--muted); }
-.cheo-stats .v { font-weight: 600; font-size: 1.15rem; }
-.cheo-stats .warn { background: var(--warn-soft); }
-.cheo-stats .warn .v, .cheo-stats .warn .k { color: var(--warn); }
-.case-form { display: flex; flex-direction: column; gap: 10px; }
-.case-top { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 6px; }
-@media (max-width: 480px) { .case-top { grid-template-columns: minmax(0, 1fr); } }
-.cf { display: flex; flex-direction: column; gap: 5px; }
-.cf .k { font-size: .8rem; color: var(--muted); }
-.cf .k small { font-size: .72rem; margin-left: 4px; }
-.choice { display: flex; gap: 6px; flex-wrap: wrap; }
-.choice label { position: relative; border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; font-size: .84rem; cursor: pointer; background: var(--surface); }
-.choice input { position: absolute; opacity: 0; pointer-events: none; }
-.choice label:has(input:checked) { border-color: var(--iron); background: var(--iron-soft); color: var(--iron); font-weight: 600; }
-.choice label:has(input:focus-visible) { outline: 2px solid var(--iron); outline-offset: 1px; }
-.case-advice { margin: 0; background: var(--surface-2); border-left: 3px solid var(--iron); border-radius: 8px; padding: 8px 12px; font-size: .84rem; line-height: 1.6; }
-.case-advice.crit { border-left-color: var(--warn); }
-.act-inline { display: flex; gap: 8px; align-items: center; font-size: .86rem; }
-.case-list { display: flex; flex-direction: column; gap: 8px; max-height: 640px; overflow-y: auto; }
-.case { border: 1px solid var(--line); border-radius: 12px; }
-.case.unlogged { border-color: var(--warn); }
-.case summary { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 12px; cursor: pointer; list-style: none; font-size: .88rem; }
-.case summary::-webkit-details-marker { display: none; }
-.case .ct { font-weight: 600; flex: 1 1 160px; min-width: 0; }
-.case-body { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 10px; font-size: .88rem; line-height: 1.6; }
-.case-body .k { display: block; font-size: .75rem; color: var(--muted); }
-.case-act { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.stress { color: var(--warn); font-size: .62rem; letter-spacing: 1px; }
 .tactic { display: flex; flex-direction: column; gap: 10px; }
 .tactic .tn { font-family: var(--display); font-size: 1.8rem; color: var(--iron); line-height: 1; }
 .tactic h3 { margin: 0; font-size: 1.02rem; line-height: 1.5; }
@@ -612,18 +580,6 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 .script.bad { color: var(--muted); background: var(--surface-2); border-color: transparent; }
 .script .sl { display: flex; justify-content: space-between; align-items: center; font-size: .75rem; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
 .cheo-sum { font-family: var(--display); font-size: 1.15rem; line-height: 1.75; margin: 0; }
-.person { display: flex; flex-direction: column; gap: 10px; }
-.person .pn-head { display: flex; align-items: center; gap: 10px; }
-.person .pn { font-family: var(--display); font-size: 1.35rem; }
-.person dl { margin: 0; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 6px 10px; font-size: .86rem; line-height: 1.6; }
-.person dt { color: var(--muted); }
-.person dd { margin: 0; }
-.person h4 { margin: 6px 0 0; font-size: .8rem; color: var(--muted); font-weight: 600; }
-.person .add-row { margin-top: 0; }
-.person .add-row input { flex: 1; min-width: 0; }
-.h-cheo { display: flex; gap: 8px 22px; flex-wrap: wrap; align-items: center; font-size: .9rem; }
-.h-cheo .last { flex: 1 1 220px; min-width: 0; color: var(--muted); text-align: right; }
-@media (max-width: 560px) { .h-cheo .last { text-align: left; } }
 
 /* 폰: 하단 탭바 */
 @media (max-width: 860px) {
@@ -672,7 +628,6 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
         <button type="button" data-q="workout">오늘 운동 체크</button>
         <button type="button" data-q="inbody">인바디 입력</button>
         <button type="button" data-q="check">자기 점검 남기기</button>
-        <button type="button" data-q="cheo">처세 상황 기록</button>
       </div>
     </div>
   </nav>
@@ -742,10 +697,6 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
         <div class="card c7">
           <h2>체중 추이 <span class="muted" style="font-weight:400;letter-spacing:0">점선 = 목표</span></h2>
           <div id="h-chart"></div>
-        </div>
-        <div class="card c12">
-          <h2>處 처세 <button class="linkbtn" type="button" data-goto-cheo style="font-size:.8rem;letter-spacing:0">상황 기록하기</button></h2>
-          <div class="h-cheo" id="h-cheo"></div>
         </div>
       </div>
     </section>
@@ -860,38 +811,13 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
 
     <!-- 처세 -->
     <section id="v-cheo" data-view="cheo" hidden>
-      <div class="view-head"><div><div class="tagline">“그 사람에게서 나오는 아우라가”</div><h1>處 처세</h1><p>IT혁신팀장 · 백승 실장 사이에서 내가 어떻게 움직일지 정하고 기록하는 곳</p></div></div>
+      <div class="view-head"><div><div class="tagline">“그 사람에게서 나오는 아우라가”</div><h1>處 처세</h1><p>대상마다 대응 원칙을 정리해 두고 꺼내 보는 곳</p></div></div>
       <div class="subtabs" role="tablist" style="margin-bottom:16px">
-        <button type="button" data-csub="log" aria-selected="true">상황 기록</button>
-        <button type="button" data-csub="tactics" aria-selected="false">대응 원칙</button>
-        <button type="button" data-csub="people" aria-selected="false">사람</button>
+        <button type="button" data-csub="lead" aria-selected="true">IT혁신팀장</button>
+        <button type="button" data-csub="finance" aria-selected="false">재무관리실장</button>
       </div>
-      <div class="grid" data-csubview="log">
-        <div class="card c12">
-          <h2 id="cheo-month"></h2>
-          <div class="cheo-stats" id="cheo-stats"></div>
-        </div>
-        <div class="card c5">
-          <h2>새 상황</h2>
-          <form class="case-form" id="case-form" autocomplete="off">
-            <div class="case-top"><input type="date" id="case-date" aria-label="날짜"/><input type="text" id="case-title" maxlength="80" placeholder="사안 한 줄 (예: 4분기 사업계획 보고 구조)" aria-label="사안"/></div>
-            <label class="f">IT혁신팀장 지시<textarea id="case-order" rows="2" maxlength="300"></textarea></label>
-            <label class="f">내가 본 빈틈<textarea id="case-gap" rows="2" maxlength="300"></textarea></label>
-            <div class="cf"><span class="k">위험도</span><div class="choice" id="case-risk"></div></div>
-            <p class="case-advice" id="case-advice"></p>
-            <div class="cf"><span class="k">내 대응</span><div class="choice" id="case-move"></div></div>
-            <label class="act-inline"><input type="checkbox" id="case-logged"/>메신저·메일로 기록 남김</label>
-            <div class="cf"><span class="k">스트레스 <small>1 편안 → 5 한계</small></span><div class="choice" id="case-stress"></div></div>
-            <button class="btn primary" type="submit">남기기</button>
-          </form>
-        </div>
-        <div class="card c7">
-          <h2>기록 <span class="muted" style="font-weight:400;letter-spacing:0" id="case-sum"></span></h2>
-          <div class="case-list" id="case-list"></div>
-        </div>
-      </div>
-      <div class="grid" data-csubview="tactics" id="tactics" hidden></div>
-      <div class="grid" data-csubview="people" id="people" hidden></div>
+      <div class="grid" data-csubview="lead"></div>
+      <div class="grid" data-csubview="finance" hidden></div>
     </section>
 
     <!-- 투자 -->
@@ -1096,10 +1022,6 @@ const EXAMPLE = () => ({
     "어깨를 펴고 천천히 걷는다.",
     "비교는 어제의 나와만 한다.",
   ],
-  cheoCases: [
-    { date: "2026-10-06", title: "4분기 사업계획 보고 구조", order: "기본 구조만 깔끔하게, 보안 내용은 빼고 보고", gap: "시스템 연동 보안 가이드라인 누락", risk: "치명", move: "옵션 제시", logged: true, stress: 3, result: "" },
-  ],
-  cheoNotes: [{ date: "2026-10-07", who: "IT혁신팀장", text: "회의 중 반박하면 더 고집. 끝난 뒤 따로 '부록으로 붙여둘게요'는 바로 수락" }],
   checks: [
     { date: "2026-08-10", s: { solid: 2, confidence: 2, ease: 3, principle: 3 }, note: "운동 루틴이 아직 들쭉날쭉. 저녁 식사량이 부족했다." },
     { date: "2026-08-31", s: { solid: 3, confidence: 3, ease: 3, principle: 4 }, note: "주 4회 운동 지킴. 거울 볼 때 어깨 라인이 조금 달라 보인다." },
@@ -1110,7 +1032,7 @@ const EXAMPLE = () => ({
 const DEFAULT_VISION = "그를 처음 보았을 때, 나는 그가 다른 이들과 다르다는 것을 느꼈다. 다부진 체구에서는 단단함을, 총명한 눈빛에서는 미래를 아는 듯한 자신감을 부드러운 말투에서는 여유와 편안함이 느껴졌다. 그 사람에게서 나오는 아우라가 그와 함께 있는 공간을 가득채웠다.";
 const DEFAULT_YEAR_BASE = { month: "2026-09", count: 100 };
 const DEFAULT_KEYWORDS = ["단단함", "자신감", "여유", "편안함", "아우라"];
-const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, rm: [], cardio: [], sajuShinsal: "", sajuMonthly: [], career: null, careerLog: [], identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [], cheoCases: [], cheoNotes: [], cheoArrive: "" });
+const EMPTY = () => ({ example: false, yearBase: { ...DEFAULT_YEAR_BASE }, goal: { weight: 68, fat: 12 }, inbody: [], done: {}, plans: {}, rm: [], cardio: [], sajuShinsal: "", sajuMonthly: [], career: null, careerLog: [], identity: EXAMPLE().identity, vision: DEFAULT_VISION, keywords: DEFAULT_KEYWORDS, principles: [], checks: [] });
 
 /* ---------- 저장소 ----------
    APPS: Apps Script 웹 앱(script.google.com)에서 열림 → google.script.run 으로 시트에 저장
@@ -2090,7 +2012,6 @@ $("#quick-menu").addEventListener("click", (e) => {
   if (q === "workout") { go("body"); selDate = ymd(TODAY); calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); if (!S.done[ymd(TODAY)]) toggleDone(ymd(TODAY)); else renderCalendar(); }
   if (q === "inbody") { go("body"); $("#ib-w").focus(); }
   if (q === "check") { go("mind"); $("#check-form").scrollIntoView({ block: "center" }); }
-  if (q === "cheo") { go("cheo"); goCheoSub("log"); $("#case-title").focus(); }
 });
 
 /* ---------- 예시 데이터 ---------- */
@@ -2318,14 +2239,6 @@ $("#career-log").addEventListener("click", (e) => {
 /* ---------- 處 처세 ---------- */
 // 받은 원문 그대로 (대응 원칙 → 원문 보기)
 const CHEO_RAW = "1. '설득(Correction)'하지 말고 '옵션(Option)'을 던지세요\n상사에게 \"팀장님, 이 부분에 빈틈이 있으니 이렇게 수정해서 보고해야 합니다\" 라고 말하는 순간, 상사는 자신의 무능이 지적당했다고 느껴 방어 기제(고집)를 발동합니다.\n\n설득하려 하지 마시고, 팀장이 고집하는 안을 그대로 존중해 주는 척하면서 슬쩍 대안을 끼워 넣는 화법을 쓰세요.\n\n❌ 기존 방식 (설득): \"팀장님, 이렇게 보고하면 실장님이 분명 연동 보안 문제를 지적하실 겁니다. 보안 가이드라인도 같이 넣어서 보고하시죠.\"\n\n⭕ 개선 방식 (옵션 제시): *\"팀장님 지시하신 대로 기본 구조는 깔끔하게 다 정리했습니다! 다만 백승 실장님이 워낙 깐깐하게 구두 질문을 던지는 스타일이다 보니, 만에 하나 나올만한 이슈나 보안 보완점은 제가 [참고/Q&A 부록]*으로 장표 맨 뒤에 살짝 붙여놓겠습니다. 팀장님 보고하실 때 혹시나 딴지 들어오면 쓱 꺼내서 보여주시면 될 것 같습니다.\"\n\n👉 Point: 팀장의 지시를 부정하지 않고, \"팀장님이 위에서 공격당하지 않게 방패를 쥐여준다\"는 명분으로 빈틈을 부록이나 Q&A 형태로 채워 넣는 것입니다.\n\n2. 빈틈을 메우는 주체를 '나'에서 '위쪽(백승 실장/경영진)의 성향'으로 넘기세요\n팀장과의 기 싸움에서 나의 논리로 설득하려 하면 감정 싸움이 됩니다. 모든 빈틈 보완의 명분을 '백승 실장의 스타일'이나 '전사 사업계획 가이드라인'으로 돌리세요.\n\n\"팀장님 소신대로 밀고 가는 방향도 좋은데요, 제가 백승 실장님 스타일을 좀 아는데 그분은 수치 정합성이나 예외 조항 안 적혀 있으면 보고서 자체를 안 읽고 돌려보내시더라고요. 팀장님 괜히 실장님한테 한 소리 들으시면 안 되니까, 제가 실장님 맞춤형으로 요 부분 수치만 살짝 보완해 둘게요.\"\n\n👉 팀장은 본인의 무능 때문에 수정하는 게 아니라, \"실장이라는 까다로운 상수를 맞추기 위해 파트장이 센스 있게 보충해 주는 것\"으로 받아들이게 됩니다.\n\n3. 때로는 '작은 실패(빈틈)'를 그냥 노출시키는 것도 전략입니다\n모든 빈틈을 작성자님이 완벽하게 메워주다 보면, 팀장은 \"내 지시대로 해도 아무 문제 없이 잘 돌아가네?\"라는 착각에 빠져 고집이 더 세집니다.\n\n완전히 치명적인 리스크(전사 보안, 예산 사고 등)가 아니라면, 팀장이 고집부린 빈틈을 상황에 따라 한두 번쯤은 그대로 위(백승 실장)에 올라가게 두는 것도 방법입니다.\n\n백승 실장이나 다른 실장들에게 보고하러 들어가서 빈틈을 지적받고 깨져봐야, 비로소 \"아, 최 과장이 말했던 걸 챙겼어야 했구나\" 하고 깨달으며 작성자님의 조언을 수용하게 됩니다.\n\n보호막 치기: 훗날 나에게 불똥이 튀지 않도록 메신저나 이메일로 \"팀장님, 말씀하신 안대로 정리해 두었습니다. (단, OO 연동 부분은 향후 실장님 지적 가능성이 있어 보완책 정리 중입니다)\" 라고 기록만 남겨두시면 됩니다.\n\n4. 내 마음의 프레임 재설정: \"팀장은 내 보고서 전달용 셔틀일 뿐이다\"\n매번 설득하는 과정이 스트레스인 이유는 '이 사람을 물리적으로 설득해서 완벽한 결과물을 만들어야 한다'는 책임감을 작성자님이 혼자 다 짊어지고 계시기 때문입니다.\n\n팀장은 작성자님이 만들어낸 완벽한 작품을 위쪽(백승 실장)에 배달해 주는 '스피커이자 셔틀'에 불과하다고 마음을 비우세요.\n\n10월 중순 백승 실장이 부임하고 나면, 백승 실장은 팀장의 허술함과 작성자님의 압도적인 퀄리티를 즉시 비교하게 됩니다.\n\n팀장의 빈틈을 지켜보며 스트레스받기보다는, \"저 허술함 덕분에 내가 백승 실장의 대체 불가능한 오른팔로 발탁되는 시간이 당겨지고 있다\"고 생각하십시오. 상대의 무능은 작성자님의 입지를 더욱 독보적으로 만들어주는 배경지 화면일 뿐입니다.\n\n💡 한 줄 요약\n팀장과 정면으로 맞서며 설득하려 하지 마시고, \"팀장님 보고 시 방어용 부록/Q&A\"라는 명분으로 빈틈을 살짝 얹어서 보고서에 넣어두세요. 팀장의 자존심도 지켜주고, 작성자님의 스트레스도 줄이면서, 수뇌부에는 완벽한 지문(실력)을 남기는 가장 세련된 수입니다.";
-const CHEO_ARRIVE_DEFAULT = "2026-10-15"; // 백승 실장 10월 중순 부임 (사람 화면에서 고칠 수 있다)
-const CHEO_RISKS = [{ k: "치명", n: "치명 (보안·예산)" }, { k: "일반", n: "일반" }];
-const CHEO_MOVES = ["옵션 제시", "실장 성향 명분", "그대로 노출"];
-const CHEO_ADVICE = {
-  "": "위험도를 고르면 추천 대응이 표시돼요.",
-  치명: "치명적인 빈틈(전사 보안, 예산 사고 등)은 그대로 올리지 않습니다. 지시는 존중하고, ‘팀장님 보고 시 방어용 부록/Q&A’라는 명분으로 장표 맨 뒤에 보완해 두세요. → 一 옵션 제시 · 二 실장 성향 명분",
-  일반: "치명적이지 않다면 한두 번은 그대로 위에 올라가게 두는 것도 방법입니다. 대신 메신저·메일로 기록을 남겨 두세요. → 三 작은 실패 노출",
-};
 const TACTICS = [
   {
     n: "一", title: `'설득(Correction)'하지 말고 '옵션(Option)'을 던지세요`,
@@ -2356,143 +2269,35 @@ const TACTICS = [
   },
 ];
 const CHEO_SUMMARY = `팀장과 정면으로 맞서며 설득하려 하지 마시고, "팀장님 보고 시 방어용 부록/Q&A"라는 명분으로 빈틈을 살짝 얹어서 보고서에 넣어두세요. 팀장의 자존심도 지켜주고, 작성자님의 스트레스도 줄이면서, 수뇌부에는 완벽한 지문(실력)을 남기는 가장 세련된 수입니다.`;
-const CHEO_PEOPLE = [
-  { n: "IT혁신팀장", role: "직속 상사", trait: "빈틈을 지적받으면 무능을 지적당했다고 느껴 방어 기제(고집)가 발동한다", how: "설득하지 말고 옵션으로 · 지시는 존중하고 빈틈은 방어용 부록/Q&A로 · 보완의 명분은 실장 성향으로", hint: "고집 포인트 · 반응이 좋았던 화법" },
-  { n: "백승 실장", arrive: true, trait: "깐깐하게 구두 질문을 던지는 스타일 · 수치 정합성이나 예외 조항이 없으면 보고서를 돌려보낸다", how: "수치 정합성 · 예외 조항 · 보안 보완점을 미리 챙긴다 · 부임 후 관찰한 성향이 쌓일수록 보완의 명분이 단단해진다", hint: "부임 후 보이는 성향 · 질문 스타일" },
+// 처세 대상: 대상마다 대응 원칙 (원칙이 없으면 준비 중)
+const CHEO_TARGETS = [
+  { k: "lead", n: "IT혁신팀장", tactics: TACTICS, summary: CHEO_SUMMARY, raw: CHEO_RAW },
+  { k: "finance", n: "재무관리실장", tactics: [] },
 ];
 
-let cheoSub = "log";
-const cheoOpen = new Set(); // 펼쳐 둔 기록 (다시 그려도 유지)
+let cheoSub = "lead";
 function goCheoSub(s) {
   cheoSub = s;
   $$("[data-csub]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.csub === s)));
   $$("[data-csubview]").forEach((v) => (v.hidden = v.dataset.csubview !== s));
 }
 $$("[data-csub]").forEach((b) => b.addEventListener("click", () => goCheoSub(b.dataset.csub)));
-document.addEventListener("click", (e) => { if (e.target.closest("[data-goto-cheo]")) { go("cheo"); goCheoSub("log"); } });
-
-const cheoArrive = () => S.cheoArrive || CHEO_ARRIVE_DEFAULT;
-const arriveText = () => { const n = daysUntil(cheoArrive()); return n > 0 ? `부임 D-${n}` : n === 0 ? "오늘 부임" : `부임 ${1 - n}일째`; };
-const dotDate = (d) => d.replaceAll("-", ".");
-const caseKey = (c) => `${c.date}|${c.title}`;
-const stressDots = (n) => (n > 0 ? `<span class="stress" title="스트레스 ${n}/5" aria-label="스트레스 ${n}/5">${"●".repeat(n)}${"○".repeat(5 - n)}</span>` : "");
-const radios = (name, opts) => opts.map((o) => `<label><input type="radio" name="${name}" value="${esc(o.v)}"${o.on ? " checked" : ""}/>${esc(o.n)}</label>`).join("");
-$("#case-risk").innerHTML = radios("case-risk", CHEO_RISKS.map((r) => ({ v: r.k, n: r.n })));
-$("#case-move").innerHTML = radios("case-move", CHEO_MOVES.map((m) => ({ v: m, n: m })));
-$("#case-stress").innerHTML = radios("case-stress", [1, 2, 3, 4, 5].map((n) => ({ v: n, n, on: n === 3 })));
-const picked = (name) => ($(`#case-form input[name="${name}"]:checked`) || {}).value || "";
-function updateAdvice() {
-  const r = picked("case-risk");
-  $("#case-advice").textContent = CHEO_ADVICE[r];
-  $("#case-advice").classList.toggle("crit", r === "치명");
-}
-updateAdvice();
 
 function renderCheo() {
-  S.cheoCases = S.cheoCases || [];
-  S.cheoNotes = S.cheoNotes || [];
-  const month = ymd(TODAY).slice(0, 7);
-  const list = S.cheoCases.filter((c) => c.date.startsWith(month));
-  const stressed = list.filter((c) => c.stress > 0);
-  const unlogged = S.cheoCases.filter((c) => !c.logged).length;
-  const order = S.cheoCases.map((c, i) => [c, i]).sort((a, b) => (a[0].date < b[0].date ? 1 : a[0].date > b[0].date ? -1 : b[1] - a[1]));
-
-  // 이번 달 현황
-  $("#cheo-month").textContent = `${TODAY.getMonth() + 1}월 처세 현황`;
-  const tiles = [
-    ["백승 실장", arriveText()],
-    ["이번 달 기록", `${list.length}건`],
-    ["치명 빈틈", `${list.filter((c) => c.risk === "치명").length}건`],
-    ["그대로 노출", `${list.filter((c) => c.move === "그대로 노출").length}건`],
-    ["기록 안 남긴 건", `${unlogged}건`, unlogged ? "warn" : ""],
-    ["평균 스트레스", stressed.length ? `${fmt1(stressed.reduce((a, c) => a + c.stress, 0) / stressed.length)} / 5` : "—"],
-  ];
-  $("#cheo-stats").innerHTML = tiles.map(([k, v, cls]) => `<div class="${cls || ""}"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("");
-  if (!$("#case-date").value) $("#case-date").value = ymd(TODAY);
-
-  // 기록 목록 (최근순, 누르면 펼쳐서 결과 적기)
-  $("#case-sum").textContent = S.cheoCases.length ? `전체 ${S.cheoCases.length}건` : "";
-  $("#case-list").innerHTML = order.length ? order.map(([c, i]) => `<details class="case ${c.logged ? "" : "unlogged"}" data-key="${esc(caseKey(c))}"${cheoOpen.has(caseKey(c)) ? " open" : ""}>
-      <summary><span class="num muted">${dotDate(c.date)}</span><span class="ct">${esc(c.title)}</span>
-        ${c.risk ? `<span class="pill ${c.risk === "치명" ? "warn" : ""}">${esc(c.risk)}</span>` : ""}
-        ${c.move ? `<span class="pill iron">${esc(c.move)}</span>` : ""}
-        <span class="pill ${c.logged ? "ok" : "warn"}">${c.logged ? "기록 ✓" : "기록 안 남김"}</span>${stressDots(c.stress)}</summary>
-      <div class="case-body">
-        ${c.order ? `<div><span class="k">IT혁신팀장 지시</span>${esc(c.order)}</div>` : ""}
-        ${c.gap ? `<div><span class="k">내가 본 빈틈</span>${esc(c.gap)}</div>` : ""}
-        <label class="f">결과 · 어떤 대응이 통했는지 (나중에 채우기)<textarea rows="2" maxlength="300" data-case-result="${i}">${esc(c.result)}</textarea></label>
-        <div class="case-act"><label class="act-inline"><input type="checkbox" data-case-logged="${i}"${c.logged ? " checked" : ""}/>메신저·메일로 기록 남김</label><button class="linkbtn danger" type="button" data-del-case="${i}">삭제</button></div>
-      </div>
-    </details>`).join("")
-    : `<p class="muted" style="margin:0">아직 기록이 없어요. 빈틈이 보이는 지시를 받았을 때 한 줄로 남겨 두세요.</p>`;
-
-  // 대응 원칙 (고정)
-  $("#tactics").innerHTML = `<div class="card c12"><h2>한 줄 요약 <button class="linkbtn" type="button" data-cheo-raw style="font-size:.8rem;letter-spacing:0">원문 보기</button></h2><p class="cheo-sum">${esc(CHEO_SUMMARY)}</p></div>`
-    + TACTICS.map((t, i) => `<div class="card c6 tactic">
-      <div class="tn">${t.n}</div><h3>${esc(t.title)}</h3>
-      <p class="body">${esc(t.body)}</p>
-      ${t.bad ? `<div class="script bad"><div class="sl"><span>❌ 기존 방식 (설득)</span></div>${esc(t.bad)}</div>` : ""}
-      ${t.good ? `<div class="script"><div class="sl"><span>⭕ ${esc(t.goodLabel)}</span><button class="linkbtn" type="button" data-copy="${i}">복사</button></div>${esc(t.good)}</div>` : ""}
-      <div class="point">👉 ${esc(t.point)}</div>
-    </div>`).join("");
-
-  // 사람 (성향 + 관찰 메모)
-  $("#people").innerHTML = CHEO_PEOPLE.map((p) => {
-    const notes = S.cheoNotes.map((n, i) => [n, i]).filter(([n]) => n.who === p.n).sort((a, b) => (a[0].date < b[0].date ? 1 : a[0].date > b[0].date ? -1 : b[1] - a[1]));
-    return `<div class="card c6 person">
-      <div class="pn-head"><span class="pn">${esc(p.n)}</span><span class="pill ${p.arrive ? "iron" : ""}">${p.arrive ? arriveText() : esc(p.role)}</span></div>
-      <dl><dt>성향</dt><dd>${esc(p.trait)}</dd><dt>대응</dt><dd>${esc(p.how)}</dd></dl>
-      ${p.arrive ? `<label class="f" style="max-width:200px">부임일<input type="date" id="cheo-arrive" value="${cheoArrive()}"/></label>` : ""}
-      <h4>관찰 메모 · ${notes.length}건</h4>
-      <form class="add-row" data-note-form="${esc(p.n)}"><input type="text" maxlength="120" placeholder="${esc(p.hint)}" aria-label="${esc(p.n)} 관찰 메모"/><button class="btn" type="submit">남기기</button></form>
-      <ul class="log-list">${notes.length ? notes.map(([n, i]) => `<li><span class="num muted">${dotDate(n.date)}</span><span class="lt">${esc(n.text)}</span><button class="linkbtn danger" type="button" data-del-note="${i}">삭제</button></li>`).join("") : `<li class="muted">아직 메모가 없어요.</li>`}</ul>
-    </div>`;
-  }).join("");
-
-  // 홈 카드
-  const last = order[0];
-  $("#h-cheo").innerHTML = `<span><span class="muted">백승 실장</span> <b>${arriveText()}</b></span>
-    <span><span class="muted">이번 달 기록</span> <b class="num">${list.length}</b>건</span>
-    ${unlogged ? `<span class="pill warn">기록 안 남긴 건 ${unlogged}</span>` : ""}
-    <span class="last">${last ? `최근 · ${dotDate(last[0].date)} ${esc(last[0].title)}` : "아직 기록 없음"}</span>`;
+  for (const t of CHEO_TARGETS) {
+    $(`[data-csubview="${t.k}"]`).innerHTML = t.tactics.length
+      ? `<div class="card c12"><h2>한 줄 요약${t.raw ? ` <button class="linkbtn" type="button" data-cheo-raw="${t.k}" style="font-size:.8rem;letter-spacing:0">원문 보기</button>` : ""}</h2><p class="cheo-sum">${esc(t.summary)}</p></div>`
+        + t.tactics.map((x, i) => `<div class="card c6 tactic">
+          <div class="tn">${x.n}</div><h3>${esc(x.title)}</h3>
+          <p class="body">${esc(x.body)}</p>
+          ${x.bad ? `<div class="script bad"><div class="sl"><span>❌ 기존 방식 (설득)</span></div>${esc(x.bad)}</div>` : ""}
+          ${x.good ? `<div class="script"><div class="sl"><span>⭕ ${esc(x.goodLabel)}</span><button class="linkbtn" type="button" data-copy="${t.k}:${i}">복사</button></div>${esc(x.good)}</div>` : ""}
+          <div class="point">👉 ${esc(x.point)}</div>
+        </div>`).join("")
+      : `<div class="card c12 placeholder"><div class="glyph">處</div><h3>대응 원칙 준비 중</h3><p class="muted">${esc(t.n)}에 대한 대응 원칙을 주시면 이곳에 정리합니다.</p></div>`;
+  }
 }
 
-$("#case-form").addEventListener("change", (e) => {
-  if (e.target.name !== "case-risk") return;
-  updateAdvice();
-  // 대응을 아직 안 골랐으면 추천 대응을 미리 골라 둔다
-  if (!picked("case-move")) $(`#case-form input[name="case-move"][value="${e.target.value === "치명" ? "옵션 제시" : "그대로 노출"}"]`).checked = true;
-});
-$("#case-form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const title = $("#case-title").value.trim();
-  if (!title) { toast("사안을 한 줄로 적어 주세요"); $("#case-title").focus(); return; }
-  if (!picked("case-risk")) { toast("위험도를 골라 주세요"); return; }
-  const c = { date: $("#case-date").value || ymd(TODAY), title, order: $("#case-order").value.trim(), gap: $("#case-gap").value.trim(), risk: picked("case-risk"), move: picked("case-move"), logged: $("#case-logged").checked, stress: Number(picked("case-stress")) || null, result: "" };
-  S.cheoCases = (S.cheoCases || []).concat(c);
-  $("#case-form").reset();
-  $("#case-date").value = ymd(TODAY);
-  updateAdvice();
-  save(); renderCheo();
-  toast(c.logged ? "상황을 남겼어요" : "상황을 남겼어요 · 메신저·메일로 기록도 남겨 두세요");
-});
-$("#case-list").addEventListener("toggle", (e) => {
-  const d = e.target;
-  if (!d.dataset || !d.dataset.key) return;
-  if (d.open) cheoOpen.add(d.dataset.key); else cheoOpen.delete(d.dataset.key);
-}, true); // toggle 은 버블링되지 않아 캡처로 받는다
-$("#case-list").addEventListener("change", (e) => {
-  const t = e.target, ds = t.dataset;
-  if (ds.caseResult != null) { S.cheoCases[+ds.caseResult].result = t.value.trim(); save(); toast("결과를 저장했어요"); }
-  else if (ds.caseLogged != null) { S.cheoCases[+ds.caseLogged].logged = t.checked; save(); renderCheo(); }
-});
-// 삭제는 두 번 눌러야 (실수 방지)
-function armDelete(b) {
-  if (b.dataset.armed === "1") return true;
-  b.dataset.armed = "1"; b.textContent = "한 번 더";
-  setTimeout(() => { b.dataset.armed = ""; b.textContent = "삭제"; }, 3000);
-  return false;
-}
 function copyText(text) {
   const ok = () => toast("복사했어요");
   const fallback = () => {
@@ -2505,31 +2310,11 @@ function copyText(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, fallback); else fallback();
 }
 $("#v-cheo").addEventListener("click", (e) => {
-  const t = e.target;
-  const del = t.closest("[data-del-case], [data-del-note]");
-  if (del) {
-    if (!armDelete(del)) return;
-    if (del.dataset.delCase != null) { const [c] = S.cheoCases.splice(+del.dataset.delCase, 1); cheoOpen.delete(caseKey(c)); }
-    else S.cheoNotes.splice(+del.dataset.delNote, 1);
-    save(); renderCheo(); return;
-  }
-  const cp = t.closest("[data-copy]");
-  if (cp) { copyText(TACTICS[+cp.dataset.copy].good.replace(/^"|"$/g, "")); return; }
-  if (t.closest("[data-cheo-raw]")) openRaw(CHEO_RAW, "처세 · 대응 원칙", "");
-});
-$("#v-cheo").addEventListener("submit", (e) => {
-  const f = e.target.closest("[data-note-form]");
-  if (!f) return;
-  e.preventDefault();
-  const text = f.querySelector("input").value.trim();
-  if (!text) return;
-  S.cheoNotes = (S.cheoNotes || []).concat({ date: ymd(TODAY), who: f.dataset.noteForm, text });
-  save(); renderCheo(); toast("관찰 메모를 남겼어요");
-});
-$("#v-cheo").addEventListener("change", (e) => {
-  if (e.target.id !== "cheo-arrive" || !e.target.value) return;
-  S.cheoArrive = e.target.value;
-  save(); renderCheo();
+  const target = (k) => CHEO_TARGETS.find((t) => t.k === k);
+  const cp = e.target.closest("[data-copy]");
+  if (cp) { const [k, i] = cp.dataset.copy.split(":"); copyText(target(k).tactics[+i].good.replace(/^"|"$/g, "")); return; }
+  const raw = e.target.closest("[data-cheo-raw]");
+  if (raw) { const t = target(raw.dataset.cheoRaw); openRaw(t.raw, `처세 · ${t.n} 대응 원칙`, ""); }
 });
 
 function renderAll() { renderExampleBar(); renderHome(); renderSaju(); renderBody(); renderMind(); renderCareer(); renderCheo(); }
@@ -2554,8 +2339,6 @@ const WEB_API = (() => {
     career_log: ["날짜", "구분", "내용"],
     rm: ["날짜", "부위", "기록(kg·복근은 회)"],
     cardio: ["날짜", "종목", "시간(분)"],
-    cheo_log: ["날짜", "사안", "IT혁신팀장 지시", "빈틈", "위험도", "대응", "기록 남김", "스트레스", "결과"],
-    cheo_people: ["날짜", "인물", "관찰 메모"],
   };
   const PART_BY_NAME = { 가슴: "chest", 어깨: "shoulder", 등: "back", 하체: "legs", 이두: "biceps", 삼두: "triceps", 전완근: "forearm", 복근: "abs", 코어: "abs", 워킹: "walking", 러닝: "running" };
   const CHECK_KEYS = ["solid", "confidence", "ease", "principle"];
@@ -2687,9 +2470,6 @@ const WEB_API = (() => {
       sajuMonthly: rowsOf(tab.saju_monthly).filter((r) => str(r[2]).trim()).map((r) => ({ date: day(r[0]), title: str(r[1]), text: str(r[2]) })),
       cardio: rowsOf(tab.cardio).map((r) => ({ date: day(r[0]), part: PART_BY_NAME[str(r[1]).trim()], min: num(r[2]) })).filter((c) => (c.part === "walking" || c.part === "running") && c.min > 0),
       rm: rowsOf(tab.rm).map((r) => ({ date: day(r[0]), part: PART_BY_NAME[str(r[1]).trim()], kg: num(r[2]) })).filter((r) => r.part && r.kg > 0),
-      cheoCases: rowsOf(tab.cheo_log).filter((r) => str(r[1]).trim()).map((r) => ({ date: day(r[0]), title: str(r[1]), order: str(r[2]), gap: str(r[3]), risk: str(r[4]), move: str(r[5]), logged: isOn(r[6]), stress: num(r[7]), result: str(r[8]) })),
-      cheoNotes: rowsOf(tab.cheo_people).filter((r) => str(r[2]).trim()).map((r) => ({ date: day(r[0]), who: str(r[1]), text: str(r[2]) })),
-      cheoArrive: settings["백승 실장 부임일"] ? day(settings["백승 실장 부임일"]) : "",
     };
   }
 
@@ -2709,13 +2489,10 @@ const WEB_API = (() => {
       saju_monthly: (s.sajuMonthly || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).map((m) => [m.date, m.title, m.text]),
       cardio: (s.cardio || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((c) => [c.date, PARTS.find((p) => p.k === c.part).n, c.min]),
       rm: (s.rm || []).slice().sort((a, b) => (a.date + a.part < b.date + b.part ? -1 : 1)).map((r) => [r.date, PARTS.find((p) => p.k === r.part).n, r.kg]),
-      cheo_log: (s.cheoCases || []).slice().sort(byDate).map((c) => [c.date, c.title, c.order || "", c.gap || "", c.risk || "", c.move || "", !!c.logged, c.stress || "", c.result || ""]),
-      cheo_people: (s.cheoNotes || []).slice().sort(byDate).map((n) => [n.date, n.who, n.text]),
       settings: [
         ["목표 체중", s.goal.weight], ["목표 골격근량", s.goal.muscle > 0 ? s.goal.muscle : ""], ["목표 체지방률", s.goal.fat], ["단계 계획", phaseTargets().slice(0, 3).map((x) => x.join("/")).join(",")], ["현재 단계", currentPhase() + 1],
         ["누적 기준 월", (s.yearBase && s.yearBase.month) || ""], ["누적 기준 횟수", s.yearBase ? s.yearBase.count : ""],
         ["지향 묘사", s.vision || DEFAULT_VISION], ["정체성 문장", s.identity || ""], ["키워드", (s.keywords || []).join(", ")],
-        ["백승 실장 부임일", s.cheoArrive || ""],
       ],
     };
     const data = Object.entries(tables).map(([name, rows]) => {
