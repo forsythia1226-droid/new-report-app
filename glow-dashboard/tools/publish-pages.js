@@ -1,5 +1,5 @@
 // index.html 을 GitHub Pages 용 gh-pages 브랜치에 올린다.
-// gh-pages 에는 생성물(index.html, .nojekyll)만 두므로 매번 새로 만들어 강제 푸시한다.
+// gh-pages 에는 생성물(index.html, privacy.html, .nojekyll)만 두므로 매번 새로 만들어 강제 푸시한다.
 // 실행: npm run pages   → https://forsythia1226-droid.github.io/new-report-app/
 const { execSync } = require("child_process");
 const fs = require("fs");
@@ -13,6 +13,7 @@ const source = sh("git rev-parse --short HEAD", root);
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "glow-pages-"));
 fs.copyFileSync(path.join(root, "index.html"), path.join(dir, "index.html"));
+fs.copyFileSync(path.join(root, "privacy.html"), path.join(dir, "privacy.html")); // 핀터레스트 앱 신청용 개인정보처리방침
 fs.writeFileSync(path.join(dir, ".nojekyll"), "");
 sh("git init -q -b gh-pages", dir);
 sh("git add -A", dir);
