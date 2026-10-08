@@ -49,7 +49,35 @@ setTimeout(() => {
     $("#log-text").value = "ISMS 인증 심사 대응 자료 준비"; $("#log-form").dispatchEvent(new w.Event("submit", { cancelable: true, bubbles: true }));
     check("경력 문서화 기록", text("#career-log").includes("ISMS 인증 심사") && text("#log-summary").includes("IT 개선 1"), text("#log-summary"));
     $("[data-tab=home]").click();
-    check("카테고리 6개", w.document.querySelectorAll(".tab").length === 6, [...w.document.querySelectorAll(".tab")].map((t) => t.textContent.trim()).join(" "));
+    check("카테고리 7개 (職 다음 處)", [...w.document.querySelectorAll(".tab")].map((t) => t.textContent.trim()).join(" ") === "◎홈 命사주 身신체 心정신 職커리어 處처세 財투자");
+    check("홈 처세 카드", text("#h-cheo").includes("백승 실장") && text("#h-cheo").includes("4분기 사업계획"), text("#h-cheo"));
+
+    // 처세
+    $("[data-tab=cheo]").click();
+    check("처세 하위 탭: 상황 기록 → 대응 원칙 → 사람", [...w.document.querySelectorAll("[data-csub]")].map((b) => b.textContent.trim()).join(",") === "상황 기록,대응 원칙,사람" && shown($("[data-csubview=log]")) && !shown($("[data-csubview=tactics]")));
+    check("처세 하위 탭이 사주 하위 탭과 섞이지 않음", shown($("[data-subview=flow]").closest("section")) === false && $("[data-sub=flow]").getAttribute("aria-selected") === "true");
+    check("이번 달 현황 6칸", w.document.querySelectorAll("#cheo-stats > div").length === 6, text("#cheo-stats"));
+    $("#case-title").value = "주간보고 수치 정합성";
+    $("#case-form input[name=case-risk][value=\"일반\"]").click();
+    check("위험도 고르면 추천 대응 + 대응 미리 선택", text("#case-advice").includes("三") && $("#case-form input[name=case-move][value=\"그대로 노출\"]").checked);
+    $("#case-form").dispatchEvent(new w.Event("submit", { cancelable: true, bubbles: true }));
+    check("상황 기록 추가 (기록 안 남김 경고)", w.document.querySelectorAll("#case-list .case").length === 2 && $("#case-list .case.unlogged") && text("#cheo-stats").includes("기록 안 남긴 건1건"), text("#cheo-stats"));
+    check("폼 초기화 (스트레스 3, 대응 비움)", $("#case-title").value === "" && $("#case-form input[name=case-stress][value=\"3\"]").checked && !$("#case-form input[name=case-move]:checked"));
+    $("#case-list .case.unlogged input[data-case-logged]").click();
+    check("기록 남김 체크하면 경고 해제", !$("#case-list .case.unlogged") && text("#cheo-stats").includes("기록 안 남긴 건0건"));
+    $("[data-csub=tactics]").click();
+    check("대응 원칙 4개 + 복사 문장 3개", w.document.querySelectorAll("#tactics .tactic").length === 4 && w.document.querySelectorAll("#tactics [data-copy]").length === 3 && shown($("[data-csubview=tactics]")) && !shown($("[data-csubview=log]")));
+    $("[data-cheo-raw]").click();
+    check("원문 보기 (받은 글 그대로)", $("#reader") && text("#raw-body").includes("배경지 화면일 뿐입니다") && w.document.querySelectorAll("#raw-toc button").length >= 4);
+    $("#raw-close").click();
+    $("[data-csub=people]").click();
+    check("사람: IT혁신팀장 · 백승 실장", [...w.document.querySelectorAll("#people .pn")].map((e) => e.textContent).join(",") === "IT혁신팀장,백승 실장" && $("#cheo-arrive"));
+    const nf = $("#people [data-note-form=\"백승 실장\"]"); nf.querySelector("input").value = "숫자 근거부터 묻는다";
+    nf.dispatchEvent(new w.Event("submit", { cancelable: true, bubbles: true }));
+    check("관찰 메모 남기기", text("#people").includes("숫자 근거부터 묻는다"));
+    $("[data-tab=saju]").click();
+    check("처세에서 돌아와도 사주 하위 탭 정상", shown($("[data-subview=flow]")) && [...w.document.querySelectorAll("[data-subview]")].filter(shown).length === 1);
+    $("[data-tab=home]").click();
     check("사주 하위 탭은 하나만 보임", [...w.document.querySelectorAll("[data-subview]")].filter(shown).length === 1);
     check("홈 지향 묘사", text("#home-vision").startsWith("그를 처음 보았을 때"));
 

@@ -14,6 +14,8 @@ var TABS = {
   career_log: ["날짜", "구분", "내용"],
   rm: ["날짜", "부위", "기록(kg·복근은 회)"],
   cardio: ["날짜", "종목", "시간(분)"],
+  cheo_log: ["날짜", "사안", "IT혁신팀장 지시", "빈틈", "위험도", "대응", "기록 남김", "스트레스", "결과"],
+  cheo_people: ["날짜", "인물", "관찰 메모"],
 };
 var PARTS = ["chest", "shoulder", "back", "legs", "biceps", "triceps", "forearm", "abs", "walking", "running"];
 // 부위 이름 → 키. 예전 workouts 탭의 부위별 열과 plans 탭의 "계획 부위" 글자를 읽을 때 쓴다.
@@ -50,7 +52,7 @@ function setup() {
     if (sh.getLastRow() === 0) sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight("bold");
     sh.setFrozenRows(1);
   });
-  ["inbody", "workouts", "plans", "checks", "rm", "cardio"].forEach(function (name) {
+  ["inbody", "workouts", "plans", "checks", "rm", "cardio", "cheo_log", "cheo_people"].forEach(function (name) {
     sheet_(name).getRange("A2:A").setNumberFormat("yyyy-mm-dd");
   });
 
@@ -155,6 +157,14 @@ function getData() {
     rm: rows_("rm")
       .map(function (r) { return { date: day_(r[0]), part: PART_BY_NAME[str_(r[1]).trim()], kg: num_(r[2]) }; })
       .filter(function (r) { return r.part && r.kg > 0; }),
+    // 처세: 상황 기록 · 인물 관찰 메모 · 백승 실장 부임일
+    cheoCases: rows_("cheo_log")
+      .filter(function (r) { return str_(r[1]).trim(); })
+      .map(function (r) { return { date: day_(r[0]), title: str_(r[1]), order: str_(r[2]), gap: str_(r[3]), risk: str_(r[4]), move: str_(r[5]), logged: isOn_(r[6]), stress: num_(r[7]), result: str_(r[8]) }; }),
+    cheoNotes: rows_("cheo_people")
+      .filter(function (r) { return str_(r[2]).trim(); })
+      .map(function (r) { return { date: day_(r[0]), who: str_(r[1]), text: str_(r[2]) }; }),
+    cheoArrive: settings["백승 실장 부임일"] ? day_(settings["백승 실장 부임일"]) : "",
   };
 }
 
@@ -223,6 +233,10 @@ function saveAll(s) {
     write_("rm", (s.rm || []).slice()
       .sort(function (a, b) { var x = a.date + a.part, y = b.date + b.part; return x < y ? -1 : x > y ? 1 : 0; })
       .map(function (r) { return [r.date, PART_NAMES[r.part], r.kg]; }));
+    write_("cheo_log", (s.cheoCases || []).slice().sort(byDate).map(function (c) {
+      return [c.date, c.title, c.order || "", c.gap || "", c.risk || "", c.move || "", !!c.logged, c.stress || "", c.result || ""];
+    }));
+    write_("cheo_people", (s.cheoNotes || []).slice().sort(byDate).map(function (n) { return [n.date, n.who, n.text]; }));
     write_("principles", (s.principles || []).map(function (p, i) { return [i + 1, p]; }));
     write_("settings", [
       ["목표 체중", s.goal.weight],
@@ -235,6 +249,7 @@ function saveAll(s) {
       ["지향 묘사", s.vision || DEFAULT_VISION],
       ["정체성 문장", s.identity || ""],
       ["키워드", (s.keywords || []).join(", ")],
+      ["백승 실장 부임일", s.cheoArrive || ""],
     ]);
   } finally {
     lock.releaseLock();

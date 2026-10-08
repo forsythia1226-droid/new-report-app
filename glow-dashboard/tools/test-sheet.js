@@ -87,6 +87,9 @@ function load() {
   d.careerRows = [["ADsP", "합격", "2026-12-05", ""], ["학위 이수학점", "", "", 35]];
   d.cardio = [{ date: "2026-10-06", part: "running", min: 30 }];
   d.rm = [{ date: "2026-10-06", part: "chest", kg: 60 }, { date: "2026-09-01", part: "triceps", kg: 27.5 }];
+  d.cheoCases = [{ date: "2026-10-08", title: "보고 구조", order: "보안 빼고", gap: "연동 보안", risk: "치명", move: "옵션 제시", logged: false, stress: 4, result: "" }];
+  d.cheoNotes = [{ date: "2026-10-08", who: "백승 실장", text: "수치부터 묻는다" }];
+  d.cheoArrive = "2026-10-19";
   ctx.saveAll(d);
   const e = ctx.getData();
   eq(e.done, d.done);
@@ -99,6 +102,9 @@ function load() {
   eq(e.career, [["ADsP", "합격", "2026-12-05", ""], ["학위 이수학점", "", "", 35]]);
   eq(e.cardio, [{ date: "2026-10-06", part: "running", min: 30 }]);
   eq(e.rm, [{ date: "2026-09-01", part: "triceps", kg: 27.5 }, { date: "2026-10-06", part: "chest", kg: 60 }]);
+  eq(e.cheoCases, d.cheoCases);
+  eq(e.cheoNotes, d.cheoNotes);
+  assert.strictEqual(e.cheoArrive, "2026-10-19");
 }
 
 // 3. 예전 형식 시트 이전 (부위별 운동 열, 부드러운 태도 점검)
