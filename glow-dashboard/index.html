@@ -619,10 +619,10 @@ th { color: var(--muted); font-weight: 500; font-size: .78rem; }
     <div class="me"><b>Glow</b><span id="me-sub"></span><span id="sync" class="sync"></span><span class="acct" id="acct"></span></div>
     <button class="tab" data-tab="home" aria-selected="true"><span class="glyph">◎</span>홈</button>
     <button class="tab" data-tab="saju" aria-selected="false"><span class="glyph">命</span>사주</button>
+    <button class="tab" data-tab="cheo" aria-selected="false"><span class="glyph">處</span>처세</button>
     <button class="tab" data-tab="body" aria-selected="false"><span class="glyph">身</span>신체</button>
     <button class="tab" data-tab="mind" aria-selected="false"><span class="glyph">心</span>정신</button>
     <button class="tab" data-tab="career" aria-selected="false"><span class="glyph">職</span>커리어</button>
-    <button class="tab" data-tab="cheo" aria-selected="false"><span class="glyph">處</span>처세</button>
     <button class="tab" data-tab="invest" aria-selected="false"><span class="glyph">財</span>투자</button>
     <div class="add quick">
       <button class="btn primary" id="quick-btn" type="button">＋ 기록</button>
@@ -1132,9 +1132,9 @@ function targetMuscle() {
 
 /* ---------- 홈 ---------- */
 function renderHome() {
-  $("#me-sub").textContent = `${age}세 · ${PROFILE.mbti} · ${PROFILE.job}`;
+  $("#me-sub").textContent = `만 ${age}세 · ${PROFILE.job}`;
   $("#hello").textContent = `${PROFILE.name}`;
-  $("#today-line").textContent = `${TODAY.getFullYear()}.${pad(TODAY.getMonth() + 1)}.${pad(TODAY.getDate())} · ${age}세 · ${PROFILE.height}cm · ${PROFILE.mbti} · ${PROFILE.job}`;
+  $("#today-line").textContent = `${TODAY.getFullYear()}.${pad(TODAY.getMonth() + 1)}.${pad(TODAY.getDate())} · 만 ${age}세 · ${PROFILE.height}cm · ${PROFILE.job}`;
   renderVision();
   $("#home-kw").innerHTML = S.keywords.map((k) => `<span>${esc(k)}</span>`).join("");
 

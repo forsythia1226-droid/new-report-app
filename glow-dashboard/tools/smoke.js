@@ -49,7 +49,8 @@ setTimeout(() => {
     $("#log-text").value = "ISMS 인증 심사 대응 자료 준비"; $("#log-form").dispatchEvent(new w.Event("submit", { cancelable: true, bubbles: true }));
     check("경력 문서화 기록", text("#career-log").includes("ISMS 인증 심사") && text("#log-summary").includes("IT 개선 1"), text("#log-summary"));
     $("[data-tab=home]").click();
-    check("카테고리 7개 (職 다음 處)", [...w.document.querySelectorAll(".tab")].map((t) => t.textContent.trim()).join(" ") === "◎홈 命사주 身신체 心정신 職커리어 處처세 財투자");
+    check("사이드바: 만 나이, MBTI 없음", text("#me-sub").startsWith("만 ") && !text("#me-sub").includes("ISTJ") && !text("#today-line").includes("ISTJ"), text("#me-sub"));
+    check("카테고리 7개 (命 다음 處)", [...w.document.querySelectorAll(".tab")].map((t) => t.textContent.trim()).join(" ") === "◎홈 命사주 處처세 身신체 心정신 職커리어 財투자");
 
     // 처세: 대상별 대응 원칙
     $("[data-tab=cheo]").click();
